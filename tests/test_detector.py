@@ -45,3 +45,18 @@ def test_node_detects_drift():
     assert len(drifts) == 1
     assert drifts[0]["doc_version"] == "18"
     assert drifts[0]["package_version"] == "24"
+
+from driftcheck.detector import find_python_drift
+
+def test_python_no_drift():
+    pkg = 'requires-python = ">=3.10"'
+    docs = {"README.md": "Python 3.10+"}
+    assert find_python_drift(pkg, docs) == []
+
+def test_python_detects_drift():
+    pkg = 'requires-python = ">=3.12"'
+    docs = {"README.md": "Python 3.10+"}
+    drifts = find_python_drift(pkg, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "3.10"
+    assert drifts[0]["pyproject_version"] == "3.12"

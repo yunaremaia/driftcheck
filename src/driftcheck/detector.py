@@ -54,6 +54,30 @@ def find_node_drift(package_text: str, docs: dict[str, str]) -> list[dict]:
                 break
     return drifts
 
+
+PY_RE = re.compile(r'Python\s+(?P<ver>[0-9]+\.[0-9]+)', re.I)
+
+def parse_python_version_from_pyproject(text: str) -> str | None:
+    # naive parse: requires-python = ">=3.10" or ">=3.10,<3.13"
+    m = re.search(r'requires-python\s*=\s*"[^"]*?([0-9]+\.[0-9]+)', text)
+    if m:
+        return m.group(1)
+    # also PEP 621 via [project] requires-python
+    return None
+
+def find_python_drift(pyproject_text: str, docs: dict[str, str]) -> list[dict]:
+    pv = parse_python_version_from_pyproject(pyproject_text)
+    if not pv:
+        return []
+    drifts=[]
+    for fname, content in docs.items():
+        for m in PY_RE.finditer(content):
+            dv=m.group("ver")
+            if dv != pv:
+                drifts.append({"file": fname, "doc_version": dv, "pyproject_version": pv, "pos": m.start()})
+                break
+    return drifts
+
 def scan_repo(root: Path = Path(".")) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}."""
     tc_path = root / "rust-toolchain.toml"
@@ -67,6 +91,9 @@ def scan_repo(root: Path = Path(".")) -> dict:
             docs[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
     pkg_path = root / "package.json"
     package_text = pkg_path.read_text(encoding="utf-8", errors="replace") if pkg_path.exists() else ""
+    py_path = root / "pyproject.toml"
+    pyproject_text = py_path.read_text(encoding="utf-8", errors="replace") if py_path.exists() else ""
     rust_drifts = find_rust_drift(toolchain_text, docs)
     node_drifts = find_node_drift(package_text, docs)
-    return {"toolchain_version": parse_toolchain_version(toolchain_text), "package_node": parse_node_version_from_package(package_text), "drifts": rust_drifts, "node_drifts": node_drifts}
+    python_drifts = find_python_drift(pyproject_text, docs)
+    return {"toolchain_version": parse_toolchain_version(toolchain_text), "package_node": parse_node_version_from_package(package_text), "pyproject_python": parse_python_version_from_pyproject(pyproject_text), "drifts": rust_drifts, "node_drifts": node_drifts, "python_drifts": python_drifts}
