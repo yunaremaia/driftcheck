@@ -30,3 +30,18 @@ def test_scan_repo():
         result = scan_repo(root)
         assert result["toolchain_version"] == "1.96.1"
         assert len(result["drifts"]) == 1
+
+from driftcheck.detector import find_node_drift
+
+def test_node_no_drift():
+    pkg = '{"engines": {"node": "24.x"}}'
+    docs = {"README.md": "Install Node.js 24"}
+    assert find_node_drift(pkg, docs) == []
+
+def test_node_detects_drift():
+    pkg = '{"engines": {"node": "24.x"}}'
+    docs = {"README.md": "Install Node.js 18"}
+    drifts = find_node_drift(pkg, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "18"
+    assert drifts[0]["package_version"] == "24"
