@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/driftcheck/__init__.py
+src/driftcheck/cli.py
+src/driftcheck/detector.py
+src/driftcheck.egg-info/PKG-INFO
+src/driftcheck.egg-info/SOURCES.txt
+src/driftcheck.egg-info/dependency_links.txt
+src/driftcheck.egg-info/entry_points.txt
+src/driftcheck.egg-info/top_level.txt
+tests/test_detector.py

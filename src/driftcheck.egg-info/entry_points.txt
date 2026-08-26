@@ -1,0 +1,2 @@
+[console_scripts]
+driftcheck = driftcheck.cli:main
