@@ -23,24 +23,27 @@ def main(argv=None) -> int:
     
     if args.as_json:
         print(json.dumps(result, indent=2))
-        return 1 if (result.get("drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts")) else 0
+        return 1 if (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts")) else 0
     
     drifts = result.get("drifts", [])
+    rust_drifts = result.get("rust_drifts", [])
     node_drifts = result.get("node_drifts", [])
     python_drifts = result.get("python_drifts", [])
     go_drifts = result.get("go_drifts", [])
     tv = result.get("toolchain_version")
+    cv = result.get("cargo_rust_version")
     nv = result.get("package_node")
     pv = result.get("pyproject_python")
     gv = result.get("gomod_version")
     
-    if not tv and not nv and not pv and not gv:
+    if not tv and not cv and not nv and not pv and not gv:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not node_drifts and not python_drifts and not go_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
+        if cv: parts.append(f"Rust(Cargo) {cv}")
         if nv: parts.append(f"Node {nv}")
         if pv: parts.append(f"Python {pv}")
         if gv: parts.append(f"Go {gv}")
@@ -49,6 +52,9 @@ def main(argv=None) -> int:
     
     for d in drifts:
         print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {d['toolchain_version']}")
+    for d in rust_drifts:
+        target = d.get("toolchain_version") or d.get("cargo_version")
+        print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {target}")
     for d in node_drifts:
         print(f"driftcheck: {d['file']}: Node {d['doc_version']} → should be {d['package_version']}")
     for d in python_drifts:

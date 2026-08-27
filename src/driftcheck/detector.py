@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 import json
 
-TOOLCHAIN_RE = re.compile(r'channel\s*=\s*"(?P<ver>[0-9]+\.[0-9]+\.[0-9]+)"')
+TOOLCHAIN_RE = re.compile(r'channel\s*=\s*"(?P<ver>[0-9]+(?:\.[0-9]+){0,2})"')
 DOC_RE = re.compile(r'Rust\s+(?P<ver>[0-9]+\.[0-9]+\.[0-9]+)')
 
 def parse_toolchain_version(text: str) -> str | None:
@@ -12,16 +12,67 @@ def parse_toolchain_version(text: str) -> str | None:
     return m.group("ver") if m else None
 
 def find_rust_drift(toolchain_text: str, docs: dict[str, str]) -> list[dict]:
-    """Return list of drifts: each is {file, doc_version, toolchain_version}."""
+    """Return list of drifts vs a rust-toolchain.toml source.
+
+    Delegates to find_rust_drift_multi for consistent minor-aware comparison.
+    """
+    return find_rust_drift_multi(toolchain_text=toolchain_text, cargo_text="", docs=docs)
+
+
+CARGO_RE = re.compile(r'rust-version\s*=\s*"(?P<ver>[0-9]+(?:\.[0-9]+){0,2})"')
+
+# Looser doc regex for multi-source: accepts major.minor (e.g. "Rust 1.96") too.
+DOC_RE_LOOSE = re.compile(r'Rust\s+(?P<ver>[0-9]+(?:\.[0-9]+){1,2})')
+
+def parse_cargo_rust_version(text: str) -> str | None:
+    """Parse `rust-version = "1.96.1"` from Cargo.toml."""
+    m = CARGO_RE.search(text)
+    return m.group("ver") if m else None
+
+
+def _minor(v: str) -> str:
+    """Best-effort major.minor of a semver-ish string (handles '1.96' and '1.96.1')."""
+    parts = v.split(".")
+    return ".".join(parts[:2])
+
+
+def find_rust_drift_multi(toolchain_text: str, cargo_text: str, docs: dict[str, str]) -> list[dict]:
+    """Detect Rust doc drift using rust-toolchain.toml and/or Cargo.toml rust-version.
+
+    A doc version drifts when it does not match the toolchain on the shared
+    precision (full version if both have a patch, major.minor otherwise).
+    Returns list of {file, doc_version, toolchain_version?, cargo_version?}.
+    """
     tv = parse_toolchain_version(toolchain_text)
-    if not tv:
+    cv = parse_cargo_rust_version(cargo_text)
+    # resolve authoritative version: prefer toolchain, fall back to cargo
+    if tv and cv:
+        authoritative = tv if _minor(tv) == _minor(cv) or tv == cv else (tv if len(tv) >= len(cv) else cv)
+    else:
+        authoritative = tv or cv
+    if not authoritative:
         return []
+    # build comparison key: full if patch present, else major.minor
+    auth_has_patch = authoritative.count(".") == 2
+    auth_key = authoritative if auth_has_patch else _minor(authoritative)
+
     drifts = []
     for fname, content in docs.items():
-        for m in DOC_RE.finditer(content):
+        for m in DOC_RE_LOOSE.finditer(content):
             dv = m.group("ver")
-            if dv != tv:
-                drifts.append({"file": fname, "doc_version": dv, "toolchain_version": tv, "pos": m.start()})
+            # When the authoritative version lacks a patch, compare on major.minor
+            # only (so "1.96" and "1.96.1" are treated as matching).
+            if not auth_has_patch:
+                doc_key = _minor(dv)
+            else:
+                doc_key = dv if dv.count(".") == 2 else _minor(dv)
+            if doc_key != auth_key:
+                entry = {"file": fname, "doc_version": dv, "pos": m.start()}
+                if tv:
+                    entry["toolchain_version"] = tv
+                if cv:
+                    entry["cargo_version"] = cv
+                drifts.append(entry)
                 break  # one per file
     return drifts
 
@@ -120,11 +171,19 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
             return True
         return False
     
-    # Rust drifts
+    # Rust drifts (toolchain.toml source)
     for d in result.get("drifts", []):
         fpath = root / d["file"]
         if fpath.exists():
             if fix_in_file(fpath, d["doc_version"], d["toolchain_version"], [DOC_RE]):
+                fixed.append(d["file"])
+    
+    # Rust drifts (multi-source: toolchain.toml or Cargo.toml rust-version)
+    for d in result.get("rust_drifts", []):
+        fpath = root / d["file"]
+        target = d.get("toolchain_version") or d.get("cargo_version")
+        if fpath.exists() and target:
+            if fix_in_file(fpath, d["doc_version"], target, [DOC_RE]):
                 fixed.append(d["file"])
     
     # Node drifts
@@ -168,18 +227,23 @@ def scan_repo(root: Path = Path(".")) -> dict:
     pyproject_text = py_path.read_text(encoding="utf-8", errors="replace") if py_path.exists() else ""
     gomod_path = root / "go.mod"
     gomod_text = gomod_path.read_text(encoding="utf-8", errors="replace") if gomod_path.exists() else ""
+    cargo_path = root / "Cargo.toml"
+    cargo_text = cargo_path.read_text(encoding="utf-8", errors="replace") if cargo_path.exists() else ""
     
     rust_drifts = find_rust_drift(toolchain_text, docs)
+    rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
     python_drifts = find_python_drift(pyproject_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
+        "cargo_rust_version": parse_cargo_rust_version(cargo_text),
         "package_node": parse_node_version_from_package(package_text),
         "pyproject_python": parse_python_version_from_pyproject(pyproject_text),
         "gomod_version": parse_go_version_from_gomod(gomod_text),
         "drifts": rust_drifts,
+        "rust_drifts": rust_drifts_multi,
         "node_drifts": node_drifts,
         "python_drifts": python_drifts,
         "go_drifts": go_drifts,

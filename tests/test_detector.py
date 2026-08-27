@@ -19,6 +19,33 @@ def test_detects_drift():
 def test_no_toolchain_returns_empty():
     assert find_rust_drift("", {"README.md": "Rust 1.93.0"}) == []
 
+from driftcheck.detector import parse_cargo_rust_version, find_rust_drift_multi
+
+def test_cargo_rust_version_parse():
+    assert parse_cargo_rust_version('rust-version = "1.96.1"\n') == "1.96.1"
+    assert parse_cargo_rust_version('rust-version = "1.96"\n') == "1.96"
+    assert parse_cargo_rust_version('[package]\nversion = "0.1"\n') is None
+
+def test_rust_drift_multi_cargo_source():
+    cargo = 'rust-version = "1.96.1"\n'
+    docs = {"README.md": "Build with Rust 1.90.0"}
+    drifts = find_rust_drift_multi(toolchain_text="", cargo_text=cargo, docs=docs)
+    assert len(drifts) == 1
+    assert drifts[0]["cargo_version"] == "1.96.1"
+
+def test_rust_drift_multi_channel_without_patch():
+    toolchain = 'channel = "1.96"\n'
+    docs = {"README.md": "Rust 1.96.1"}
+    assert find_rust_drift_multi(toolchain_text=toolchain, cargo_text="", docs=docs) == []
+
+def test_rust_drift_multi_minor_mismatch():
+    toolchain = 'channel = "1.96"\n'
+    docs = {"README.md": "Rust 1.90 required"}
+    drifts = find_rust_drift_multi(toolchain_text=toolchain, cargo_text="", docs=docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "1.90"
+
+
 def test_scan_repo():
     from pathlib import Path
     import tempfile

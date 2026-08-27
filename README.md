@@ -11,8 +11,9 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.2):
-- Rust: `rust-toolchain.toml` `channel` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
+Checks (v0.1.4):
+- Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
+  - Minor-aware: `channel = "1.96"` matches docs that say `Rust 1.96.1` (patch differences ignored); a real drift is a different major/minor.
 - Node: `package.json` `engines.node` vs README
 - Python: `pyproject.toml` `requires-python` vs README
 - Go: `go.mod` `go` directive vs README
