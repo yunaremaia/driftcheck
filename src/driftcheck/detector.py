@@ -77,7 +77,10 @@ def find_rust_drift_multi(toolchain_text: str, cargo_text: str, docs: dict[str, 
     return drifts
 
 
-NODE_RE = re.compile(r'Node(?:\.js)?\s+(?P<ver>[0-9]+)(?:\.[0-9]+)?', re.I)
+NODE_RE = re.compile(
+    r'(?:install|use|require[sd]?|minimum|supports?|version)\s+Node(?:\.js)?\s+(?P<ver>[0-9]+(?:\.[0-9]+)?)',
+    re.I
+)
 ENGINES_RE = re.compile(r'"node"\s*:\s*"(?P<ver>[^"]+)"')
 
 def parse_node_version_from_package(text: str) -> str | None:
@@ -86,7 +89,6 @@ def parse_node_version_from_package(text: str) -> str | None:
         eng = data.get("engines", {}).get("node", "")
         if not eng:
             return None
-        # extract first number: "24.x" -> 24, ">=24.0.0" -> 24
         m = re.search(r"[0-9]+", eng)
         return m.group(0) if m else None
     except Exception:
@@ -100,6 +102,11 @@ def find_node_drift(package_text: str, docs: dict[str, str]) -> list[dict]:
     for fname, content in docs.items():
         for m in NODE_RE.finditer(content):
             dv = m.group("ver")
+            # Check if this match is on a numbered list line (1., 2., etc.) - common in TOC
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            line = content[line_start:m.end()].strip()
+            if re.match(r'^\d+\.', line):
+                continue  # Skip TOC/list numbering
             if dv != pv:
                 drifts.append({"file": fname, "doc_version": dv, "package_version": pv, "pos": m.start()})
                 break
@@ -130,7 +137,10 @@ def find_python_drift(pyproject_text: str, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
-GO_RE = re.compile(r'Go\s+(?P<ver>[0-9]+\.[0-9]+)', re.I)
+GO_RE = re.compile(
+    r'(?:install|use|require[sd]?|minimum|supports?|version|build|test|with|requires)\s+Go\s+(?P<ver>[0-9]+\.[0-9]+)|(?<=\s)Go\s+(?P<ver2>[0-9]+\.[0-9]+)(?=\s|$|,|\.|;)(?!\s+(?:and|or)\s+(?:later|earlier))',
+    re.I
+)
 GO_MOD_RE = re.compile(r'^\s*go\s+(?P<ver>[0-9]+\.[0-9]+)', re.MULTILINE)
 
 def parse_go_version_from_gomod(text: str) -> str | None:
@@ -141,11 +151,18 @@ def find_go_drift(gomod_text: str, docs: dict[str, str]) -> list[dict]:
     gv = parse_go_version_from_gomod(gomod_text)
     if not gv:
         return []
+    # Normalize go.mod version to major.minor
+    gv_minor = ".".join(gv.split(".")[:2])
     drifts = []
     for fname, content in docs.items():
         for m in GO_RE.finditer(content):
             dv = m.group("ver")
-            if dv != gv:
+            # Check if this match is on a numbered list line
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            line = content[line_start:m.end()].strip()
+            if re.match(r'^\d+\.', line):
+                continue  # Skip TOC/list numbering
+            if dv != gv_minor:
                 drifts.append({"file": fname, "doc_version": dv, "gomod_version": gv, "pos": m.start()})
                 break
     return drifts
