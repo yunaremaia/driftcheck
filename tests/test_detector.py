@@ -90,6 +90,13 @@ def test_python_detects_drift():
     assert drifts[0]["doc_version"] == "3.10"
     assert drifts[0]["pyproject_version"] == "3.12"
 
+def test_python_no_drift_when_doc_above_floor():
+    # requires-python is a floor; a README mentioning a higher version
+    # (e.g. an example using 3.12 while requires-python is >=3.8) is fine.
+    pkg = 'requires-python = ">=3.8"'
+    docs = {"README.md": "uv python install 3.12 3.13 3.14"}
+    assert find_python_drift(pkg, docs) == []
+
 
 from driftcheck.detector import find_go_drift, parse_go_version_from_gomod
 

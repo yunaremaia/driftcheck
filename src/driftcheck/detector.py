@@ -123,15 +123,29 @@ def parse_python_version_from_pyproject(text: str) -> str | None:
     # also PEP 621 via [project] requires-python
     return None
 
+def _vtuple(v: str) -> tuple[int, ...]:
+    """Version string -> tuple of ints for comparison (e.g. '3.8' -> (3, 8))."""
+    try:
+        return tuple(int(p) for p in v.split("."))
+    except ValueError:
+        return (0,)
+
+
 def find_python_drift(pyproject_text: str, docs: dict[str, str]) -> list[dict]:
     pv = parse_python_version_from_pyproject(pyproject_text)
     if not pv:
         return []
+    pv_t = _vtuple(pv)
     drifts = []
     for fname, content in docs.items():
         for m in PY_RE.finditer(content):
             dv = m.group("ver")
-            if dv != pv:
+            # requires-python is a *floor* (minimum supported). A doc that
+            # mentions a version >= the floor is fine (e.g. an example using
+            # 3.12 while requires-python is >=3.8). Only flag when the doc asks
+            # for something BELOW the supported minimum — that means the README
+            # is stale and understates what the project requires.
+            if _vtuple(dv) < pv_t:
                 drifts.append({"file": fname, "doc_version": dv, "pyproject_version": pv, "pos": m.start()})
                 break
     return drifts
