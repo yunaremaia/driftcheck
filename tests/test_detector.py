@@ -1,6 +1,6 @@
 """TDD for driftcheck — RED first, then GREEN."""
 
-from driftcheck.detector import find_rust_drift
+from driftcheck.detector import find_rust_drift, scan_repo, apply_fixes
 
 def test_no_drift():
     toolchain = 'channel = "1.96.1"'
@@ -150,3 +150,39 @@ def test_apply_fixes_idempotent_when_no_drift():
         (root / "README.md").write_text("Rust 1.96.1")
         fixed = apply_fixes(root, {"drifts": [], "node_drifts": [], "python_drifts": [], "go_drifts": []})
         assert fixed == []
+
+
+def test_lineending_drift_detected_when_missing():
+    from pathlib import Path
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "README.md").write_text("project")
+        r = scan_repo(root)
+        assert r["lineending_drifts"], "expected a lineending drift when .gitattributes is absent"
+        assert r["lineending_drifts"][0]["file"] == ".gitattributes"
+
+
+def test_lineending_drift_apply_fix_creates_gitattributes():
+    from pathlib import Path
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "README.md").write_text("project")
+        r = scan_repo(root)
+        fixed = apply_fixes(root, r)
+        assert ".gitattributes" in fixed
+        assert "text=auto eol=lf" in (root / ".gitattributes").read_text()
+        # re-scan should be clean
+        assert scan_repo(root)["lineending_drifts"] == []
+
+
+def test_lineending_drift_absent_when_present():
+    from pathlib import Path
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "README.md").write_text("project")
+        (root / ".gitattributes").write_text("* text=auto eol=lf\n")
+        r = scan_repo(root)
+        assert r["lineending_drifts"] == []

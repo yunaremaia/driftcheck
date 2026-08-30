@@ -11,12 +11,13 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.4):
+Checks (v0.1.5):
 - Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
   - Minor-aware: `channel = "1.96"` matches docs that say `Rust 1.96.1` (patch differences ignored); a real drift is a different major/minor.
 - Node: `package.json` `engines.node` vs README
 - Python: `pyproject.toml` `requires-python` vs README
 - Go: `go.mod` `go` directive vs README
+- Line endings: missing `* text=auto eol=lf` in `.gitattributes` (causes CRLF working-tree drift on Windows `core.autocrlf=true`)
 - Extensible: add more toolchain sources in `driftcheck/detector.py`
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
