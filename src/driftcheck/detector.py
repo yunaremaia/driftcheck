@@ -216,6 +216,45 @@ def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
+ACTIONS_NODE24_FIX = {
+    "actions/checkout": {"deprecated": "v4", "fixed": "v5"},
+    "actions/setup-node": {"deprecated": "v4", "fixed": "v5"},
+    "actions/configure-pages": {"deprecated": "v5", "fixed": "v6"},
+    "actions/deploy-pages": {"deprecated": "v4", "fixed": "v5"},
+    "pnpm/action-setup": {"deprecated": "v4", "fixed": "v5"},
+}
+ACTIONS_RE = re.compile(r'uses:\s*(?P<action>[A-Za-z0-9_.\-\/]+)\s*@\s*(?P<ver>v\d+(?:\.\d+)*)', re.I)
+
+def find_actions_node_drift(root: Path) -> list[dict]:
+    """Detect GitHub Actions still pinned to deprecated Node 20 runtime versions.
+    Scans .github/workflows/*.yml/.yaml for known actions where the pinned
+    major version still uses node20 and a node24 fixed version exists.
+    Returns list of {file, action, current, suggested, pos}.
+    """
+    wf_dir = root / ".github" / "workflows"
+    if not wf_dir.is_dir():
+        return []
+    drifts = []
+    for wf in list(wf_dir.glob("*.yml")) + list(wf_dir.glob("*.yaml")):
+        try:
+            text = wf.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        rel = str(wf.relative_to(root))
+        for m in ACTIONS_RE.finditer(text):
+            action = m.group("action")
+            ver = m.group("ver").lower()
+            # normalize v4.1.0 -> v4
+            major = ver.split(".")[0]
+            fix = ACTIONS_NODE24_FIX.get(action)
+            if not fix:
+                continue
+            dep_major = fix["deprecated"].lower()
+            if major == dep_major:
+                drifts.append({"file": rel, "action": action, "current": ver, "suggested": fix["fixed"], "pos": m.start()})
+    return drifts
+
+
 def find_lineending_drift(root: Path) -> list[dict]:
     """Detect missing CRLF-safe .gitattributes.
 
@@ -306,6 +345,20 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
                 if d["file"] not in fixed:
                     fixed.append(d["file"])
 
+    # Actions Node drifts: bump GitHub Actions from node20 to node24
+    for d in result.get("actions_drifts", []):
+        fpath = root / d["file"]
+        if fpath.exists():
+            text = fpath.read_text(encoding="utf-8", errors="replace")
+            # replace the specific deprecated version with fixed
+            old = f"{d['action']}@{d['current']}"
+            new = f"{d['action']}@{d['suggested']}"
+            if old in text:
+                text = text.replace(old, new)
+                fpath.write_text(text, encoding="utf-8")
+                if d["file"] not in fixed:
+                    fixed.append(d["file"])
+
     # Line-ending drifts: ensure .gitattributes normalizes CRLF
     for d in result.get("lineending_drifts", []):
         ga = root / d["file"]
@@ -349,6 +402,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     python_drifts = find_python_drift(pyproject_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
     count_drifts = find_count_drift(root, docs)
+    actions_drifts = find_actions_node_drift(root)
     lineending_drifts = find_lineending_drift(root)
     
     return {
@@ -363,5 +417,6 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "python_drifts": python_drifts,
         "go_drifts": go_drifts,
         "count_drifts": count_drifts,
+        "actions_drifts": actions_drifts,
         "lineending_drifts": lineending_drifts,
     }

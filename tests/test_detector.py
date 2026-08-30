@@ -230,3 +230,40 @@ def test_count_fix_rewrites():
         fixed = apply_fixes(root, result)
         assert "README.md" in fixed
         assert "2 skills" in (root / "README.md").read_text()
+
+from driftcheck.detector import find_actions_node_drift
+
+def test_actions_no_drift_when_fixed():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text("steps:\n  - uses: actions/checkout@v5\n  - uses: actions/setup-node@v5\n")
+        assert find_actions_node_drift(root) == []
+
+def test_actions_detects_node20():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text("steps:\n  - uses: actions/checkout@v4\n  - uses: actions/configure-pages@v5\n  - uses: pnpm/action-setup@v4\n")
+        drifts = find_actions_node_drift(root)
+        assert len(drifts) == 3
+        assert {d["action"] for d in drifts} == {"actions/checkout", "actions/configure-pages", "pnpm/action-setup"}
+        assert drifts[0]["suggested"] == "v5"
+        # configure-pages v5 -> v6
+        assert [d for d in drifts if d["action"]=="actions/configure-pages"][0]["suggested"]=="v6"
+
+def test_actions_fix_rewrites():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text("steps:\n  - uses: actions/checkout@v4\n")
+        result = {"actions_drifts": [{"file": ".github/workflows/ci.yml", "action": "actions/checkout", "current": "v4", "suggested": "v5"}]}
+        from driftcheck.detector import apply_fixes
+        fixed = apply_fixes(root, result)
+        assert ".github/workflows/ci.yml" in fixed
+        assert "actions/checkout@v5" in (root / ".github" / "workflows" / "ci.yml").read_text()
+
+def test_actions_no_workflows_returns_empty():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        assert find_actions_node_drift(root) == []

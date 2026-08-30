@@ -23,7 +23,7 @@ def main(argv=None) -> int:
     
     if args.as_json:
         print(json.dumps(result, indent=2))
-        return 1 if (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts")) else 0
+        return 1 if (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts") or result.get("actions_drifts")) else 0
     
     drifts = result.get("drifts", [])
     rust_drifts = result.get("rust_drifts", [])
@@ -31,17 +31,18 @@ def main(argv=None) -> int:
     python_drifts = result.get("python_drifts", [])
     go_drifts = result.get("go_drifts", [])
     count_drifts = result.get("count_drifts", [])
+    actions_drifts = result.get("actions_drifts", [])
     tv = result.get("toolchain_version")
     cv = result.get("cargo_rust_version")
     nv = result.get("package_node")
     pv = result.get("pyproject_python")
     gv = result.get("gomod_version")
     
-    if not tv and not cv and not nv and not pv and not gv and not count_drifts:
+    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
         if cv: parts.append(f"Rust(Cargo) {cv}")
@@ -64,6 +65,8 @@ def main(argv=None) -> int:
         print(f"driftcheck: {d['file']}: Go {d['doc_version']} → should be {d['gomod_version']}")
     for d in count_drifts:
         print(f"driftcheck: {d['file']}: {d['doc_count']} skills → should be {d['actual_count']} (skills/ count)")
+    for d in actions_drifts:
+        print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']} (node20→node24)")
     return 1
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.6):
+Checks (v0.1.7):
 - Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
   - Minor-aware: `channel = "1.96"` matches docs that say `Rust 1.96.1` (patch differences ignored); a real drift is a different major/minor.
 - Node: `package.json` `engines.node` vs README
@@ -19,6 +19,7 @@ Checks (v0.1.6):
 - Go: `go.mod` `go` directive vs README
 - Line endings: missing `* text=auto eol=lf` in `.gitattributes` (causes CRLF working-tree drift on Windows `core.autocrlf=true`)
 - Count: `skills/` directory count vs `README.md` mentions of "N skills" (e.g. 161 vs 163) — catches README/file-count drift like [K-Dense-AI/scientific-agent-skills#240](https://github.com/K-Dense-AI/scientific-agent-skills/issues/240)
+- Actions: GitHub Actions pinned to deprecated Node 20 runtime (`actions/checkout@v4`, `setup-node@v4`, `configure-pages@v5`, `deploy-pages@v4`, `pnpm/action-setup@v4`) → suggests `node24` fixed versions (fixes [tt-a1i/archify#217](https://github.com/tt-a1i/archify/issues/217))
 - Extensible: add more toolchain sources in `driftcheck/detector.py`
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
