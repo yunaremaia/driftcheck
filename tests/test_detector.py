@@ -1,4 +1,6 @@
 """TDD for driftcheck — RED first, then GREEN."""
+import tempfile
+from pathlib import Path
 
 from driftcheck.detector import find_rust_drift, scan_repo, apply_fixes
 
@@ -186,3 +188,45 @@ def test_lineending_drift_absent_when_present():
         (root / ".gitattributes").write_text("* text=auto eol=lf\n")
         r = scan_repo(root)
         assert r["lineending_drifts"] == []
+
+from driftcheck.detector import find_count_drift
+
+def test_count_no_drift():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "skills").mkdir()
+        for name in ["a", "b", "c"]:
+            (root / "skills" / name).mkdir()
+        docs = {"README.md": "We have 3 skills in total"}
+        assert find_count_drift(root, docs) == []
+
+def test_count_detects_drift():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "skills").mkdir()
+        for name in ["a", "b", "c"]:
+            (root / "skills" / name).mkdir()
+        docs = {"README.md": "We have 161 skills but also 3 skills"}
+        drifts = find_count_drift(root, docs)
+        assert len(drifts) == 1
+        assert drifts[0]["doc_count"] == "161"
+        assert drifts[0]["actual_count"] == 3
+
+def test_count_no_skills_dir_returns_empty():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        docs = {"README.md": "We have 161 skills"}
+        assert find_count_drift(root, docs) == []
+
+def test_count_fix_rewrites():
+    from driftcheck.detector import apply_fixes
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "skills").mkdir()
+        for n in ["a", "b"]:
+            (root / "skills" / n).mkdir()
+        (root / "README.md").write_text("Our project has 161 skills")
+        result = {"count_drifts": [{"file": "README.md", "doc_count": "161", "actual_count": 2}]}
+        fixed = apply_fixes(root, result)
+        assert "README.md" in fixed
+        assert "2 skills" in (root / "README.md").read_text()

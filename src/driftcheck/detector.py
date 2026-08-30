@@ -186,6 +186,35 @@ def find_go_drift(gomod_text: str, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
+COUNT_RE = re.compile(r'(?P<count>\d+)\s+skills?\b', re.I)
+
+def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
+    """Detect drift where README says 'N skills' but filesystem has M skill dirs.
+    Looks for '<N> skills' patterns in docs and compares to count of immediate
+    subdirectories under <root>/skills. Returns drifts where doc count != actual.
+    One entry per file (first mismatched count per file).
+    """
+    skills_dir = root / "skills"
+    if not skills_dir.is_dir():
+        return []
+    try:
+        actual = sum(1 for p in skills_dir.iterdir() if p.is_dir())
+    except Exception:
+        return []
+    if actual == 0:
+        return []
+    drifts = []
+    for fname, content in docs.items():
+        for m in COUNT_RE.finditer(content):
+            try:
+                doc_count = int(m.group("count"))
+            except ValueError:
+                continue
+            if doc_count != actual:
+                drifts.append({"file": fname, "doc_count": str(doc_count), "actual_count": actual, "pos": m.start()})
+                break
+    return drifts
+
 
 def find_lineending_drift(root: Path) -> list[dict]:
     """Detect missing CRLF-safe .gitattributes.
@@ -269,6 +298,14 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
                 fixed.append(d["file"])
     
 
+    # Count drifts (skills directory count)
+    for d in result.get("count_drifts", []):
+        fpath = root / d["file"]
+        if fpath.exists():
+            if fix_in_file(fpath, d["doc_count"], str(d["actual_count"]), [COUNT_RE]):
+                if d["file"] not in fixed:
+                    fixed.append(d["file"])
+
     # Line-ending drifts: ensure .gitattributes normalizes CRLF
     for d in result.get("lineending_drifts", []):
         ga = root / d["file"]
@@ -311,6 +348,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     node_drifts = find_node_drift(package_text, docs)
     python_drifts = find_python_drift(pyproject_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
+    count_drifts = find_count_drift(root, docs)
     lineending_drifts = find_lineending_drift(root)
     
     return {
@@ -324,5 +362,6 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "node_drifts": node_drifts,
         "python_drifts": python_drifts,
         "go_drifts": go_drifts,
+        "count_drifts": count_drifts,
         "lineending_drifts": lineending_drifts,
     }
