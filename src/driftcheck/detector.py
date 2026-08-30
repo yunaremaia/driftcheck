@@ -157,6 +157,10 @@ GO_RE = re.compile(
 )
 GO_MOD_RE = re.compile(r'^\s*go\s+(?P<ver>[0-9]+\.[0-9]+)', re.MULTILINE)
 
+
+EOL_ATTR_RE = re.compile(r'^\s*\*?\s*text\s*=\s*auto', re.MULTILINE)
+EOL_LINE_RE = re.compile(r'^\s*\*.*eol\s*=\s*lf', re.MULTILINE)
+
 def parse_go_version_from_gomod(text: str) -> str | None:
     m = GO_MOD_RE.search(text)
     return m.group("ver") if m else None
@@ -181,6 +185,32 @@ def find_go_drift(gomod_text: str, docs: dict[str, str]) -> list[dict]:
                 break
     return drifts
 
+
+
+def find_lineending_drift(root: Path) -> list[dict]:
+    """Detect missing CRLF-safe .gitattributes.
+
+    A repo that ships text source but lacks `* text=auto eol=lf` in
+    .gitattributes can check out with CRLF working-tree bytes on Windows
+    (core.autocrlf=true) while the index stores LF -- silently breaking
+    byte-exact checks. Returns a drift if .gitattributes is absent or does
+    not normalize line endings.
+    """
+    ga = root / ".gitattributes"
+    if not ga.exists():
+        return [{
+            "file": ".gitattributes",
+            "kind": "lineending",
+            "detail": "missing .gitattributes with `* text=auto eol=lf`",
+        }]
+    text = ga.read_text(encoding="utf-8", errors="replace")
+    if not (EOL_ATTR_RE.search(text) and EOL_LINE_RE.search(text)):
+        return [{
+            "file": ".gitattributes",
+            "kind": "lineending",
+            "detail": ".gitattributes does not set `* text=auto eol=lf`",
+        }]
+    return []
 
 def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
@@ -238,6 +268,21 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
             if fix_in_file(fpath, d["doc_version"], d["gomod_version"], [GO_RE]):
                 fixed.append(d["file"])
     
+
+    # Line-ending drifts: ensure .gitattributes normalizes CRLF
+    for d in result.get("lineending_drifts", []):
+        ga = root / d["file"]
+        needed = "* text=auto eol=lf\n"
+        if not ga.exists():
+            ga.write_text("# Normalize line endings so working-tree bytes match the index on every platform\n" + needed)
+            fixed.append(d["file"])
+        else:
+            text = ga.read_text(encoding="utf-8", errors="replace")
+            if "text=auto eol=lf" not in text:
+                text = text.rstrip("\n") + "\n\n# Normalize line endings (added by driftcheck --fix)\n" + needed
+                ga.write_text(text, encoding="utf-8")
+                fixed.append(d["file"])
+
     return fixed
 
 
@@ -266,6 +311,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     node_drifts = find_node_drift(package_text, docs)
     python_drifts = find_python_drift(pyproject_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
+    lineending_drifts = find_lineending_drift(root)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -278,4 +324,5 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "node_drifts": node_drifts,
         "python_drifts": python_drifts,
         "go_drifts": go_drifts,
+        "lineending_drifts": lineending_drifts,
     }
