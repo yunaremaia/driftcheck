@@ -267,3 +267,37 @@ def test_actions_no_workflows_returns_empty():
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         assert find_actions_node_drift(root) == []
+
+from driftcheck.detector import find_external_resource_drift
+
+def test_external_resource_detects_google_fonts():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "archify" / "assets").mkdir(parents=True)
+        (root / "archify" / "assets" / "template.html").write_text('<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono">')
+        drifts = find_external_resource_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["host"] == "fonts.googleapis.com"
+        assert "archify#242" in drifts[0]["detail"]
+
+def test_external_resource_no_false_positive():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "archify" / "assets").mkdir(parents=True)
+        (root / "archify" / "assets" / "template.html").write_text("<style>body{font:system}</style>")
+        assert find_external_resource_drift(root) == []
+
+def test_external_resource_no_template_returns_empty():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        assert find_external_resource_drift(root) == []
+
+def test_external_resource_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "archify" / "assets").mkdir(parents=True)
+        (root / "archify" / "assets" / "template.html").write_text('<link href="https://fonts.googleapis.com/css">')
+        result = scan_repo(root)
+        assert "external_resource_drifts" in result
+        assert len(result["external_resource_drifts"]) == 1
+
