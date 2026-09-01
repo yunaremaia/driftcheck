@@ -301,3 +301,35 @@ def test_external_resource_included_in_scan():
         assert "external_resource_drifts" in result
         assert len(result["external_resource_drifts"]) == 1
 
+def test_python_drift_skips_cpython_stack():
+    # CPython 3.11 compatibility stack is not a repo requirement
+    docs = {"README.md": "PyTDC 1.1.15 on its verified CPython 3.11 compatibility stack"}
+    assert find_python_drift('requires-python = ">=3.13"', docs) == []
+
+def test_python_drift_still_catches_real_requirement():
+    docs = {"README.md": "Requires Python 3.11 for install"}
+    drifts = find_python_drift('requires-python = ">=3.13"', docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "3.11"
+
+def test_count_drift_skips_subset_ship():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "skills").mkdir()
+        for i in range(163):
+            (root / f"skills/s{i}").mkdir()
+        # 32 is subset (ships X), 163 is total — should not drift
+        docs = {"CONTRIBUTING.md": "32 skills ship a scripts/_common.py, 163 skills total"}
+        assert find_count_drift(root, docs) == []
+
+def test_count_drift_still_catches_wrong_total():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "skills").mkdir()
+        for i in range(163):
+            (root / f"skills/s{i}").mkdir()
+        docs = {"README.md": "We have 32 skills total"}
+        drifts = find_count_drift(root, docs)
+        assert len(drifts) == 1
+        assert drifts[0]["doc_count"] == "32"
+

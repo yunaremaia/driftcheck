@@ -140,6 +140,18 @@ def find_python_drift(pyproject_text: str, docs: dict[str, str]) -> list[dict]:
     for fname, content in docs.items():
         for m in PY_RE.finditer(content):
             dv = m.group("ver")
+            # Precision filter: skip non-requirement mentions like
+            # "CPython 3.11 compatibility stack" or "PyTDC 1.1.15 on CPython 3.11"
+            # which are package-specific stacks, not the repo's required Python.
+            window_start = max(0, m.start() - 40)
+            window_end = min(len(content), m.end() + 40)
+            window = content[window_start:window_end].lower()
+            if "cpython" in window or "compatibility stack" in window or "pyt" in window and "compatibility" in window:
+                # double-check: only skip if CPython is near Python mention
+                if "cpython" in content[max(0, m.start()-20):m.start()].lower():
+                    continue
+                if "compatibility" in window:
+                    continue
             # requires-python is a *floor* (minimum supported). A doc that
             # mentions a version >= the floor is fine (e.g. an example using
             # 3.12 while requires-python is >=3.8). Only flag when the doc asks
@@ -193,6 +205,9 @@ def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
     Looks for '<N> skills' patterns in docs and compares to count of immediate
     subdirectories under <root>/skills. Returns drifts where doc count != actual.
     One entry per file (first mismatched count per file).
+
+    Precision: skips sub-counts like "32 skills ship a scripts/_common.py"
+    (a subset, not the collection total).
     """
     skills_dir = root / "skills"
     if not skills_dir.is_dir():
@@ -209,6 +224,15 @@ def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
             try:
                 doc_count = int(m.group("count"))
             except ValueError:
+                continue
+            # Skip subset mentions: "32 skills ship/use/with/via" — not total count
+            after = content[m.end():m.end()+30].lower()
+            if after.lstrip().startswith(("ship", "use ", "with ", "via ", "for ")):
+                continue
+            # Also skip if the surrounding sentence is about a subset feature
+            # e.g. "32 skills ship a `scripts/_common.py`"
+            window = content[max(0, m.start()-20):m.end()+40].lower()
+            if "ship a" in window and "scripts" in window:
                 continue
             if doc_count != actual:
                 drifts.append({"file": fname, "doc_count": str(doc_count), "actual_count": actual, "pos": m.start()})
