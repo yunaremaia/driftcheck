@@ -11,8 +11,9 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.12):
-- CircleCI: `.circleci/config.yml` docker image tags vs README mentions — handles variant tags (`24` matches `24-slim`)
+Checks (v0.1.13):
+- GitLab CI: `.gitlab-ci.yml` image tags vs README mentions — handles variant tags (`24` matches `24-slim`)
+- CircleCI: `.circleci/config.yml` docker image tags vs README mentions
 - Terraform: `versions.tf` `required_providers` block `version` vs README mentions
 - Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions
 - Docker: `Dockerfile` `FROM <image>:<tag>` vs README mentions
