@@ -354,6 +354,112 @@ def find_external_resource_drift(root: Path) -> list[dict]:
             break  # one per file
     return drifts
 
+# ---------------------------------------------------------------------------
+# Docker drift: Dockerfile FROM <image>:<tag> vs README mentions
+# ---------------------------------------------------------------------------
+DOCKER_FROM_RE = re.compile(r'^FROM\s+(?:--\S+\s+)?(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)', re.MULTILINE | re.I)
+DOCKER_TAG_RE = re.compile(r'(?:Docker|image)\s+(?P<image>[\w.\-]+):(?P<tag>[\w.\-]+)|(?:Docker|image)\s+(?:version|tag)?\s+(?P<tag2>[\d.]+[\w.\-]*)', re.I)
+
+def parse_dockerfile_from(text: str) -> dict[str, str]:
+    """Return {image: tag} map of FROM instructions in a Dockerfile."""
+    result = {}
+    for m in DOCKER_FROM_RE.finditer(text):
+        result[m.group("image").lower()] = m.group("tag")
+    return result
+
+def find_docker_drift(dockerfiles: dict[str, str], docs: dict[str, str]) -> list[dict]:
+    """Detect drift between Dockerfile FROM tags and README mentions.
+
+    Scans docs for patterns like 'node:24' or 'Docker node 22' and compares
+    to the actual FROM tag in the Dockerfile. Returns drifts where the doc
+    mentions a different version than what the Dockerfile pins.
+    """
+    # Collect all FROM tags across dockerfiles
+    all_from: dict[str, str] = {}
+    for fname, content in dockerfiles.items():
+        for image, tag in parse_dockerfile_from(content).items():
+            all_from[image] = tag
+
+    if not all_from:
+        return []
+
+    def tags_match(doc_tag: str, from_tag: str) -> bool:
+        """Return True when tags are equivalent (handles '24' vs '24-slim')."""
+        if doc_tag == from_tag:
+            return True
+        # '24' matches '24-slim', '24-alpine', etc.
+        if from_tag.startswith(doc_tag + "-"):
+            return True
+        # '24-slim' matches '24'
+        if doc_tag.startswith(from_tag + "-"):
+            return True
+        return False
+
+    drifts = []
+    for fname, content in docs.items():
+        for m in DOCKER_TAG_RE.finditer(content):
+            img = (m.group("image") or "").lower()
+            tag = m.group("tag") or m.group("tag2")
+            if not tag:
+                continue
+            # Match by image name (node, python, golang, etc.)
+            for from_img, from_tag in all_from.items():
+                if img and img not in from_img and from_img not in img:
+                    continue
+                if not tags_match(tag, from_tag):
+                    drifts.append({
+                        "file": fname,
+                        "doc_image": f"{img or from_img}:{tag}",
+                        "dockerfile_image": f"{from_img}:{from_tag}",
+                        "pos": m.start(),
+                    })
+                    break
+            break  # one per file
+    return drifts
+
+
+# ---------------------------------------------------------------------------
+# Java/Gradle drift: build.gradle sourceCompatibility vs README
+# ---------------------------------------------------------------------------
+GRADLE_JAVA_RE = re.compile(r'sourceCompatibility\s*=\s*["\']?(?P<ver>\d+(?:\.\d+)?)["\']?|JavaVersion\.VERSION_(?P<ver2>_\d+|(?:\d+))', re.I)
+GRADLE_KOTLIN_RE = re.compile(r'jvmTarget\s*=\s*["\']?(?P<ver>\d+(?:\.\d+)?)["\']?', re.I)
+JAVA_DOC_RE = re.compile(r'(?:Java|JDK|JRE)\s+(?P<ver>\d+(?:\.\d+)?)', re.I)
+
+def parse_gradle_java_version(text: str) -> str | None:
+    """Parse Java version from build.gradle sourceCompatibility or jvmTarget."""
+    m = GRADLE_JAVA_RE.search(text)
+    if m:
+        v = m.group("ver") or m.group("ver2")
+        if v:
+            return v.replace("_", "")
+    m = GRADLE_KOTLIN_RE.search(text)
+    if m:
+        return m.group("ver")
+    return None
+
+def find_java_drift(gradle_text: str, docs: dict[str, str]) -> list[dict]:
+    """Detect drift between build.gradle Java version and README mentions."""
+    jv = parse_gradle_java_version(gradle_text)
+    if not jv:
+        return []
+    drifts = []
+    for fname, content in docs.items():
+        for m in JAVA_DOC_RE.finditer(content):
+            dv = m.group("ver")
+            # Normalize: "17.0.1" -> "17" for comparison with sourceCompatibility
+            dv_major = dv.split(".")[0]
+            jv_major = jv.split(".")[0]
+            if dv_major != jv_major:
+                drifts.append({
+                    "file": fname,
+                    "doc_version": dv,
+                    "gradle_version": jv,
+                    "pos": m.start(),
+                })
+                break
+    return drifts
+
+
 def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
     fixed = []
@@ -470,6 +576,20 @@ def scan_repo(root: Path = Path(".")) -> dict:
     cargo_path = root / "Cargo.toml"
     cargo_text = cargo_path.read_text(encoding="utf-8", errors="replace") if cargo_path.exists() else ""
     
+    # Dockerfiles
+    dockerfiles = {}
+    for pattern in ["Dockerfile", "Dockerfile.*", "docker/Dockerfile", "docker/Dockerfile.*"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                dockerfiles[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    
+    # Gradle build files
+    gradle_files = {}
+    for pattern in ["build.gradle", "build.gradle.kts", "gradle/build.gradle", "gradle/build.gradle.kts"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                gradle_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
@@ -479,6 +599,8 @@ def scan_repo(root: Path = Path(".")) -> dict:
     actions_drifts = find_actions_node_drift(root)
     lineending_drifts = find_lineending_drift(root)
     external_resource_drifts = find_external_resource_drift(root)
+    docker_drifts = find_docker_drift(dockerfiles, docs)
+    java_drifts = find_java_drift("\n".join(gradle_files.values()), docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -495,4 +617,6 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "actions_drifts": actions_drifts,
         "lineending_drifts": lineending_drifts,
         "external_resource_drifts": external_resource_drifts,
+        "docker_drifts": docker_drifts,
+        "java_drifts": java_drifts,
     }

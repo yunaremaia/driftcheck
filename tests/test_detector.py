@@ -333,3 +333,87 @@ def test_count_drift_still_catches_wrong_total():
         assert len(drifts) == 1
         assert drifts[0]["doc_count"] == "32"
 
+
+# ---- Docker drift tests ----
+from driftcheck.detector import find_docker_drift, parse_dockerfile_from
+
+def test_parse_dockerfile_from_basic():
+    df = "FROM node:24-slim\nWORKDIR /app\nCOPY . ."
+    result = parse_dockerfile_from(df)
+    assert result == {"node": "24-slim"}
+
+def test_parse_dockerfile_from_multi_stage():
+    df = "FROM golang:1.23 AS builder\nRUN go build\nFROM alpine:3.21\nCOPY --from=builder /app ."
+    result = parse_dockerfile_from(df)
+    assert result == {"golang": "1.23", "alpine": "3.21"}
+
+def test_docker_no_drift():
+    dockerfiles = {"Dockerfile": "FROM node:24-slim"}
+    docs = {"README.md": "Docker node:24 image"}
+    assert find_docker_drift(dockerfiles, docs) == []
+
+def test_docker_detects_drift():
+    dockerfiles = {"Dockerfile": "FROM node:24-slim"}
+    docs = {"README.md": "Docker node:22 image"}
+    drifts = find_docker_drift(dockerfiles, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_image"] == "node:22"
+    assert drifts[0]["dockerfile_image"] == "node:24-slim"
+
+def test_docker_no_dockerfile_returns_empty():
+    assert find_docker_drift({}, {"README.md": "node:22"}) == []
+
+def test_docker_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "Dockerfile").write_text("FROM python:3.12-slim")
+        (root / "README.md").write_text("Docker python:3.11 base image")
+        result = scan_repo(root)
+        assert "docker_drifts" in result
+        assert len(result["docker_drifts"]) == 1
+
+
+# ---- Java/Gradle drift tests ----
+from driftcheck.detector import find_java_drift, parse_gradle_java_version
+
+def test_parse_gradle_source_compatibility():
+    gradle = "sourceCompatibility = '17'\n"
+    assert parse_gradle_java_version(gradle) == "17"
+
+def test_parse_gradle_jvm_target():
+    gradle = 'jvmTarget = "21"\n'
+    assert parse_gradle_java_version(gradle) == "21"
+
+def test_parse_gradle_java_version_enum():
+    gradle = "sourceCompatibility = JavaVersion.VERSION_21\n"
+    assert parse_gradle_java_version(gradle) == "21"
+
+def test_parse_gradle_no_java_info():
+    gradle = "plugins { id 'java' }\n"
+    assert parse_gradle_java_version(gradle) is None
+
+def test_java_no_drift():
+    gradle = "sourceCompatibility = '17'"
+    docs = {"README.md": "Requires Java 17"}
+    assert find_java_drift(gradle, docs) == []
+
+def test_java_detects_drift():
+    gradle = "sourceCompatibility = '17'"
+    docs = {"README.md": "Requires Java 11"}
+    drifts = find_java_drift(gradle, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "11"
+    assert drifts[0]["gradle_version"] == "17"
+
+def test_java_no_gradle_returns_empty():
+    assert find_java_drift("", {"README.md": "Java 17"}) == []
+
+def test_java_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "build.gradle").write_text("sourceCompatibility = '21'\n")
+        (root / "README.md").write_text("Requires Java 17 to build")
+        result = scan_repo(root)
+        assert "java_drifts" in result
+        assert len(result["java_drifts"]) == 1
+
