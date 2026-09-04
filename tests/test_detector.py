@@ -535,3 +535,41 @@ def test_circleci_drift_included_in_scan():
         assert "circleci_drifts" in result
         assert len(result["circleci_drifts"]) == 1
 
+
+# ---- GitLab CI drift tests ----
+from driftcheck.detector import find_gitlab_drift, parse_gitlab_images
+
+def test_parse_gitlab_images():
+    yml = 'image: node:24.2.0\n\nbuild:\n  script:\n    - npm test'
+    result = parse_gitlab_images(yml)
+    assert result == {"node": "24.2.0"}
+
+def test_parse_gitlab_no_images():
+    yml = 'build:\n  script:\n    - npm test'
+    assert parse_gitlab_images(yml) == {}
+
+def test_gitlab_no_drift():
+    yml = 'image: node:24.2.0'
+    docs = {"README.md": "Docker node:24.2.0 image"}
+    assert find_gitlab_drift({".gitlab-ci.yml": yml}, docs) == []
+
+def test_gitlab_detects_drift():
+    yml = 'image: node:24.2.0'
+    docs = {"README.md": "Docker node:22 image"}
+    drifts = find_gitlab_drift({".gitlab-ci.yml": yml}, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_image"] == "node:22"
+    assert drifts[0]["gitlab_image"] == "node:24.2.0"
+
+def test_gitlab_no_files_returns_empty():
+    assert find_gitlab_drift({}, {"README.md": "node:24"}) == []
+
+def test_gitlab_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".gitlab-ci.yml").write_text('image: node:24.2.0')
+        (root / "README.md").write_text("Docker node:22 base image")
+        result = scan_repo(root)
+        assert "gitlab_drifts" in result
+        assert len(result["gitlab_drifts"]) == 1
+
