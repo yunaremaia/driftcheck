@@ -408,6 +408,47 @@ def test_java_detects_drift():
 def test_java_no_gradle_returns_empty():
     assert find_java_drift("", {"README.md": "Java 17"}) == []
 
+
+# ---- Maven drift tests ----
+from driftcheck.detector import find_maven_drift, parse_maven_java_version
+
+def test_parse_maven_java_version():
+    pom = "<java.version>17</java.version>"
+    assert parse_maven_java_version(pom) == "17"
+
+def test_parse_maven_compiler_source():
+    pom = "<maven.compiler.source>21</maven.compiler.source>"
+    assert parse_maven_java_version(pom) == "21"
+
+def test_parse_maven_no_java_info():
+    pom = "<project><groupId>com.example</groupId></project>"
+    assert parse_maven_java_version(pom) is None
+
+def test_maven_no_drift():
+    pom = "<java.version>17</java.version>"
+    docs = {"README.md": "Requires Java 17"}
+    assert find_maven_drift(pom, docs) == []
+
+def test_maven_detects_drift():
+    pom = "<java.version>17</java.version>"
+    docs = {"README.md": "Requires Java 11"}
+    drifts = find_maven_drift(pom, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "11"
+    assert drifts[0]["maven_version"] == "17"
+
+def test_maven_no_pom_returns_empty():
+    assert find_maven_drift("", {"README.md": "Java 17"}) == []
+
+def test_maven_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "pom.xml").write_text("<java.version>21</java.version>")
+        (root / "README.md").write_text("Requires Java 17 to build")
+        result = scan_repo(root)
+        assert "maven_drifts" in result
+        assert len(result["maven_drifts"]) == 1
+
 def test_java_drift_included_in_scan():
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
