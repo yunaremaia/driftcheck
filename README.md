@@ -11,7 +11,8 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.10):
+Checks (v0.1.11):
+- Terraform: `versions.tf` `required_providers` block `version` vs README mentions — handles both `required_providers = {` and `required_providers {` formats
 - Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions — major-version comparison
 - Docker: `Dockerfile` `FROM <image>:<tag>` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — handles variant tags (`24` matches `24-slim`, `24-alpine`), multi-stage builds (`FROM golang:1.23 AS builder` → `FROM alpine:3.21`)
 - Java/Gradle: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README mentions

@@ -458,3 +458,41 @@ def test_java_drift_included_in_scan():
         assert "java_drifts" in result
         assert len(result["java_drifts"]) == 1
 
+
+# ---- Terraform drift tests ----
+from driftcheck.detector import find_terraform_drift, parse_terraform_provider_versions
+
+def test_parse_terraform_provider_versions():
+    tf = 'required_providers {\n  aws = {\n    source  = "hashicorp/aws"\n    version = "5.45.0"\n  }\n}'
+    result = parse_terraform_provider_versions(tf)
+    assert result == {"hashicorp/aws": "5.45.0"}
+
+def test_parse_terraform_no_providers():
+    tf = 'resource "aws_instance" "example" {\n  ami = "abc"\n}'
+    assert parse_terraform_provider_versions(tf) == {}
+
+def test_terraform_no_drift():
+    tf = 'required_providers {\n  aws = { source = "hashicorp/aws", version = "5.45.0" }\n}'
+    docs = {"README.md": "AWS provider 5.45.0"}
+    assert find_terraform_drift({"versions.tf": tf}, docs) == []
+
+def test_terraform_detects_drift():
+    tf = 'required_providers {\n  aws = { source = "hashicorp/aws", version = "5.45.0" }\n}'
+    docs = {"README.md": "AWS provider 5.40.0"}
+    drifts = find_terraform_drift({"versions.tf": tf}, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "5.40.0"
+    assert drifts[0]["terraform_version"] == "5.45.0"
+
+def test_terraform_no_files_returns_empty():
+    assert find_terraform_drift({}, {"README.md": "AWS 5.45.0"}) == []
+
+def test_terraform_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "versions.tf").write_text('required_providers {\n  aws = { source = "hashicorp/aws", version = "5.45.0" }\n}')
+        (root / "README.md").write_text("AWS provider 5.40.0")
+        result = scan_repo(root)
+        assert "terraform_drifts" in result
+        assert len(result["terraform_drifts"]) == 1
+
