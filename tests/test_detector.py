@@ -573,3 +573,52 @@ def test_gitlab_drift_included_in_scan():
         assert "gitlab_drifts" in result
         assert len(result["gitlab_drifts"]) == 1
 
+
+# ---- GitHub Actions version drift tests ----
+from driftcheck.detector import find_gh_actions_version_drift, GH_ACTIONS_LATEST
+
+def test_gh_actions_detects_outdated():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text(
+            "steps:\n  - uses: actions/checkout@v4\n  - uses: actions/setup-node@v5\n"
+        )
+        drifts = find_gh_actions_version_drift(root)
+        # checkout@v4 should be flagged (latest is v5)
+        assert len(drifts) >= 1
+        checkout_drifts = [d for d in drifts if d["action"] == "actions/checkout"]
+        assert len(checkout_drifts) == 1
+        assert checkout_drifts[0]["current"] == "v4"
+        assert checkout_drifts[0]["suggested"] == "v5"
+
+def test_gh_actions_no_drift():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text(
+            "steps:\n  - uses: actions/checkout@v5\n  - uses: actions/setup-node@v5\n"
+        )
+        drifts = find_gh_actions_version_drift(root)
+        assert len(drifts) == 0
+
+def test_gh_actions_no_workflows():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        assert find_gh_actions_version_drift(root) == []
+
+def test_gh_actions_version_drift_in_scan():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github" / "workflows").mkdir(parents=True)
+        (root / ".github" / "workflows" / "ci.yml").write_text(
+            "steps:\n  - uses: actions/checkout@v4\n"
+        )
+        result = scan_repo(root)
+        assert "gh_actions_version_drifts" in result
+        assert len(result["gh_actions_version_drifts"]) >= 1
+
