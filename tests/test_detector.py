@@ -496,3 +496,42 @@ def test_terraform_drift_included_in_scan():
         assert "terraform_drifts" in result
         assert len(result["terraform_drifts"]) == 1
 
+
+# ---- CircleCI drift tests ----
+from driftcheck.detector import find_circleci_drift, parse_circleci_images
+
+def test_parse_circleci_images():
+    yml = 'jobs:\n  build:\n    docker:\n      - image: cimg/node:24.2.0'
+    result = parse_circleci_images(yml)
+    assert result == {"cimg/node": "24.2.0"}
+
+def test_parse_circleci_no_images():
+    yml = 'jobs:\n  build:\n    steps:\n      - checkout'
+    assert parse_circleci_images(yml) == {}
+
+def test_circleci_no_drift():
+    yml = 'jobs:\n  build:\n    docker:\n      - image: cimg/node:24.2.0'
+    docs = {"README.md": "Docker cimg/node:24.2.0 image"}
+    assert find_circleci_drift({".circleci/config.yml": yml}, docs) == []
+
+def test_circleci_detects_drift():
+    yml = 'jobs:\n  build:\n    docker:\n      - image: cimg/node:24.2.0'
+    docs = {"README.md": "Docker cimg/node:22 image"}
+    drifts = find_circleci_drift({".circleci/config.yml": yml}, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_image"] == "cimg/node:22"
+    assert drifts[0]["circleci_image"] == "cimg/node:24.2.0"
+
+def test_circleci_no_files_returns_empty():
+    assert find_circleci_drift({}, {"README.md": "node:24"}) == []
+
+def test_circleci_drift_included_in_scan():
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".circleci").mkdir(parents=True)
+        (root / ".circleci" / "config.yml").write_text('jobs:\n  build:\n    docker:\n      - image: cimg/node:24.2.0')
+        (root / "README.md").write_text("Docker cimg/node:22 base image")
+        result = scan_repo(root)
+        assert "circleci_drifts" in result
+        assert len(result["circleci_drifts"]) == 1
+
