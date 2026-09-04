@@ -622,3 +622,43 @@ def test_gh_actions_version_drift_in_scan():
         assert "gh_actions_version_drifts" in result
         assert len(result["gh_actions_version_drifts"]) >= 1
 
+
+# ---- Kubernetes drift tests ----
+from driftcheck.detector import find_k8s_drift, parse_k8s_images
+
+def test_parse_k8s_images():
+    yaml = 'apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - image: nginx:1.25'
+    result = parse_k8s_images(yaml)
+    assert result == {"nginx": "1.25"}
+
+def test_parse_k8s_no_images():
+    yaml = 'apiVersion: v1\nkind: ConfigMap'
+    assert parse_k8s_images(yaml) == {}
+
+def test_k8s_no_drift():
+    yaml = 'containers:\n  - image: nginx:1.25'
+    docs = {"README.md": "Uses nginx:1.25"}
+    assert find_k8s_drift({"k8s/deployment.yaml": yaml}, docs) == []
+
+def test_k8s_detects_drift():
+    yaml = 'containers:\n  - image: nginx:1.25'
+    docs = {"README.md": "Uses nginx:1.21"}
+    drifts = find_k8s_drift({"k8s/deployment.yaml": yaml}, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_image"] == "nginx:1.21"
+    assert drifts[0]["k8s_image"] == "nginx:1.25"
+
+def test_k8s_no_files_returns_empty():
+    assert find_k8s_drift({}, {"README.md": "nginx:1.25"}) == []
+
+def test_k8s_drift_included_in_scan():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "k8s").mkdir()
+        (root / "k8s" / "deployment.yaml").write_text('image: nginx:1.25')
+        (root / "README.md").write_text("Uses nginx:1.21")
+        result = scan_repo(root)
+        assert "k8s_drifts" in result
+        assert len(result["k8s_drifts"]) == 1
+
