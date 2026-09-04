@@ -11,10 +11,11 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.11):
-- Terraform: `versions.tf` `required_providers` block `version` vs README mentions — handles both `required_providers = {` and `required_providers {` formats
-- Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions — major-version comparison
-- Docker: `Dockerfile` `FROM <image>:<tag>` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — handles variant tags (`24` matches `24-slim`, `24-alpine`), multi-stage builds (`FROM golang:1.23 AS builder` → `FROM alpine:3.21`)
+Checks (v0.1.12):
+- CircleCI: `.circleci/config.yml` docker image tags vs README mentions — handles variant tags (`24` matches `24-slim`)
+- Terraform: `versions.tf` `required_providers` block `version` vs README mentions
+- Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions
+- Docker: `Dockerfile` `FROM <image>:<tag>` vs README mentions
 - Java/Gradle: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README mentions
 - Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
   - Minor-aware: `channel = "1.96"` matches docs that say `Rust 1.96.1` (patch differences ignored); a real drift is a different major/minor.

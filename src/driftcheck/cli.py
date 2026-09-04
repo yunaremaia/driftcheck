@@ -39,17 +39,18 @@ def main(argv=None) -> int:
     java_drifts = result.get("java_drifts", [])
     maven_drifts = result.get("maven_drifts", [])
     terraform_drifts = result.get("terraform_drifts", [])
+    circleci_drifts = result.get("circleci_drifts", [])
     tv = result.get("toolchain_version")
     cv = result.get("cargo_rust_version")
     nv = result.get("package_node")
     pv = result.get("pyproject_python")
     gv = result.get("gomod_version")
     
-    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts:
+    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
         if cv: parts.append(f"Rust(Cargo) {cv}")
@@ -92,6 +93,8 @@ def main(argv=None) -> int:
         print(f"driftcheck: {d['file']}: Java {d['doc_version']} → should be {d['maven_version']} (pom.xml)")
     for d in terraform_drifts:
         print(f"driftcheck: {d['file']}: Terraform {d['provider']} {d['doc_version']} → should be {d['terraform_version']}")
+    for d in circleci_drifts:
+        print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['circleci_image']} (CircleCI)")
     return 1
 
 if __name__ == "__main__":
