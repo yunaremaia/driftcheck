@@ -42,17 +42,18 @@ def main(argv=None) -> int:
     circleci_drifts = result.get("circleci_drifts", [])
     gitlab_drifts = result.get("gitlab_drifts", [])
     gh_actions_version_drifts = result.get("gh_actions_version_drifts", [])
+    k8s_drifts = result.get("k8s_drifts", [])
     tv = result.get("toolchain_version")
     cv = result.get("cargo_rust_version")
     nv = result.get("package_node")
     pv = result.get("pyproject_python")
     gv = result.get("gomod_version")
     
-    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts:
+    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
         if cv: parts.append(f"Rust(Cargo) {cv}")
@@ -99,6 +100,8 @@ def main(argv=None) -> int:
         print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['circleci_image']} (CircleCI)")
     for d in gitlab_drifts:
         print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['gitlab_image']} (GitLab CI)")
+    for d in k8s_drifts:
+        print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['k8s_image']} (Kubernetes)")
     for d in gh_actions_version_drifts:
         print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']}")
     return 1
