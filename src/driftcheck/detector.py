@@ -493,6 +493,51 @@ def find_maven_drift(pom_text: str, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
+# ---------------------------------------------------------------------------
+# Terraform drift: versions.tf provider versions vs README
+# ---------------------------------------------------------------------------
+TERRAFORM_PROVIDER_RE = re.compile(r'required_providers\s*=?\s*\{[^}]*source\s*=\s*"(?P<source>[^"]+)"[^}]*version\s*=\s*"(?P<ver>[^"]+)"', re.S)
+TERRAFORM_VER_RE = re.compile(r'(?:provider|terraform|version)\s+"?(?P<ver>\d+\.\d+(?:\.\d+)?)"?', re.I)
+
+def parse_terraform_provider_versions(text: str) -> dict[str, str]:
+    """Return {source: version} map of required_providers in versions.tf."""
+    result = {}
+    for m in TERRAFORM_PROVIDER_RE.finditer(text):
+        result[m.group("source")] = m.group("ver")
+    return result
+
+def find_terraform_drift(terraform_files: dict[str, str], docs: dict[str, str]) -> list[dict]:
+    """Detect drift between Terraform provider versions and README mentions."""
+    all_providers: dict[str, str] = {}
+    for fname, content in terraform_files.items():
+        for source, ver in parse_terraform_provider_versions(content).items():
+            all_providers[source] = ver
+
+    if not all_providers:
+        return []
+
+    drifts = []
+    for fname, content in docs.items():
+        for m in TERRAFORM_VER_RE.finditer(content):
+            ver = m.group("ver")
+            # Check if this version matches any provider version
+            for source, tf_ver in all_providers.items():
+                if ver != tf_ver and ver.split(".")[:2] == tf_ver.split(".")[:2]:
+                    # Same major.minor, different patch — skip
+                    continue
+                if ver != tf_ver:
+                    drifts.append({
+                        "file": fname,
+                        "doc_version": ver,
+                        "terraform_version": tf_ver,
+                        "provider": source,
+                        "pos": m.start(),
+                    })
+                    break
+            break  # one per file
+    return drifts
+
+
 def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
     fixed = []
@@ -630,6 +675,13 @@ def scan_repo(root: Path = Path(".")) -> dict:
             if p.is_file():
                 maven_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
     
+    # Terraform files
+    terraform_files = {}
+    for pattern in ["versions.tf", "*.tf", "terraform/*.tf"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                terraform_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
@@ -642,6 +694,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     docker_drifts = find_docker_drift(dockerfiles, docs)
     java_drifts = find_java_drift("\n".join(gradle_files.values()), docs)
     maven_drifts = find_maven_drift("\n".join(maven_files.values()), docs)
+    terraform_drifts = find_terraform_drift(terraform_files, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -661,4 +714,5 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "docker_drifts": docker_drifts,
         "java_drifts": java_drifts,
         "maven_drifts": maven_drifts,
+        "terraform_drifts": terraform_drifts,
     }
