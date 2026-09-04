@@ -11,8 +11,9 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.13):
-- GitLab CI: `.gitlab-ci.yml` image tags vs README mentions — handles variant tags (`24` matches `24-slim`)
+Checks (v0.1.14):
+- GitHub Actions version: detect outdated `uses: action@version` in `.github/workflows/*.yml/.yaml` — compares against known latest versions for 18 popular actions
+- GitLab CI: `.gitlab-ci.yml` image tags vs README mentions
 - CircleCI: `.circleci/config.yml` docker image tags vs README mentions
 - Terraform: `versions.tf` `required_providers` block `version` vs README mentions
 - Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions
