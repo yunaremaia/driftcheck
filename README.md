@@ -11,7 +11,8 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.9):
+Checks (v0.1.10):
+- Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions — major-version comparison
 - Docker: `Dockerfile` `FROM <image>:<tag>` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — handles variant tags (`24` matches `24-slim`, `24-alpine`), multi-stage builds (`FROM golang:1.23 AS builder` → `FROM alpine:3.21`)
 - Java/Gradle: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README mentions
 - Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
