@@ -817,6 +817,60 @@ def find_helm_drift(helm_files: dict[str, str], docs: dict[str, str]) -> list[di
     return drifts
 
 
+# ---------------------------------------------------------------------------
+# Docker Compose drift: docker-compose.yml image tags vs README
+# ---------------------------------------------------------------------------
+DC_IMAGE_RE = re.compile(r'^\s{4,}(?:image:\s*)(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)', re.MULTILINE)
+DC_VER_RE = re.compile(r'(?:image|docker|container)?\s*(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)|(?:version|tag)\s+(?P<tag2>[\d.]+[\w.\-]*)', re.I)
+
+def parse_docker_compose_images(text: str) -> dict[str, str]:
+    """Return {image: tag} map of images in docker-compose.yml / compose.yaml."""
+    result = {}
+    for m in DC_IMAGE_RE.finditer(text):
+        result[m.group("image")] = m.group("tag")
+    return result
+
+def find_docker_compose_drift(dc_files: dict[str, str], docs: dict[str, str]) -> list[dict]:
+    """Detect drift between docker-compose.yml image tags and README mentions."""
+    all_images: dict[str, str] = {}
+    for fname, content in dc_files.items():
+        for image, tag in parse_docker_compose_images(content).items():
+            all_images[image] = tag
+
+    if not all_images:
+        return []
+
+    def tags_match(doc_tag: str, dc_tag: str) -> bool:
+        if doc_tag == dc_tag:
+            return True
+        if dc_tag.startswith(doc_tag + "-"):
+            return True
+        if doc_tag.startswith(dc_tag + "-"):
+            return True
+        return False
+
+    drifts = []
+    for fname, content in docs.items():
+        for m in DC_VER_RE.finditer(content):
+            img = (m.group("image") or "").lower()
+            tag = m.group("tag") or m.group("tag2")
+            if not tag:
+                continue
+            for dc_img, dc_tag in all_images.items():
+                if img and img not in dc_img and dc_img not in img:
+                    continue
+                if not tags_match(tag, dc_tag):
+                    drifts.append({
+                        "file": fname,
+                        "doc_version": f"{img or dc_img}:{tag}",
+                        "compose_image": f"{dc_img}:{dc_tag}",
+                        "pos": m.start(),
+                    })
+                    break
+            break  # one per file
+    return drifts
+
+
 def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
     fixed = []
@@ -911,6 +965,31 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
                 fixed.append(d["file"])
 
     return fixed
+    # Helm drifts
+    for d in result.get("helm_drifts", []):
+        fpath = root / d["file"]
+        if fpath.exists():
+            text = fpath.read_text(encoding="utf-8", errors="replace")
+            old = d["doc_version"]
+            new = d["helm_image"]
+            if old in text:
+                text = text.replace(old, new, 1)
+                fpath.write_text(text, encoding="utf-8")
+                fixed.append(d["file"])
+
+    # Docker Compose drifts
+    for d in result.get("dc_drifts", []):
+        fpath = root / d["file"]
+        if fpath.exists():
+            text = fpath.read_text(encoding="utf-8", errors="replace")
+            old = d["doc_version"]
+            new = d["compose_image"]
+            if old in text:
+                text = text.replace(old, new, 1)
+                fpath.write_text(text, encoding="utf-8")
+                fixed.append(d["file"])
+
+
 
 
 def scan_repo(root: Path = Path(".")) -> dict:
@@ -982,6 +1061,14 @@ def scan_repo(root: Path = Path(".")) -> dict:
             if p.is_file():
                 k8s_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
+    # Docker Compose files
+    dc_files = {}
+    for pattern in ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "docker/docker-compose.yml"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                dc_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+
+
     # Helm chart files
     helm_files = {}
     for pattern in ["Chart.yaml", "charts/**/Chart.yaml", "values.yaml", "charts/**/values.yaml", "charts/**/values.*.yaml"]:
@@ -1007,6 +1094,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     gitlab_drifts = find_gitlab_drift(gitlab_files, docs)
     k8s_drifts = find_k8s_drift(k8s_files, docs)
     helm_drifts = find_helm_drift(helm_files, docs)
+    dc_drifts = find_docker_compose_drift(dc_files, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -1031,5 +1119,6 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "circleci_drifts": circleci_drifts,
         "gitlab_drifts": gitlab_drifts,
         "helm_drifts": helm_drifts,
+        "dc_drifts": dc_drifts,
         "k8s_drifts": k8s_drifts,
     }

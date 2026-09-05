@@ -1,3 +1,4 @@
 src/driftcheck/__pycache__
 tests/__pycache__
 src/driftcheck.egg-info
+dist/
