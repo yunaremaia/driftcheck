@@ -11,10 +11,11 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.17):
+Checks (v0.1.18):
 - Kubernetes: image tags in manifests (`k8s/**/*.yaml`, `deploy/**/*.yaml`) vs README mentions — handles variant tags
 - Helm: `Chart.yaml`/`values.yaml` image tags vs README mentions — handles variant tags (`tag:` and `version:` keys)
 - Docker Compose: `docker-compose.yml`/`compose.yaml` image tags vs README mentions — handles variant tags
+- Dependabot: ecosystems used by the repo but not covered by `.github/dependabot.yml`
 - GitHub Actions version: detect outdated `uses: action@version` in `.github/workflows/*.yml/.yaml` — compares against known latest versions for 18 popular actions
 - GitLab CI: `.gitlab-ci.yml` image tags vs README mentions
 - CircleCI: `.circleci/config.yml` docker image tags vs README mentions
