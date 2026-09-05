@@ -1076,7 +1076,19 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
                 ga.write_text(text, encoding="utf-8")
                 fixed.append(d["file"])
 
-    return fixed
+    # GitHub Actions version drifts: bump outdated action versions
+    for d in result.get("gh_actions_version_drifts", []):
+        fpath = root / d["file"]
+        if fpath.exists():
+            text = fpath.read_text(encoding="utf-8", errors="replace")
+            old = f"{d['action']}@{d['current']}"
+            new = f"{d['action']}@{d['suggested']}"
+            if old in text:
+                text = text.replace(old, new)
+                fpath.write_text(text, encoding="utf-8")
+                if d["file"] not in fixed:
+                    fixed.append(d["file"])
+
     # Helm drifts
     for d in result.get("helm_drifts", []):
         fpath = root / d["file"]
@@ -1101,7 +1113,7 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
                 fpath.write_text(text, encoding="utf-8")
                 fixed.append(d["file"])
 
-
+    return fixed
 
 
 def scan_repo(root: Path = Path(".")) -> dict:
