@@ -825,3 +825,85 @@ def test_dc_drift_included_in_scan():
         assert "dc_drifts" in result
         assert len(result["dc_drifts"]) == 1
 
+
+
+# ---- Dependabot drift tests ----
+from driftcheck.detector import find_dependabot_drift
+
+def test_dependabot_no_ecosystems():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        assert find_dependabot_drift(root) == []
+
+def test_dependabot_missing_file():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text("{}")
+        (root / "requirements.txt").write_text("flask")
+        drifts = find_dependabot_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "dependabot_missing"
+        assert "npm" in drifts[0]["ecosystems"]
+        assert "pip" in drifts[0]["ecosystems"]
+
+def test_dependabot_incomplete():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text("{}")
+        (root / "requirements.txt").write_text("flask")
+        (root / "go.mod").write_text("module test")
+        (root / ".github").mkdir()
+        (root / ".github" / "dependabot.yml").write_text("""version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+""")
+        drifts = find_dependabot_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "dependabot_incomplete"
+        assert "pip" in drifts[0]["ecosystems"]
+        assert "gomod" in drifts[0]["ecosystems"]
+        assert "npm" in drifts[0]["configured"]
+
+def test_dependabot_complete():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text("{}")
+        (root / ".github").mkdir()
+        (root / ".github" / "dependabot.yml").write_text("""version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+""")
+        drifts = find_dependabot_drift(root)
+        assert len(drifts) == 0
+
+def test_dependabot_detects_all_ecosystems():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text("{}")
+        (root / "go.mod").write_text("module test")
+        (root / "Cargo.toml").write_text("[package]")
+        (root / "requirements.txt").write_text("flask")
+        (root / ".github").mkdir()
+        (root / ".github" / "workflows").mkdir()
+        (root / ".github" / "workflows" / "ci.yml").write_text("name: CI")
+        drifts = find_dependabot_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "dependabot_missing"
+        ecos = drifts[0]["ecosystems"]
+        assert "npm" in ecos
+        assert "gomod" in ecos
+        assert "cargo" in ecos
+        assert "pip" in ecos
+        assert "github-actions" in ecos
+
