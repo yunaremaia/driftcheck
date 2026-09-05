@@ -23,7 +23,7 @@ def main(argv=None) -> int:
     
     if args.as_json:
         print(json.dumps(result, indent=2))
-        has_blocking = (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts") or result.get("actions_drifts") or result.get("lineending_drifts") or result.get("docker_drifts") or result.get("java_drifts") or result.get("helm_drifts"))
+        has_blocking = (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts") or result.get("actions_drifts") or result.get("lineending_drifts") or result.get("docker_drifts") or result.get("java_drifts") or result.get("helm_drifts") or result.get("dc_drifts"))
         return 1 if has_blocking else 0
     
     drifts = result.get("drifts", [])
@@ -44,17 +44,18 @@ def main(argv=None) -> int:
     gh_actions_version_drifts = result.get("gh_actions_version_drifts", [])
     k8s_drifts = result.get("k8s_drifts", [])
     helm_drifts = result.get("helm_drifts", [])
+    dc_drifts = result.get("dc_drifts", [])
     tv = result.get("toolchain_version")
     cv = result.get("cargo_rust_version")
     nv = result.get("package_node")
     pv = result.get("pyproject_python")
     gv = result.get("gomod_version")
     
-    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts:
+    if not tv and not cv and not nv and not pv and not gv and not count_drifts and not actions_drifts and not lineending_drifts and not external_resource_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts and not dc_drifts:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts and not dc_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
         if cv: parts.append(f"Rust(Cargo) {cv}")
@@ -107,6 +108,8 @@ def main(argv=None) -> int:
         print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']}")
     for d in helm_drifts:
         print(f"driftcheck: {d['file']}: {d['doc_version']} → should be {d['helm_image']} (Helm chart)")
+    for d in dc_drifts:
+        print(f"driftcheck: {d['file']}: {d['doc_version']} → should be {d['compose_image']} (Docker Compose)")
     return 1
 
 if __name__ == "__main__":
