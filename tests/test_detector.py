@@ -907,3 +907,67 @@ def test_dependabot_detects_all_ecosystems():
         assert "pip" in ecos
         assert "github-actions" in ecos
 
+
+
+# ---- CI OS drift tests ----
+from driftcheck.detector import find_ci_os_drift
+
+def test_ci_os_no_workflows():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        assert find_ci_os_drift(root) == []
+
+def test_ci_os_deprecated_ubuntu():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github").mkdir()
+        (root / ".github" / "workflows").mkdir()
+        (root / ".github" / "workflows" / "ci.yml").write_text("runs-on: ubuntu-18.04")
+        drifts = find_ci_os_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["runner"] == "ubuntu-18.04"
+        assert drifts[0]["suggested"] == "ubuntu-22.04"
+
+def test_ci_os_multiple_deprecated():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github").mkdir()
+        (root / ".github" / "workflows").mkdir()
+        (root / ".github" / "workflows" / "ci.yml").write_text("""jobs:
+  test:
+    runs-on: ubuntu-18.04
+  build:
+    runs-on: macos-11
+  deploy:
+    runs-on: ubuntu-latest""")
+        drifts = find_ci_os_drift(root)
+        assert len(drifts) == 2
+        runners = [d["runner"] for d in drifts]
+        assert "ubuntu-18.04" in runners
+        assert "macos-11" in runners
+
+def test_ci_os_no_deprecated():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github").mkdir()
+        (root / ".github" / "workflows").mkdir()
+        (root / ".github" / "workflows" / "ci.yml").write_text("runs-on: ubuntu-latest")
+        drifts = find_ci_os_drift(root)
+        assert len(drifts) == 0
+
+def test_ci_os_in_scan():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / ".github").mkdir()
+        (root / ".github" / "workflows").mkdir()
+        (root / ".github" / "workflows" / "ci.yml").write_text("runs-on: windows-2016")
+        result = scan_repo(root)
+        assert "ci_os_drifts" in result
+        assert len(result["ci_os_drifts"]) == 1
+        assert result["ci_os_drifts"][0]["runner"] == "windows-2016"
+
