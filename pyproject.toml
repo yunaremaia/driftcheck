@@ -28,3 +28,4 @@ Homepage = "https://github.com/yunaremaia/driftcheck"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["driftcheck*"]
