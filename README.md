@@ -36,5 +36,6 @@ Checks (v0.1.23):
 - .NET/C#: `*.csproj` `<TargetFramework>` vs README mentions — handles multi-targeting (first TFM wins); matches ".NET X.Y" in docs
 - External resources: delivered HTML fetching third-party CDN hosts (`fonts.googleapis.com`, `cdn.jsdelivr`, etc.) — breaks offline/air-gapped rendering (cf. [tt-a1i/archify#242](https://github.com/tt-a1i/archify/issues/242)) (informational, non-blocking)
 - Ruby: `Gemfile` `ruby "x.y.z"` directive vs README mentions — major.minor comparison (patch differences ignored); skips TOC numbered-list lines
+- Lockfile: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) — checks manifest-lockfile consistency and mtime freshness (informational, non-blocking)
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).

@@ -53,6 +53,7 @@ class TestCLINoDrift:
 
     def test_node_no_drift(self, tmp_path):
         (tmp_path / "package.json").write_text('{"engines": {"node": "24.x"}}')
+        (tmp_path / "package-lock.json").write_text('{"name": "test"}')
         (tmp_path / "README.md").write_text("Install Node.js 24")
         make_gitattributes(tmp_path)
         rc, out, _ = run_cli([str(tmp_path)])
@@ -71,6 +72,7 @@ class TestCLINoDrift:
 
     def test_go_no_drift(self, tmp_path):
         (tmp_path / "go.mod").write_text("module example.com/foo\ngo 1.23")
+        (tmp_path / "go.sum").write_text("github.com/test v1.0.0 h1:abc=")
         (tmp_path / "README.md").write_text("Build with Go 1.23")
         make_gitattributes(tmp_path)
         rc, out, _ = run_cli([str(tmp_path)])
@@ -229,6 +231,7 @@ class TestCLIRuby:
 
     def test_ruby_no_drift(self, tmp_path):
         (tmp_path / "Gemfile").write_text('ruby "3.2.2"')
+        (tmp_path / "Gemfile.lock").write_text("GEM\n  specs:\n    rake (13.0)")
         (tmp_path / "README.md").write_text("Ruby 3.2")
         make_gitattributes(tmp_path)
         rc, out, _ = run_cli([str(tmp_path)])
@@ -267,3 +270,25 @@ class TestCLIDotnet:
         assert rc == 1
         assert ".NET 7.0" in out
         assert "should be 8.0" in out
+
+
+class TestCLILockfile:
+    """CLI detects lockfile drift (missing, stale, orphaned)."""
+
+    def test_lockfile_missing_informational(self, tmp_path):
+        (tmp_path / "package.json").write_text('{"dependencies": {}}')
+        (tmp_path / "README.md").write_text("Test project")
+        make_gitattributes(tmp_path)
+        rc, out, _ = run_cli([str(tmp_path)])
+        # Lockfile drift is informational — should not fail
+        assert rc == 0
+        assert "lockfile" in out.lower() or "missing" in out.lower()
+
+    def test_lockfile_present_no_drift(self, tmp_path):
+        (tmp_path / "package.json").write_text('{"dependencies": {}}')
+        (tmp_path / "package-lock.json").write_text('{"name": "test"}')
+        (tmp_path / "README.md").write_text("Test project")
+        make_gitattributes(tmp_path)
+        rc, out, _ = run_cli([str(tmp_path)])
+        assert rc == 0
+        assert "OK" in out

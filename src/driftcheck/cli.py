@@ -5,7 +5,7 @@ from pathlib import Path
 from .detector import scan_repo, apply_fixes
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
-INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts"}
+INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts"}
 
 
 def main(argv=None) -> int:
@@ -33,6 +33,7 @@ def main(argv=None) -> int:
         "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
         "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts",
+        "lockfile_drifts",
     ]
     all_drifts = {k: result.get(k, []) for k in drift_keys}
     blocking_drifts = {k: v for k, v in all_drifts.items() if k not in INFORMATIONAL_DRIFTS}
@@ -160,6 +161,13 @@ def _print_informational(all_drifts: dict) -> None:
             print(f"driftcheck: info: {d['file']}: missing — {d['detail']}")
         else:
             print(f"driftcheck: info: {d['file']}: incomplete — {d['detail']}")
+    for d in all_drifts.get("lockfile_drifts", []):
+        if d.get("kind") == "lockfile_missing":
+            print(f"driftcheck: info: {d['file']}: missing — {d['detail']}")
+        elif d.get("kind") == "lockfile_stale":
+            print(f"driftcheck: info: {d['file']}: stale — {d['detail']}")
+        elif d.get("kind") == "lockfile_orphaned":
+            print(f"driftcheck: info: {d['file']}: orphaned — {d['detail']}")
 
 
 if __name__ == "__main__":

@@ -42,6 +42,7 @@ from .detectors import (
     find_count_drift,
     find_dependabot_drift,
     find_ci_os_drift,
+    find_lockfile_drift,
     apply_fixes,
 )
 
@@ -169,6 +170,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     dotnet_drifts = find_dotnet_drift(csproj_files, docs)
     ruby_drifts = find_ruby_drift(gemfile_text, docs)
     php_drifts = find_php_drift(composer_text, docs)
+    lockfile_drifts = find_lockfile_drift(root)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -201,6 +203,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "dotnet_drifts": dotnet_drifts,
         "ruby_drifts": ruby_drifts,
         "php_drifts": php_drifts,
+        "lockfile_drifts": lockfile_drifts,
     }
 
 
@@ -265,6 +268,8 @@ __all__ = [
     "find_dependabot_drift",
     # CI OS
     "find_ci_os_drift",
+    # Lockfile
+    "find_lockfile_drift",
     # Fix
     "apply_fixes",
     # Orchestrator

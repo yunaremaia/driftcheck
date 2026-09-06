@@ -108,3 +108,70 @@ def test_bun_drift_same_major_minor():
     pkg = '{"engines": {"bun": ">=1.2"}}'
     docs = {"README.md": "Bun 1.2.5 required"}
     assert find_bun_drift(pkg, docs) == []
+
+
+# ---- Lockfile drift tests ----
+from driftcheck.detector import find_lockfile_drift
+
+def test_lockfile_missing_npm():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text('{"dependencies": {}}')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "lockfile_missing"
+        assert "package-lock.json" in drifts[0]["file"]
+
+def test_lockfile_missing_cargo():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "Cargo.toml").write_text('[package]\nname = "test"\nversion = "0.1.0"')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "lockfile_missing"
+        assert "Cargo.lock" in drifts[0]["file"]
+
+def test_lockfile_missing_go():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "go.mod").write_text("module test\ngo 1.23")
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "lockfile_missing"
+        assert "go.sum" in drifts[0]["file"]
+
+def test_lockfile_no_drift():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text('{"dependencies": {}}')
+        (root / "package-lock.json").write_text('{"name": "test"}')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 0
+
+def test_lockfile_orphaned():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package-lock.json").write_text('{"name": "test"}')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["kind"] == "lockfile_orphaned"
+
+def test_lockfile_drift_included_in_scan():
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text('{"dependencies": {}}')
+        result = scan_repo(root)
+        assert "lockfile_drifts" in result
+        assert len(result["lockfile_drifts"]) == 1

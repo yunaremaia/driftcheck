@@ -113,6 +113,7 @@ from .bun import (
     BUN_ENGINES_RE,
     BUN_DOC_RE,
 )
+from .lockfile import find_lockfile_drift
 from .lineending import (
     find_lineending_drift,
     EOL_ATTR_RE,
@@ -235,6 +236,8 @@ __all__ = [
     "find_bun_drift",
     "BUN_ENGINES_RE",
     "BUN_DOC_RE",
+    # Lockfile
+    "find_lockfile_drift",
     # Line endings
     "find_lineending_drift",
     "EOL_ATTR_RE",

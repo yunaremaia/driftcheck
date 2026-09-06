@@ -4,8 +4,14 @@ All notable changes to driftcheck will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.24] - 2026-09-06
+
+### Added
+- Lockfile drift detection: missing, stale, or orphaned lockfiles (package-lock.json, Cargo.lock, go.sum, Gemfile.lock, composer.lock)
+- Lockfile drift is informational (non-blocking) — reported but doesn't fail the check
+
 ### Changed
-- **Architecture**: split monolithic `detector.py` (1520 lines) into a modular `detectors/` subpackage with 24 focused modules — each detector lives in its own file (rust, node, python, go, docker, java, maven, terraform, circleci, gitlab, actions, k8s, helm, compose, dotnet, ruby, php, bun, lineending, external, count, dependabot, ci_os, fix). `detector.py` is now a thin orchestrator (272 lines) that re-exports all public APIs. All 42 tests pass.
+- Bumped version to 0.1.24
 
 ## [0.1.23] - 2026-09-06
 
