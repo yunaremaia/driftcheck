@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse, json
 from pathlib import Path
 from .detector import scan_repo, apply_fixes
+from .sarif import to_sarif
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
 INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts"}
@@ -12,9 +13,27 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="driftcheck", description="Detect version drift between docs and toolchain.")
     ap.add_argument("path", nargs="?", default=".", help="repo root (default: .)")
     ap.add_argument("--json", action="store_true", dest="as_json", help="JSON output")
+    ap.add_argument("--sarif", action="store_true", dest="as_sarif", help="SARIF 2.1.0 output (for GitHub Code Scanning)")
     ap.add_argument("--fix", action="store_true", help="auto-fix detected drifts in documentation files")
     args = ap.parse_args(argv)
     result = scan_repo(Path(args.path))
+    
+    if args.as_sarif:
+        from . import __version__
+        sarif_doc = to_sarif(result, version=__version__)
+        print(json.dumps(sarif_doc, indent=2))
+        # SARIF exit code: 0 if no blocking drifts, 1 otherwise
+        drift_keys = [
+            "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts", "go_drifts",
+            "count_drifts", "actions_drifts", "lineending_drifts", "docker_drifts",
+            "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
+            "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
+            "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
+            "external_resource_drifts", "dependabot_drifts",
+            "lockfile_drifts",
+        ]
+        blocking = {k: result.get(k, []) for k in drift_keys if k not in INFORMATIONAL_DRIFTS}
+        return 1 if any(blocking.values()) else 0
     
     if args.fix:
         fixed = apply_fixes(Path(args.path), result)

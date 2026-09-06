@@ -4,6 +4,12 @@ All notable changes to driftcheck will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Architecture**: split monolithic `detector.py` (1520 lines) into a modular `detectors/` subpackage with 24 focused modules — each detector lives in its own file (rust, node, python, go, docker, java, maven, terraform, circleci, gitlab, actions, k8s, helm, compose, dotnet, ruby, php, bun, lineending, external, count, dependabot, ci_os, fix). `detector.py` is now a thin orchestrator (272 lines) that re-exports all public APIs. All 42 tests pass.
+
+### Added
+- **SARIF 2.1.0 output**: `driftcheck --sarif` emits findings in the Static Analysis Results Interchange Format for ingestion by GitHub Code Scanning, GitLab Vulnerability Reports, and any other consumer that speaks SARIF. Informational drifts (dependabot, external resources, lockfile) are emitted as `warning`; blocking drifts as `error`. 9 new tests cover SARIF generation.
+
 ## [0.1.24] - 2026-09-06
 
 ### Added

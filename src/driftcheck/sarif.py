@@ -1,0 +1,302 @@
+"""SARIF output generation for driftcheck.
+
+Converts driftcheck results to SARIF 2.1.0 for ingestion by GitHub Code Scanning,
+GitLab Vulnerability Reports, and any other consumer that speaks SARIF.
+"""
+from __future__ import annotations
+
+from typing import Any
+
+SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
+
+# Drift type metadata: (rule_id, rule_name, rule_description)
+DRIFT_RULES = {
+    "drifts": (
+        "rust-toolchain-version-drift",
+        "Rust Toolchain Version Drift",
+        "README documentation references a Rust version that doesn't match rust-toolchain.toml",
+    ),
+    "rust_drifts": (
+        "rust-cargo-version-drift",
+        "Rust Cargo Version Drift",
+        "README documentation references a Rust version that doesn't match the declared toolchain or Cargo.toml rust-version",
+    ),
+    "node_drifts": (
+        "node-version-drift",
+        "Node.js Version Drift",
+        "README documentation references a Node.js version that doesn't match package.json engines.node",
+    ),
+    "bun_drifts": (
+        "bun-version-drift",
+        "Bun Version Drift",
+        "README documentation references a Bun version that doesn't match package.json engines.bun",
+    ),
+    "python_drifts": (
+        "python-version-drift",
+        "Python Version Drift",
+        "README documentation references a Python version that doesn't match pyproject.toml requires-python",
+    ),
+    "go_drifts": (
+        "go-version-drift",
+        "Go Version Drift",
+        "README documentation references a Go version that doesn't match go.mod go directive",
+    ),
+    "docker_drifts": (
+        "docker-version-drift",
+        "Docker Image Drift",
+        "README documentation references a Docker image tag that doesn't match the Dockerfile FROM directive",
+    ),
+    "java_drifts": (
+        "java-gradle-version-drift",
+        "Java Gradle Version Drift",
+        "README documentation references a Java version that doesn't match build.gradle sourceCompatibility",
+    ),
+    "maven_drifts": (
+        "java-maven-version-drift",
+        "Java Maven Version Drift",
+        "README documentation references a Java version that doesn't match pom.xml java.version",
+    ),
+    "terraform_drifts": (
+        "terraform-version-drift",
+        "Terraform Provider Version Drift",
+        "README documentation references a Terraform provider version that doesn't match versions.tf",
+    ),
+    "circleci_drifts": (
+        "circleci-version-drift",
+        "CircleCI Image Drift",
+        "README documentation references a Docker image that doesn't match .circleci/config.yml",
+    ),
+    "gitlab_drifts": (
+        "gitlab-version-drift",
+        "GitLab CI Image Drift",
+        "README documentation references a Docker image that doesn't match .gitlab-ci.yml",
+    ),
+    "k8s_drifts": (
+        "kubernetes-version-drift",
+        "Kubernetes Image Drift",
+        "README documentation references a container image that doesn't match Kubernetes manifests",
+    ),
+    "helm_drifts": (
+        "helm-version-drift",
+        "Helm Chart Version Drift",
+        "README documentation references a version that doesn't match Chart.yaml or values.yaml",
+    ),
+    "dc_drifts": (
+        "compose-version-drift",
+        "Docker Compose Image Drift",
+        "README documentation references an image that doesn't match docker-compose.yml",
+    ),
+    "dotnet_drifts": (
+        "dotnet-version-drift",
+        ".NET Version Drift",
+        "README documentation references a .NET version that doesn't match .csproj TargetFramework",
+    ),
+    "ruby_drifts": (
+        "ruby-version-drift",
+        "Ruby Version Drift",
+        "README documentation references a Ruby version that doesn't match Gemfile ruby directive",
+    ),
+    "php_drifts": (
+        "php-version-drift",
+        "PHP Version Drift",
+        "README documentation references a PHP version that doesn't match composer.json require.php",
+    ),
+    "actions_drifts": (
+        "github-actions-node20-deprecated",
+        "GitHub Actions Node 20 Deprecation",
+        "Workflow uses a GitHub Actions version still pinned to deprecated Node 20 runtime",
+    ),
+    "gh_actions_version_drifts": (
+        "github-actions-version-drift",
+        "GitHub Actions Outdated Version",
+        "Workflow uses an outdated GitHub Actions version with a newer release available",
+    ),
+    "ci_os_drifts": (
+        "ci-os-deprecated",
+        "Deprecated CI Runner",
+        "Workflow uses a deprecated GitHub Actions runner (e.g., ubuntu-20.04)",
+    ),
+    "lineending_drifts": (
+        "lineending-drift",
+        "Missing Line Ending Configuration",
+        "Repository is missing .gitattributes with text=auto eol=lf normalization",
+    ),
+    "count_drifts": (
+        "skills-count-drift",
+        "Skills Count Drift",
+        "README documentation references a skills/ directory count that doesn't match actual file count",
+    ),
+    # Informational (non-blocking) — these are warnings
+    "external_resource_drifts": (
+        "external-resource-drift",
+        "External Resource Reference",
+        "Documentation references external CDN resources that may break offline/air-gapped rendering",
+    ),
+    "dependabot_drifts": (
+        "dependabot-coverage-drift",
+        "Dependabot Coverage Gap",
+        "Repository uses package ecosystems not covered by .github/dependabot.yml",
+    ),
+    "lockfile_drifts": (
+        "lockfile-drift",
+        "Lockfile Drift",
+        "Lockfile is missing, stale, or orphaned relative to its manifest",
+    ),
+}
+
+# Drift types that are informational (SARIF level: warning)
+INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts"}
+
+
+def _make_rule(rule_id: str, name: str, description: str) -> dict:
+    return {
+        "id": rule_id,
+        "name": name,
+        "shortDescription": {"text": description},
+        "fullDescription": {"text": description},
+        "helpUri": "https://github.com/yunaremaia/driftcheck",
+    }
+
+
+def _make_result(
+    rule_id: str,
+    message: str,
+    file: str,
+    *,
+    line: int = 1,
+    level: str = "warning",
+    pos: int = 0,
+) -> dict:
+    return {
+        "ruleId": rule_id,
+        "message": {"text": message},
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {"uri": file},
+                    "region": {"startLine": line, "startColumn": 1},
+                }
+            }
+        ],
+        "level": level,
+    }
+
+
+def _drift_message(drift_type: str, d: dict) -> str:
+    """Generate human-readable message for a drift entry."""
+    if drift_type == "drifts":
+        return f"Rust {d.get('doc_version')} in docs should be {d.get('toolchain_version')}"
+    elif drift_type == "rust_drifts":
+        target = d.get("toolchain_version") or d.get("cargo_version")
+        return f"Rust {d.get('doc_version')} in docs should be {target}"
+    elif drift_type == "node_drifts":
+        return f"Node.js {d.get('doc_version')} in docs should be {d.get('package_version')}"
+    elif drift_type == "bun_drifts":
+        return f"Bun {d.get('doc_version')} in docs should be {d.get('package_version')}"
+    elif drift_type == "python_drifts":
+        return f"Python {d.get('doc_version')} in docs should be {d.get('pyproject_version')}"
+    elif drift_type == "go_drifts":
+        return f"Go {d.get('doc_version')} in docs should be {d.get('gomod_version')}"
+    elif drift_type == "docker_drifts":
+        return f"Docker image {d.get('doc_image')} in docs should be {d.get('dockerfile_image')}"
+    elif drift_type == "java_drifts":
+        return f"Java {d.get('doc_version')} in docs should be {d.get('gradle_version')}"
+    elif drift_type == "maven_drifts":
+        return f"Java {d.get('doc_version')} in docs should be {d.get('maven_version')}"
+    elif drift_type == "terraform_drifts":
+        return f"Terraform {d.get('provider')} {d.get('doc_version')} in docs should be {d.get('terraform_version')}"
+    elif drift_type == "circleci_drifts":
+        return f"CircleCI image {d.get('doc_image')} in docs should be {d.get('circleci_image')}"
+    elif drift_type == "gitlab_drifts":
+        return f"GitLab CI image {d.get('doc_image')} in docs should be {d.get('gitlab_image')}"
+    elif drift_type == "k8s_drifts":
+        return f"Kubernetes image {d.get('doc_image')} in docs should be {d.get('k8s_image')}"
+    elif drift_type == "helm_drifts":
+        return f"Helm chart {d.get('doc_version')} in docs should be {d.get('helm_image')}"
+    elif drift_type == "dc_drifts":
+        return f"Docker Compose {d.get('doc_version')} in docs should be {d.get('compose_image')}"
+    elif drift_type == "dotnet_drifts":
+        return f".NET {d.get('doc_version')} in docs should be {d.get('csproj_version')}"
+    elif drift_type == "ruby_drifts":
+        return f"Ruby {d.get('doc_version')} in docs should be {d.get('gemfile_version')}"
+    elif drift_type == "php_drifts":
+        return f"PHP {d.get('doc_version')} in docs should be {d.get('composer_version')}"
+    elif drift_type == "actions_drifts":
+        return f"Action {d.get('action')}@{d.get('current')} should be updated to {d.get('action')}@{d.get('suggested')}"
+    elif drift_type == "gh_actions_version_drifts":
+        return f"Action {d.get('action')}@{d.get('current')} should be updated to {d.get('action')}@{d.get('suggested')}"
+    elif drift_type == "ci_os_drifts":
+        return f"Runner {d.get('runner')} is deprecated, use {d.get('suggested')}"
+    elif drift_type == "lineending_drifts":
+        return d.get("detail", "Missing .gitattributes line ending normalization")
+    elif drift_type == "count_drifts":
+        return f"Docs say {d.get('doc_count')} skills but actual count is {d.get('actual_count')}"
+    elif drift_type == "external_resource_drifts":
+        return f"External resource: {d.get('detail')} ({d.get('url')})"
+    elif drift_type == "dependabot_drifts":
+        if d.get("kind") == "dependabot_missing":
+            return f"Missing dependabot configuration: {d.get('detail')}"
+        return f"Incomplete dependabot coverage: {d.get('detail')}"
+    elif drift_type == "lockfile_drifts":
+        return d.get("detail", "Lockfile drift detected")
+    return str(d)
+
+
+def to_sarif(result: dict, version: str = "0.1.24") -> dict:
+    """Convert driftcheck scan result to SARIF 2.1.0 document."""
+    rules: list[dict] = []
+    results: list[dict] = []
+    rule_set: set[str] = set()
+
+    # All possible drift keys in the result
+    drift_keys = [
+        "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts",
+        "go_drifts", "count_drifts", "actions_drifts", "lineending_drifts",
+        "docker_drifts", "java_drifts", "maven_drifts", "terraform_drifts",
+        "circleci_drifts", "gitlab_drifts", "gh_actions_version_drifts",
+        "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
+        "dotnet_drifts", "ruby_drifts", "php_drifts",
+        "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
+    ]
+
+    for drift_type in drift_keys:
+        entries = result.get(drift_type, [])
+        if not entries:
+            continue
+
+        meta = DRIFT_RULES.get(drift_type)
+        if not meta:
+            continue
+        rule_id, rule_name, rule_desc = meta
+
+        if rule_id not in rule_set:
+            rules.append(_make_rule(rule_id, rule_name, rule_desc))
+            rule_set.add(rule_id)
+
+        is_informational = drift_type in INFORMATIONAL_TYPES
+        level = "warning" if is_informational else "error"
+
+        for d in entries:
+            file = d.get("file", "")
+            message = _drift_message(drift_type, d)
+            results.append(
+                _make_result(rule_id, message, file, level=level, pos=d.get("pos", 0))
+            )
+
+    return {
+        "$schema": SARIF_SCHEMA,
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "driftcheck",
+                        "version": version,
+                        "informationUri": "https://github.com/yunaremaia/driftcheck",
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+            }
+        ],
+    }

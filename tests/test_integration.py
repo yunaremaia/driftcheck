@@ -292,3 +292,58 @@ class TestCLILockfile:
         rc, out, _ = run_cli([str(tmp_path)])
         assert rc == 0
         assert "OK" in out
+
+
+class TestCLISARIF:
+    """CLI --sarif outputs SARIF 2.1.0 with correct structure."""
+
+    def test_sarif_no_drift(self, tmp_path):
+        (tmp_path / "rust-toolchain.toml").write_text('channel = "1.96.1"')
+        (tmp_path / "README.md").write_text("Install Rust 1.96.1")
+        make_gitattributes(tmp_path)
+        rc, out, _ = run_cli([str(tmp_path), "--sarif"])
+        assert rc == 0
+        data = json.loads(out)
+        assert data["version"] == "2.1.0"
+        assert len(data["runs"]) == 1
+        assert data["runs"][0]["tool"]["driver"]["name"] == "driftcheck"
+        assert data["runs"][0]["results"] == []
+
+    def test_sarif_with_drift(self, tmp_path):
+        (tmp_path / "rust-toolchain.toml").write_text('channel = "1.96.1"')
+        (tmp_path / "README.md").write_text("Install Rust 1.93.0")
+        rc, out, _ = run_cli([str(tmp_path), "--sarif"])
+        assert rc == 1
+        data = json.loads(out)
+        assert len(data["runs"][0]["results"]) >= 1
+        assert any(r["ruleId"] == "rust-toolchain-version-drift" for r in data["runs"][0]["results"])
+
+    def test_sarif_error_level_for_blocking(self, tmp_path):
+        (tmp_path / "rust-toolchain.toml").write_text('channel = "1.96.1"')
+        (tmp_path / "README.md").write_text("Install Rust 1.93.0")
+        rc, out, _ = run_cli([str(tmp_path), "--sarif"])
+        data = json.loads(out)
+        blocking = [r for r in data["runs"][0]["results"] if r["level"] == "error"]
+        assert len(blocking) >= 1
+
+    def test_sarif_warning_level_for_informational(self, tmp_path):
+        (tmp_path / "package.json").write_text('{"dependencies": {}}')
+        (tmp_path / "README.md").write_text("Test")
+        make_gitattributes(tmp_path)
+        rc, out, _ = run_cli([str(tmp_path), "--sarif"])
+        data = json.loads(out)
+        lockfile = [r for r in data["runs"][0]["results"] if "lockfile" in r["ruleId"]]
+        for r in lockfile:
+            assert r["level"] == "warning"
+
+    def test_sarif_exit_code_matches_blocking(self, tmp_path):
+        """Exit code 1 when blocking drifts exist, 0 otherwise."""
+        (tmp_path / "rust-toolchain.toml").write_text('channel = "1.96.1"')
+        (tmp_path / "README.md").write_text("Rust 1.96.1")
+        make_gitattributes(tmp_path)
+        rc, _, _ = run_cli([str(tmp_path), "--sarif"])
+        assert rc == 0
+
+        (tmp_path / "README.md").write_text("Rust 1.90.0")
+        rc, _, _ = run_cli([str(tmp_path), "--sarif"])
+        assert rc == 1
