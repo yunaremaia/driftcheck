@@ -11,7 +11,7 @@ driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
 
-Checks (v0.1.21):
+Checks (v0.1.22):
 - Kubernetes: image tags in manifests (`k8s/**/*.yaml`, `deploy/**/*.yaml`) vs README mentions — handles variant tags
 - Helm: `Chart.yaml`/`values.yaml` image tags vs README mentions — handles variant tags (`tag:` and `version:` keys)
 - Docker Compose: `docker-compose.yml`/`compose.yaml` image tags vs README mentions — handles variant tags
@@ -33,6 +33,6 @@ Checks (v0.1.21):
 - Actions: GitHub Actions pinned to deprecated Node 20 runtime (`actions/checkout@v4`, `setup-node@v4`, `configure-pages@v5`, `deploy-pages@v4`, `pnpm/action-setup@v4`) → suggests `node24` fixed versions (fixes [tt-a1i/archify#217](https://github.com/tt-a1i/archify/issues/217))
 - .NET/C#: `*.csproj` `<TargetFramework>` vs README mentions — handles multi-targeting (first TFM wins); matches ".NET X.Y" in docs
 - External resources: delivered HTML fetching third-party CDN hosts (`fonts.googleapis.com`, `cdn.jsdelivr`, etc.) — breaks offline/air-gapped rendering (cf. [tt-a1i/archify#242](https://github.com/tt-a1i/archify/issues/242))
-- Extensible: add more toolchain sources in `driftcheck/detector.py`
+- Ruby: `Gemfile` `ruby "x.y.z"` directive vs README mentions — major.minor comparison (patch differences ignored); skips TOC numbered-list lines
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
