@@ -198,6 +198,51 @@ def find_go_drift(gomod_text: str, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
+
+
+# ---------------------------------------------------------------------------
+# .NET / C# drift: .csproj <TargetFramework> vs README mentions
+# DOTNET_RE matches: ".NET 8.0" / "using .NET 7.0" / "targets .NET 9.0" etc.
+DOTNET_TF_RE = re.compile(r'<TargetFrameworks?\s*>\s*(?P<tf>[^<]+)</TargetFrameworks?>', re.I)
+DOTNET_DOC_RE = re.compile(r'\.NET\s+(?:Core\s+|Runtime\s+|SDK\s+)?(?P<ver>[0-9]+(?:\.[0-9]+)?)', re.I)
+
+def parse_dotnet_tfm(csproj_text: str) -> str | None:
+    """Parse .NET TargetFramework from a .csproj file. Returns major.minor (e.g., '8.0')."""
+    m = DOTNET_TF_RE.search(csproj_text)
+    if not m:
+        return None
+    tfm = m.group("tf").strip()
+    first = tfm.split(";")[0].strip()  # multi-targeting → first TFM
+    if first.startswith("net"):
+        return first[3:]  # "net8.0" → "8.0"
+    return None
+
+def find_dotnet_drift(csproj_files: dict[str, str], docs: dict[str, str]) -> list[dict]:
+    """Detect .NET version drift between .csproj <TargetFramework> and docs mentions.
+
+    Returns list of {file, doc_version, csproj_version, pos}.
+    Only flags when doc version differs from the csproj TFM.
+    """
+    if not csproj_files:
+        return []
+    versions = set()
+    for text in csproj_files.values():
+        v = parse_dotnet_tfm(text)
+        if v:
+            versions.add(v)
+    if not versions:
+        return []
+    csproj_ver = max(versions, key=lambda v: tuple(int(x) for x in v.split(".")))
+    drifts = []
+    for fname, doc_content in docs.items():
+        for m in DOTNET_DOC_RE.finditer(doc_content):
+            dv = m.group("ver")
+            if dv != csproj_ver:
+                drifts.append({"file": fname, "doc_version": dv, "csproj_version": csproj_ver, "pos": m.start()})
+                break
+    return drifts
+
+
 COUNT_RE = re.compile(r'(?P<count>\d+)\s+skills?\b', re.I)
 
 def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
@@ -1200,6 +1245,13 @@ def scan_repo(root: Path = Path(".")) -> dict:
             if p.is_file():
                 helm_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
+    # .NET / C# project files
+    csproj_files = {}
+    for pattern in ["*.csproj", "**/*.csproj", "src/**/*.csproj", "tests/**/*.csproj"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                csproj_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+
     
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
@@ -1220,6 +1272,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     helm_drifts = find_helm_drift(helm_files, docs)
     dc_drifts = find_docker_compose_drift(dc_files, docs)
     dependabot_drifts = find_dependabot_drift(root)
+    dotnet_drifts = find_dotnet_drift(csproj_files, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -1248,4 +1301,5 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "dependabot_drifts": dependabot_drifts,
         "ci_os_drifts": find_ci_os_drift(root),
         "k8s_drifts": k8s_drifts,
+        "dotnet_drifts": dotnet_drifts,
     }

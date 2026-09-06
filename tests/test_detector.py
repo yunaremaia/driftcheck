@@ -971,3 +971,52 @@ def test_ci_os_in_scan():
         assert len(result["ci_os_drifts"]) == 1
         assert result["ci_os_drifts"][0]["runner"] == "windows-2016"
 
+
+from driftcheck.detector import find_dotnet_drift, parse_dotnet_tfm
+
+def test_parse_dotnet_tfm_standard():
+    csproj = '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n'
+    assert parse_dotnet_tfm(csproj) == "8.0"
+
+def test_parse_dotnet_tfm_multi():
+    csproj = '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>\n  </PropertyGroup>\n</Project>\n'
+    assert parse_dotnet_tfm(csproj) == "8.0"
+
+def test_parse_dotnet_tfm_none():
+    assert parse_dotnet_tfm("<Project></Project>") is None
+
+def test_dotnet_no_drift():
+    csproj = '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n'
+    docs = {"README.md": "Built with .NET 8.0\n"}
+    assert find_dotnet_drift({"Lib.csproj": csproj}, docs) == []
+
+def test_dotnet_drift():
+    csproj = '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net9.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n'
+    docs = {"README.md": "Uses .NET 8.0\n"}
+    result = find_dotnet_drift({"Lib.csproj": csproj}, docs)
+    assert len(result) == 1
+    assert result[0]["doc_version"] == "8.0"
+    assert result[0]["csproj_version"] == "9.0"
+
+def test_dotnet_no_csproj():
+    assert find_dotnet_drift({}, {"README.md": ".NET 8.0\n"}) == []
+
+def test_dotnet_no_docs():
+    csproj = '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n'
+    assert find_dotnet_drift({"Lib.csproj": csproj}, {"README.md": "No version here\n"}) == []
+
+def test_dotnet_in_scan_repo():
+    """End-to-end: scan_repo detects .NET drift."""
+    import tempfile
+    from driftcheck.detector import scan_repo
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "src").mkdir()
+        (root / "src" / "Lib.csproj").write_text(
+            '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net9.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n'
+        )
+        (root / "README.md").write_text("# Lib\n\nBuilt with .NET 8.0\n")
+        result = scan_repo(root)
+        assert len(result["dotnet_drifts"]) == 1
+        assert result["dotnet_drifts"][0]["doc_version"] == "8.0"
+        assert result["dotnet_drifts"][0]["csproj_version"] == "9.0"
