@@ -27,11 +27,11 @@ def main(argv=None) -> int:
     
     # Collect all drift types
     drift_keys = [
-        "drifts", "rust_drifts", "node_drifts", "python_drifts", "go_drifts",
+        "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts", "go_drifts",
         "count_drifts", "actions_drifts", "lineending_drifts", "docker_drifts",
         "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
         "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
-        "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts",
+        "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts",
     ]
     all_drifts = {k: result.get(k, []) for k in drift_keys}
@@ -52,12 +52,12 @@ def main(argv=None) -> int:
     
     has_toolchain = tv or cv or nv or pv or gv
     
-    # Also check for other project types (Ruby, .NET, Docker, etc.)
+    # Also check for other project types (Ruby, .NET, Docker, PHP, etc.)
     if not has_toolchain:
         path = Path(args.path)
         other_indicators = [
             "Gemfile", "Dockerfile", "docker-compose.yml", "compose.yaml",
-            "Dockerfile.*", "docker/Dockerfile", "*.csproj", "*.sln",
+            "Dockerfile.*", "docker/Dockerfile", "*.csproj", "*.sln", "composer.json",
         ]
         for pattern in other_indicators:
             if list(path.glob(pattern)):
@@ -109,6 +109,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {target}")
     for d in all_drifts.get("node_drifts", []):
         print(f"driftcheck: {d['file']}: Node {d['doc_version']} → should be {d['package_version']}")
+    for d in all_drifts.get("bun_drifts", []):
+        print(f"driftcheck: {d['file']}: Bun {d['doc_version']} → should be {d['package_version']} (package.json)")
     for d in all_drifts.get("python_drifts", []):
         print(f"driftcheck: {d['file']}: Python {d['doc_version']} → should be {d['pyproject_version']}")
     for d in all_drifts.get("go_drifts", []):
@@ -145,6 +147,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: .NET {d['doc_version']} → should be {d['csproj_version']} (.csproj)")
     for d in all_drifts.get("ruby_drifts", []):
         print(f"driftcheck: {d['file']}: Ruby {d['doc_version']} → should be {d['gemfile_version']} (Gemfile)")
+    for d in all_drifts.get("php_drifts", []):
+        print(f"driftcheck: {d['file']}: PHP {d['doc_version']} → should be {d['composer_version']} (composer.json)")
 
 
 def _print_informational(all_drifts: dict) -> None:
