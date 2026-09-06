@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from typing import Any
 from .config import load_config, get_excluded_detectors
+from .plugins import load_plugins, run_plugin_detectors
 from .detectors import (
     parse_toolchain_version,
     find_rust_drift,
@@ -56,6 +57,8 @@ from .detectors import (
     find_deno_drift,
     parse_swift_version_from_package,
     find_swift_drift,
+    parse_dart_sdk_version,
+    find_dart_drift,
     apply_fixes,
 )
 
@@ -177,6 +180,14 @@ def scan_repo(root: Path = Path(".")) -> dict:
     swift_path = root / "Package.swift"
     swift_text = swift_path.read_text(encoding="utf-8", errors="replace") if swift_path.exists() else ""
 
+    # Dart/Flutter pubspec
+    pubspec_files = {}
+    for pattern in ["pubspec.yaml", "pubspec.yml"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                pubspec_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    pubspec_text = "\n".join(pubspec_files.values()) if pubspec_files else ""
+
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
@@ -204,6 +215,9 @@ def scan_repo(root: Path = Path(".")) -> dict:
     tool_versions_drifts = find_tool_versions_drift(tool_versions_text, docs)
     nvmrc_drifts = find_nvmrc_drift(nvmrc_text, parse_node_version_from_package(package_text), docs)
     swift_drifts = find_swift_drift(swift_text, docs)
+
+    # Dart/Flutter
+    dart_drifts = find_dart_drift(pubspec_text, docs)
 
     # Deno
     deno_files = {}
@@ -250,7 +264,13 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "nvmrc_drifts": nvmrc_drifts,
         "swift_drifts": swift_drifts,
         "deno_drifts": deno_drifts,
+        "dart_drifts": dart_drifts,
     }
+
+    # Run plugin detectors
+    plugins = load_plugins(root)
+    plugin_results = run_plugin_detectors(root, docs, plugins)
+    result.update(plugin_results)
 
     # Apply excluded detectors filter
     for key in list(result.keys()):
@@ -335,6 +355,9 @@ __all__ = [
     # Swift
     "parse_swift_version_from_package",
     "find_swift_drift",
+    # Dart
+    "parse_dart_sdk_version",
+    "find_dart_drift",
     # Fix
     "apply_fixes",
     # Orchestrator

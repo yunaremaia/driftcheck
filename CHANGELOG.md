@@ -2,6 +2,16 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.28] - 2026-09-06
+
+### Added
+- **Dart/Flutter drift detection**: `pubspec.yaml` `environment.sdk` constraint vs README mentions — major.minor comparison (patch differences ignored). Handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Intentionally excludes Flutter release versions (independent of Dart SDK).
+- **Plugin system**: load custom detectors from `.driftcheck_plugins/` directory. Plugins define a `register()` function returning `{name: detector_fn}`. Each detector_fn takes `(root: Path, docs: dict[str, str]) -> list[dict]`. Plugin results appear as `plugin_<name>_drifts` in output. Broken plugins are skipped with a warning.
+- SARIF rule `dart-sdk-version-drift` (blocking level)
+
+### Changed
+- Bumped version to 0.1.28
+
 ## [0.1.27] - 2026-09-06
 
 ### Added

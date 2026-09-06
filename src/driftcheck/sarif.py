@@ -162,6 +162,11 @@ DRIFT_RULES = {
         "Deno Version Drift",
         "README documentation references a Deno version that doesn't match deno.json version field",
     ),
+    "dart_drifts": (
+        "dart-sdk-version-drift",
+        "Dart SDK Version Drift",
+        "README documentation references a Dart SDK version that doesn't match pubspec.yaml SDK constraint",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -267,6 +272,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Swift {d.get('doc_version')} in docs should be {d.get('package_version')} (Package.swift)"
     elif drift_type == "deno_drifts":
         return f"Deno {d.get('doc_version')} in docs should be {d.get('deno_json_version')} (deno.json)"
+    elif drift_type == "dart_drifts":
+        return f"Dart {d.get('doc_version')} in docs should be {d.get('pubspec_version')} (pubspec.yaml)"
     return str(d)
 
 
@@ -285,7 +292,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
-        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts",
+        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts",
     ]
 
     for drift_type in drift_keys:

@@ -136,6 +136,12 @@ from .swift import (
     SPM_VERSION_RE,
     SWIFT_DOC_RE,
 )
+from .dart import (
+    parse_dart_sdk_version,
+    find_dart_drift,
+    DART_SDK_RE,
+    DART_DOC_RE,
+)
 from .lineending import (
     find_lineending_drift,
     EOL_ATTR_RE,
@@ -290,6 +296,11 @@ __all__ = [
     "find_swift_drift",
     "SPM_VERSION_RE",
     "SWIFT_DOC_RE",
+    # Dart
+    "parse_dart_sdk_version",
+    "find_dart_drift",
+    "DART_SDK_RE",
+    "DART_DOC_RE",
     # Fix
     "apply_fixes",
 ]

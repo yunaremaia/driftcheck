@@ -36,8 +36,9 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.27):
-- **Deno** (NEW): `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
+### Checks (v0.1.28):
+- **Dart/Flutter** (NEW): `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
+- **Deno**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
 - **Swift Package Manager**: `Package.swift` `swift-tools-version` and dependency version pins vs README mentions — major.minor comparison (patch differences ignored)
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift between `.tool-versions` declarations and README mentions for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **NVMRC**: `.nvmrc` vs `package.json` engines.node — catches Node version mismatches (informational)
@@ -70,6 +71,33 @@ You can also use CLI flags `--only` and `--exclude` to filter detectors at runti
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
 
+### Plugins
+
+driftcheck supports plugins for custom drift detection. Create a `.driftcheck_plugins/` directory in your repo root and add Python files that define a `register()` function:
+
+```python
+# .driftcheck_plugins/my_detector.py
+import re
+
+def register():
+    return {"my_detector": find_my_drift}
+
+MY_RE = re.compile(r'my_tool\s+(?P<ver>\d+\.\d+)')
+
+def find_my_drift(root, docs):
+    drifts = []
+    for fname, content in docs.items():
+        for m in MY_RE.finditer(content):
+            drifts.append({
+                "file": fname,
+                "doc_version": m.group("ver"),
+                "detail": f"my_tool {m.group('ver')} mentioned",
+            })
+    return drifts
+```
+
+Plugin results appear as `plugin_<name>_drifts` in JSON output and are printed in the CLI. Broken plugins are skipped with a warning — they won't crash driftcheck.
+
 ### Pre-commit hook
 
 driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
@@ -77,7 +105,7 @@ driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.27
+    rev: v0.1.28
     hooks:
       - id: driftcheck
         args: ["--no-informational"]
