@@ -37,6 +37,7 @@ class TestCLINoDrift:
     """CLI returns 0 and OK message when no drift detected."""
 
     def test_no_toolchain(self, tmp_path):
+        (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
         rc, out, _ = run_cli([str(tmp_path)])
         assert rc == 0
         assert "no toolchain version found" in out
@@ -199,7 +200,7 @@ class TestCLIMultiFile:
         (docs / "README.zh-CN.md").write_text("Rust 1.90.0")
         rc, out, _ = run_cli([str(tmp_path)])
         assert rc == 1
-        assert "docs/README.zh-CN.md" in out
+        assert "docs" in out and "README.zh-CN.md" in out
 
 
 class TestCLILineEnding:

@@ -293,6 +293,126 @@ def find_ruby_drift(gemfile_text: str, docs: dict[str, str]) -> list[dict]:
     return drifts
 
 
+# ---------------------------------------------------------------------------
+# PHP/Composer drift: composer.json require.php vs README mentions
+# ---------------------------------------------------------------------------
+COMPOSER_PHP_RE = re.compile(r'"php"\s*:\s*"(?P<ver>[^\"]+)"')
+PHP_DOC_RE = re.compile(
+    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+PHP\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)PHP\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\\.|;)',
+    re.I
+)
+
+
+def parse_composer_php_version(text: str) -> str | None:
+    """Parse PHP version from composer.json require.php. Returns major.minor (e.g., '8.2')."""
+    m = COMPOSER_PHP_RE.search(text)
+    if not m:
+        return None
+    ver = m.group("ver")
+    # Handle ranges like "^8.2", ">=8.2", "~8.2", "8.2.*"
+    ver = re.sub(r'[\^~>=<]+', '', ver).strip()
+    ver = ver.replace('.*', '')
+    parts = ver.split('.')
+    if len(parts) >= 2:
+        return f"{parts[0]}.{parts[1]}"
+    return ver
+
+
+def find_php_drift(composer_text: str, docs: dict[str, str]) -> list[dict]:
+    """Detect PHP version drift between composer.json and README mentions.
+
+    Returns list of {file, doc_version, composer_version, pos}.
+    Only flags when the doc's PHP major.minor doesn't match composer.json.
+    """
+    if not composer_text:
+        return []
+    cv = parse_composer_php_version(composer_text)
+    if not cv:
+        return []
+    cv_major_minor = ".".join(cv.split(".")[:2])
+    drifts = []
+    for fname, content in docs.items():
+        for m in PHP_DOC_RE.finditer(content):
+            dv = m.group("ver") or m.group("ver2")
+            if dv is None:
+                continue
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            line = content[line_start:m.end()].strip()
+            if re.match(r'^\d+\.', line):
+                continue
+            dv_major_minor = ".".join(dv.split(".")[:2])
+            if dv_major_minor != cv_major_minor:
+                drifts.append({
+                    "file": fname,
+                    "doc_version": dv,
+                    "composer_version": cv,
+                    "pos": m.start(),
+                })
+                break
+    return drifts
+
+
+# ---------------------------------------------------------------------------
+# Bun drift: package.json engines.bun vs README mentions
+# ---------------------------------------------------------------------------
+BUN_ENGINES_RE = re.compile(r'"bun"\s*:\s*"(?P<ver>[^\"]+)"')
+BUN_DOC_RE = re.compile(
+    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+Bun\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)Bun\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\\.|;)',
+    re.I
+)
+
+
+def parse_bun_version_from_package(text: str) -> str | None:
+    """Parse Bun version from package.json engines.bun. Returns major.minor (e.g., '1.0')."""
+    try:
+        data = json.loads(text)
+        bun_ver = data.get("engines", {}).get("bun", "")
+        if not bun_ver:
+            return None
+        # Handle ranges like ">=1.0", "^1.0", "~1.0"
+        bun_ver = re.sub(r'[\^~>=<]+', '', bun_ver).strip()
+        parts = bun_ver.split('.')
+        if len(parts) >= 2:
+            return f"{parts[0]}.{parts[1]}"
+        return bun_ver
+    except Exception:
+        return None
+
+
+def find_bun_drift(package_text: str, docs: dict[str, str]) -> list[dict]:
+    """Detect Bun version drift between package.json engines.bun and README mentions.
+
+    Returns list of {file, doc_version, package_version, pos}.
+    Only flags when the doc's Bun major.minor doesn't match package.json.
+    """
+    if not package_text:
+        return []
+    bv = parse_bun_version_from_package(package_text)
+    if not bv:
+        return []
+    bv_major_minor = ".".join(bv.split(".")[:2])
+    drifts = []
+    for fname, content in docs.items():
+        for m in BUN_DOC_RE.finditer(content):
+            dv = m.group("ver") or m.group("ver2")
+            if dv is None:
+                continue
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            line = content[line_start:m.end()].strip()
+            if re.match(r'^\d+\.', line):
+                continue
+            dv_major_minor = ".".join(dv.split(".")[:2])
+            if dv_major_minor != bv_major_minor:
+                drifts.append({
+                    "file": fname,
+                    "doc_version": dv,
+                    "package_version": bv,
+                    "pos": m.start(),
+                })
+                break
+    return drifts
+
+
 COUNT_RE = re.compile(r'(?P<count>\d+)\s+skills?\b', re.I)
 
 def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
@@ -382,7 +502,39 @@ def find_lineending_drift(root: Path) -> list[dict]:
     (core.autocrlf=true) while the index stores LF -- silently breaking
     byte-exact checks. Returns a drift if .gitattributes is absent or does
     not normalize line endings.
+    
+    Only fires when the repo has source files (to avoid noise on empty dirs).
     """
+    # Check if repo has any source files that would need line ending normalization
+    source_patterns = [
+        "*.py", "*.js", "*.ts", "*.tsx", "*.jsx", "*.rs", "*.go", "*.java",
+        "*.kt", "*.kts", "*.c", "*.cpp", "*.h", "*.hpp", "*.rb", "*.php",
+        "*.cs", "*.fs", "*.swift", "*.m", "*.mm", "*.scala", "*.clj",
+        "*.sh", "*.bash", "*.zsh", "*.fish", "*.ps1", "*.bat", "*.cmd",
+        "*.xml", "*.json", "*.yaml", "*.yml", "*.toml", "*.ini", "*.cfg",
+        "*.conf", "*.config", "*.properties", "*.gradle", "*.sbt",
+        "Makefile", "Dockerfile", "*.md", "*.rst", "*.txt",
+    ]
+    has_source = False
+    for pattern in source_patterns:
+        if list(root.glob(pattern)):
+            has_source = True
+            break
+    if not has_source:
+        # Check common subdirectories
+        for subdir in ["src", "lib", "app", "test", "tests", "scripts", "bin", "pkg", "cmd"]:
+            subpath = root / subdir
+            if subpath.exists():
+                for pattern in source_patterns:
+                    if list(subpath.glob(pattern)):
+                        has_source = True
+                        break
+            if has_source:
+                break
+    
+    if not has_source:
+        return []  # Empty repo or no source files — skip lineending check
+
     ga = root / ".gitattributes"
     if not ga.exists():
         return [{
@@ -1165,7 +1317,7 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
             ga.write_text("# Normalize line endings so working-tree bytes match the index on every platform\n" + needed)
             fixed.append(d["file"])
         else:
-            text = ga.read_text(encoding="utf-8", errors="replace")
+            text = ga.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
             if "text=auto eol=lf" not in text:
                 text = text.rstrip("\n") + "\n\n# Normalize line endings (added by driftcheck --fix)\n" + needed
                 ga.write_text(text, encoding="utf-8")
@@ -1299,6 +1451,10 @@ def scan_repo(root: Path = Path(".")) -> dict:
     gemfile_path = root / "Gemfile"
     gemfile_text = gemfile_path.read_text(encoding="utf-8", errors="replace") if gemfile_path.exists() else ""
 
+    # PHP/Composer project files
+    composer_path = root / "composer.json"
+    composer_text = composer_path.read_text(encoding="utf-8", errors="replace") if composer_path.exists() else ""
+
     # .NET / C# project files
     csproj_files = {}
     for pattern in ["*.csproj", "**/*.csproj", "src/**/*.csproj", "tests/**/*.csproj"]:
@@ -1310,6 +1466,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
+    bun_drifts = find_bun_drift(package_text, docs)
     python_drifts = find_python_drift(pyproject_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
     count_drifts = find_count_drift(root, docs)
@@ -1328,6 +1485,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     dependabot_drifts = find_dependabot_drift(root)
     dotnet_drifts = find_dotnet_drift(csproj_files, docs)
     ruby_drifts = find_ruby_drift(gemfile_text, docs)
+    php_drifts = find_php_drift(composer_text, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -1338,6 +1496,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "drifts": rust_drifts,
         "rust_drifts": rust_drifts_multi,
         "node_drifts": node_drifts,
+        "bun_drifts": bun_drifts,
         "python_drifts": python_drifts,
         "go_drifts": go_drifts,
         "count_drifts": count_drifts,
@@ -1358,4 +1517,5 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "k8s_drifts": k8s_drifts,
         "dotnet_drifts": dotnet_drifts,
         "ruby_drifts": ruby_drifts,
+        "php_drifts": php_drifts,
     }
