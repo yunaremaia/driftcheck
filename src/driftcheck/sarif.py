@@ -149,8 +149,13 @@ DRIFT_RULES = {
     ),
     "nvmrc_drifts": (
         "nvmrc-drift",
-        "NVMRC Drift",
-        ".nvmrc Node.js version doesn't match package.json engines.node",
+        "NVMRC Version Drift",
+        "README documentation references a Node.js version that doesn't match .nvmrc",
+    ),
+    "swift_drifts": (
+        "swift-package-version-drift",
+        "Swift Package Version Drift",
+        "README documentation references a Swift version that doesn't match Package.swift version pins",
     ),
 }
 
@@ -253,6 +258,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('tool_versions_version')} (.tool-versions)"
     elif drift_type == "nvmrc_drifts":
         return f"Node {d.get('doc_version')} in docs should be {d.get('nvmrc_version')} (.nvmrc)"
+    elif drift_type == "swift_drifts":
+        return f"Swift {d.get('doc_version')} in docs should be {d.get('package_version')} (Package.swift)"
     return str(d)
 
 
@@ -271,7 +278,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
-        "tool_versions_drifts", "nvmrc_drifts",
+        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts",
     ]
 
     for drift_type in drift_keys:

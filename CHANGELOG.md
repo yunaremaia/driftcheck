@@ -5,7 +5,8 @@ All notable changes to driftcheck will be documented in this file.
 ## [0.1.26] - 2026-09-06
 
 ### Added
-- **Swift Package Manager drift detection**: `Package.swift` version pins (swift-tools-version, dependency `from:`/`.exact()`) vs README mentions. Major.minor comparison (patch differences ignored).
+- **Swift Package Manager drift detection**: `Package.swift` `swift-tools-version` and dependency version pins vs README mentions. Major.minor comparison (patch differences ignored).
+- SARIF rule `swift-package-version-drift` (blocking level)
 
 ### Changed
 - Bumped version to 0.1.26

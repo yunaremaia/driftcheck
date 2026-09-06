@@ -46,3 +46,24 @@ def test_sarif_nvmrc_drift_informational():
     assert len(results) == 1
     # nvmrc is informational → SARIF level: warning
     assert results[0]["level"] == "warning"
+
+
+def test_sarif_swift_drift():
+    result = {
+        "swift_drifts": [
+            {
+                "file": "README.md",
+                "doc_version": "5.7",
+                "package_version": "5.9",
+                "pos": 18,
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.25")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "swift-package-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "swift-package-version-drift"
+    assert "5.9" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"

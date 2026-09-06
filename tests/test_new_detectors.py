@@ -1,4 +1,4 @@
-"""Tests for tool-versions and nvmrc detectors."""
+"""Tests for tool-versions, nvmrc, and swift detectors."""
 from pathlib import Path
 import tempfile
 import os
@@ -10,6 +10,10 @@ from driftcheck.detectors.tool_versions import (
 from driftcheck.detectors.nvmrc import (
     parse_nvmrc_version,
     find_nvmrc_drift,
+)
+from driftcheck.detectors.swift import (
+    parse_swift_version_from_package,
+    find_swift_drift,
 )
 
 
@@ -126,3 +130,48 @@ class TestFindNvmrcDrift:
         pkg = ">=20.12.0"
         docs = {}
         assert find_nvmrc_drift(nvmrc, pkg, docs) == []
+
+
+class TestParseSwiftVersion:
+    def test_swift_tools_version(self):
+        pkg = "// swift-tools-version:5.9\nimport PackageDescription"
+        assert parse_swift_version_from_package(pkg) == "5.9"
+
+    def test_dependency_pin(self):
+        pkg = '.package(url: "https://github.com/foo/bar.git", from: "1.2.3")'
+        assert parse_swift_version_from_package(pkg) == "1.2.3"
+
+    def test_empty(self):
+        assert parse_swift_version_from_package("") is None
+
+    def test_no_version(self):
+        pkg = "import PackageDescription\nlet package = Package(name: \"Test\")"
+        assert parse_swift_version_from_package(pkg) is None
+
+
+class TestFindSwiftDrift:
+    def test_no_drift(self):
+        pkg = "// swift-tools-version:5.9"
+        docs = {"README.md": "This project uses Swift 5.9"}
+        assert find_swift_drift(pkg, docs) == []
+
+    def test_drift_major_minor(self):
+        pkg = "// swift-tools-version:5.9"
+        docs = {"README.md": "Swift 5.7 required"}
+        result = find_swift_drift(pkg, docs)
+        assert len(result) == 1
+        assert result[0]["doc_version"] == "5.7"
+        assert result[0]["package_version"] == "5.9"
+
+    def test_patch_ignored(self):
+        pkg = "// swift-tools-version:5.9.1"
+        docs = {"README.md": "Swift 5.9.3"}
+        assert find_swift_drift(pkg, docs) == []
+
+    def test_empty_package(self):
+        assert find_swift_drift("", {"README.md": "Swift 5"}) == []
+
+    def test_no_swift_in_docs(self):
+        pkg = "// swift-tools-version:5.9"
+        docs = {"README.md": "A great project"}
+        assert find_swift_drift(pkg, docs) == []
