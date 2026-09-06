@@ -2,13 +2,27 @@
 
 All notable changes to driftcheck will be documented in this file.
 
-## [Unreleased]
-
-### Changed
-- **Architecture**: split monolithic `detector.py` (1520 lines) into a modular `detectors/` subpackage with 24 focused modules — each detector lives in its own file (rust, node, python, go, docker, java, maven, terraform, circleci, gitlab, actions, k8s, helm, compose, dotnet, ruby, php, bun, lineending, external, count, dependabot, ci_os, fix). `detector.py` is now a thin orchestrator (272 lines) that re-exports all public APIs. All 42 tests pass.
+## [0.1.25] - 2026-09-06
 
 ### Added
-- **SARIF 2.1.0 output**: `driftcheck --sarif` emits findings in the Static Analysis Results Interchange Format for ingestion by GitHub Code Scanning, GitLab Vulnerability Reports, and any other consumer that speaks SARIF. Informational drifts (dependabot, external resources, lockfile) are emitted as `warning`; blocking drifts as `error`. 9 new tests cover SARIF generation.
+- **Tool-versions (asdf/mise) drift detection**: `.tool-versions` file declares tool versions (node, python, go, rust, ruby, java, php, dotnet) — `driftcheck` now detects when README mentions a different version than what `.tool-versions` pins. Major.minor comparison (patch differences ignored).
+- **NVMRC drift detection**: `.nvmrc` vs `package.json` engines.node — informational (non-blocking) check for Node.js version mismatches. Smart comparison: major-only versions (e.g., "20") match any version with the same major.
+- **New CLI flags**:
+  - `--list-detectors`: list all available detectors with blocking/informational status
+  - `--only DETECTOR`: run only specified detectors (comma-separated)
+  - `--exclude DETECTOR`: exclude specified detectors (comma-separated)
+  - `--quiet` / `-q`: only output drifts, suppress OK messages
+  - `--no-informational`: skip informational drifts in output
+  - `--version`: show version and exit
+
+### Fixed
+- Duplicate `codecov/codecov-action` key in `actions.py` removed
+- `__pycache__` files removed from git tracking; `.gitignore` improved
+
+### Changed
+- **CLI refactoring**: eliminated duplicated `drift_keys` list (4 copies → 1), centralizing all drift type metadata into a single `DETECTOR_INFO` registry for `--list-detectors`
+- `tool_versions_drifts` is a blocking drift type; `nvmrc_drifts` is informational
+- pyproject.toml classifiers updated
 
 ## [0.1.24] - 2026-09-06
 

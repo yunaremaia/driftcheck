@@ -43,6 +43,8 @@ from .detectors import (
     find_dependabot_drift,
     find_ci_os_drift,
     find_lockfile_drift,
+    find_tool_versions_drift,
+    find_nvmrc_drift,
     apply_fixes,
 )
 
@@ -139,6 +141,14 @@ def scan_repo(root: Path = Path(".")) -> dict:
     composer_path = root / "composer.json"
     composer_text = composer_path.read_text(encoding="utf-8", errors="replace") if composer_path.exists() else ""
 
+    # .tool-versions (asdf/mise)
+    tv_path = root / ".tool-versions"
+    tool_versions_text = tv_path.read_text(encoding="utf-8", errors="replace") if tv_path.exists() else ""
+
+    # .nvmrc
+    nvmrc_path = root / ".nvmrc"
+    nvmrc_text = nvmrc_path.read_text(encoding="utf-8", errors="replace") if nvmrc_path.exists() else ""
+
     # .NET / C# project files
     csproj_files = {}
     for pattern in ["*.csproj", "**/*.csproj", "src/**/*.csproj", "tests/**/*.csproj"]:
@@ -171,6 +181,8 @@ def scan_repo(root: Path = Path(".")) -> dict:
     ruby_drifts = find_ruby_drift(gemfile_text, docs)
     php_drifts = find_php_drift(composer_text, docs)
     lockfile_drifts = find_lockfile_drift(root)
+    tool_versions_drifts = find_tool_versions_drift(tool_versions_text, docs)
+    nvmrc_drifts = find_nvmrc_drift(nvmrc_text, parse_node_version_from_package(package_text), docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -204,6 +216,8 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "ruby_drifts": ruby_drifts,
         "php_drifts": php_drifts,
         "lockfile_drifts": lockfile_drifts,
+        "tool_versions_drifts": tool_versions_drifts,
+        "nvmrc_drifts": nvmrc_drifts,
     }
 
 
@@ -270,6 +284,12 @@ __all__ = [
     "find_ci_os_drift",
     # Lockfile
     "find_lockfile_drift",
+    # Tool versions (asdf/mise)
+    "parse_tool_versions",
+    "find_tool_versions_drift",
+    # NVMRC
+    "parse_nvmrc_version",
+    "find_nvmrc_drift",
     # Fix
     "apply_fixes",
     # Orchestrator

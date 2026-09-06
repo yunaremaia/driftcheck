@@ -32,7 +32,6 @@ GH_ACTIONS_LATEST = {
     "github/codeql-action/analyze": "v4",
     "codecov/codecov-action": "v5",
     "dorny/test-reporter": "v2",
-    "codecov/codecov-action": "v5",
 }
 
 GH_ACTIONS_RE = re.compile(r'uses:\s*(?P<action>[A-Za-z0-9_.\-\/]+)\s*@(?P<ver>v\d+(?:\.\d+)*)', re.I)

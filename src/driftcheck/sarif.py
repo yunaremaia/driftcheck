@@ -142,10 +142,20 @@ DRIFT_RULES = {
         "Lockfile Drift",
         "Lockfile is missing, stale, or orphaned relative to its manifest",
     ),
+    "tool_versions_drifts": (
+        "tool-versions-drift",
+        "Tool Versions Drift",
+        "README documentation references a version that doesn't match .tool-versions (asdf/mise)",
+    ),
+    "nvmrc_drifts": (
+        "nvmrc-drift",
+        "NVMRC Drift",
+        ".nvmrc Node.js version doesn't match package.json engines.node",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
-INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts"}
+INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts"}
 
 
 def _make_rule(rule_id: str, name: str, description: str) -> dict:
@@ -239,6 +249,10 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Incomplete dependabot coverage: {d.get('detail')}"
     elif drift_type == "lockfile_drifts":
         return d.get("detail", "Lockfile drift detected")
+    elif drift_type == "tool_versions_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('tool_versions_version')} (.tool-versions)"
+    elif drift_type == "nvmrc_drifts":
+        return f"Node {d.get('doc_version')} in docs should be {d.get('nvmrc_version')} (.nvmrc)"
     return str(d)
 
 
@@ -257,6 +271,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
+        "tool_versions_drifts", "nvmrc_drifts",
     ]
 
     for drift_type in drift_keys:

@@ -10,10 +10,18 @@ driftcheck           # scan current repo
 driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
 driftcheck --sarif   # SARIF 2.1.0 output for GitHub Code Scanning
+driftcheck --list-detectors  # show available detectors
+driftcheck --only tool_versions_drifts  # run specific detectors
+driftcheck --exclude nvmrc_drifts,lockfile_drifts  # exclude detectors
+driftcheck --quiet   # only output drifts, suppress OK
+driftcheck --no-informational  # skip informational drifts
+driftcheck --version
 ```
 
-Checks (v0.1.24):
-- SARIF output: `driftcheck --sarif` generates a SARIF 2.1.0 document with each drift as a finding, ready for upload to GitHub Code Scanning via `github/codeql-action/upload-sarif`. Blocking drifts are `error`-level; informational drifts (dependabot, external resources, lockfile) are `warning`-level.
+Checks (v0.1.25):
+- **Tool versions** (NEW): `.tool-versions` (asdf/mise) — detects drift between `.tool-versions` declarations and README mentions for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
+- **NVMRC** (NEW): `.nvmrc` vs `package.json` engines.node — catches Node version mismatches (informational)
+- **SARIF output**: `driftcheck --sarif` generates a SARIF 2.1.0 document with each drift as a finding, ready for upload to GitHub Code Scanning via `github/codeql-action/upload-sarif`. Blocking drifts are `error`-level; informational drifts (dependabot, external resources, lockfile, nvmrc) are `warning`-level.
 - Kubernetes: image tags in manifests (`k8s/**/*.yaml`, `deploy/**/*.yaml`) vs README mentions — handles variant tags
 - Helm: `Chart.yaml`/`values.yaml` image tags vs README mentions — handles variant tags (`tag:` and `version:` keys)
 - Docker Compose: `docker-compose.yml`/`compose.yaml` image tags vs README mentions — handles variant tags

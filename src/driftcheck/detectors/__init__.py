@@ -114,6 +114,16 @@ from .bun import (
     BUN_DOC_RE,
 )
 from .lockfile import find_lockfile_drift
+from .tool_versions import (
+    parse_tool_versions,
+    find_tool_versions_drift,
+    TOOL_VERSION_RE,
+)
+from .nvmrc import (
+    parse_nvmrc_version,
+    find_nvmrc_drift,
+    NVMRC_RE,
+)
 from .lineending import (
     find_lineending_drift,
     EOL_ATTR_RE,
@@ -256,6 +266,10 @@ __all__ = [
     "find_ci_os_drift",
     "CI_OS_DEPRECATED",
     "CI_OS_RE",
+    # Tool versions
+    "TOOL_VERSION_RE",
+    # NVMRC
+    "NVMRC_RE",
     # Fix
     "apply_fixes",
 ]
