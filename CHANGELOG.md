@@ -2,6 +2,24 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.27] - 2026-09-06
+
+### Added
+- **Deno drift detection**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
+- **Configuration file support**: `.driftcheck.toml` in repo root to customize detection behavior
+  - `exclude_detectors`: list of detectors to skip (supports short names like "rust" or drift keys like "node_drifts")
+  - `fail_on_informational`: treat informational drifts as blocking
+  - `ignore_patterns`: patterns to ignore in drift detection
+- **Pre-commit hook**: `.pre-commit-hooks.yaml` for use with pre-commit framework
+- SARIF rule `deno-version-drift` (blocking level)
+
+### Fixed
+- Fixed dead code in `scan_repo()` where exclusion filter was placed after `return` statement (unreachable)
+- Aligned `__version__` in `__init__.py` with `pyproject.toml` (0.1.27)
+
+### Changed
+- Bumped version to 0.1.27
+
 ## [0.1.26] - 2026-09-06
 
 ### Added

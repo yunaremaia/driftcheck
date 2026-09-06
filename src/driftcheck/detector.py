@@ -2,9 +2,16 @@
 
 This is a thin orchestrator that imports from the detectors/ subpackage.
 All drift detection logic lives in src/driftcheck/detectors/.
+
+Configuration:
+    driftcheck supports a `.driftcheck.toml` file in the repo root for
+    customizing behavior. See README for details.
 """
 from __future__ import annotations
+import os
 from pathlib import Path
+from typing import Any
+from .config import load_config, get_excluded_detectors
 from .detectors import (
     parse_toolchain_version,
     find_rust_drift,
@@ -45,6 +52,8 @@ from .detectors import (
     find_lockfile_drift,
     find_tool_versions_drift,
     find_nvmrc_drift,
+    parse_deno_version,
+    find_deno_drift,
     parse_swift_version_from_package,
     find_swift_drift,
     apply_fixes,
@@ -52,7 +61,13 @@ from .detectors import (
 
 
 def scan_repo(root: Path = Path(".")) -> dict:
-    """Scan a repo on disk, return {toolchain_version, drifts}."""
+    """Scan a repo on disk, return {toolchain_version, drifts}.
+
+    Configuration is loaded from .driftcheck.toml if present.
+    """
+    config = load_config(root)
+    excluded = get_excluded_detectors(config)
+
     tc_path = root / "rust-toolchain.toml"
     toolchain_text = tc_path.read_text(encoding="utf-8", errors="replace") if tc_path.exists() else ""
     # collect doc files
@@ -190,7 +205,16 @@ def scan_repo(root: Path = Path(".")) -> dict:
     nvmrc_drifts = find_nvmrc_drift(nvmrc_text, parse_node_version_from_package(package_text), docs)
     swift_drifts = find_swift_drift(swift_text, docs)
 
-    return {
+    # Deno
+    deno_files = {}
+    for pattern in ["deno.json", "deno.jsonc", "deno/deno.json", "deno/deno.jsonc"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                deno_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    deno_text = "\n".join(deno_files.values()) if deno_files else ""
+    deno_drifts = find_deno_drift(deno_text, docs)
+
+    result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
         "package_node": parse_node_version_from_package(package_text),
@@ -225,7 +249,15 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "tool_versions_drifts": tool_versions_drifts,
         "nvmrc_drifts": nvmrc_drifts,
         "swift_drifts": swift_drifts,
+        "deno_drifts": deno_drifts,
     }
+
+    # Apply excluded detectors filter
+    for key in list(result.keys()):
+        if key in excluded:
+            del result[key]
+
+    return result
 
 
 # Re-export all public functions for backward compatibility
@@ -297,6 +329,9 @@ __all__ = [
     # NVMRC
     "parse_nvmrc_version",
     "find_nvmrc_drift",
+    # Deno
+    "parse_deno_version",
+    "find_deno_drift",
     # Swift
     "parse_swift_version_from_package",
     "find_swift_drift",

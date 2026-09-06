@@ -18,8 +18,27 @@ driftcheck --no-informational  # skip informational drifts
 driftcheck --version
 ```
 
-Checks (v0.1.26):
-- **Swift Package Manager** (NEW): `Package.swift` `swift-tools-version` and dependency version pins vs README mentions — major.minor comparison (patch differences ignored)
+### Configuration (`.driftcheck.toml`)
+
+Place a `.driftcheck.toml` file in your repo root to customize detection:
+
+```toml
+[driftcheck]
+# Exclude specific detectors (supports short names or drift keys)
+exclude_detectors = ["lockfile", "nvmrc", "ci_os"]
+
+# Treat informational drifts as blocking
+fail_on_informational = false
+
+# Custom doc paths (default: auto-detects README.md, CONTRIBUTING.md, docs/README*.md)
+# doc_paths = ["README.md", "docs/guide.md"]
+```
+
+You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
+
+### Checks (v0.1.27):
+- **Deno** (NEW): `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
+- **Swift Package Manager**: `Package.swift` `swift-tools-version` and dependency version pins vs README mentions — major.minor comparison (patch differences ignored)
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift between `.tool-versions` declarations and README mentions for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **NVMRC**: `.nvmrc` vs `package.json` engines.node — catches Node version mismatches (informational)
 - **SARIF output**: `driftcheck --sarif` generates a SARIF 2.1.0 document with each drift as a finding, ready for upload to GitHub Code Scanning via `github/codeql-action/upload-sarif`. Blocking drifts are `error`-level; informational drifts (dependabot, external resources, lockfile, nvmrc) are `warning`-level.
@@ -50,3 +69,23 @@ Checks (v0.1.26):
 - Lockfile: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) — checks manifest-lockfile consistency and mtime freshness (informational, non-blocking)
 
 Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
+
+### Pre-commit hook
+
+driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/yunaremaia/driftcheck
+    rev: v0.1.27
+    hooks:
+      - id: driftcheck
+        args: ["--no-informational"]
+```
+
+Or use it locally:
+
+```bash
+pip install pre-commit
+pre-commit install
+```

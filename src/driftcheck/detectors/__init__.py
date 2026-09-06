@@ -114,6 +114,12 @@ from .bun import (
     BUN_DOC_RE,
 )
 from .lockfile import find_lockfile_drift
+from .deno import (
+    parse_deno_version,
+    find_deno_drift,
+    DENO_JSON_VER_RE,
+    DENO_DOC_RE,
+)
 from .tool_versions import (
     parse_tool_versions,
     find_tool_versions_drift,
@@ -276,6 +282,9 @@ __all__ = [
     "TOOL_VERSION_RE",
     # NVMRC
     "NVMRC_RE",
+    # Deno
+    "parse_deno_version",
+    "find_deno_drift",
     # Swift
     "parse_swift_version_from_package",
     "find_swift_drift",

@@ -1,0 +1,8 @@
+- id: driftcheck
+  name: Check for version drift between docs and toolchain
+  entry: driftcheck
+  language: python
+  types: [text]
+  additional_dependencies:
+    - "git+https://github.com/yunaremaia/driftcheck.git@v0.1.27"
+  args: ["--no-informational"]
