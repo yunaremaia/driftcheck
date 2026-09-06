@@ -243,6 +243,56 @@ def find_dotnet_drift(csproj_files: dict[str, str], docs: dict[str, str]) -> lis
     return drifts
 
 
+# ---------------------------------------------------------------------------
+# Ruby drift: Gemfile ruby version vs README mentions
+# ---------------------------------------------------------------------------
+GEMFILE_RUBY_RE = re.compile(r'^\s*ruby\s+["\'](?P<ver>\d+\.\d+(?:\.\d+)?)["\']', re.MULTILINE)
+RUBY_DOC_RE = re.compile(
+    r'(?:install|use|require[sd]?|minimum|supports?|version|with|needs)\s+Ruby\s+(?P<ver>\d+\.\d+(?:\.\d+)?)|(?<!\w)Ruby\s+(?P<ver2>\d+\.\d+(?:\.\d+)?)(?=\s|$|,|\.|;)',
+    re.I
+)
+
+
+def parse_gemfile_ruby_version(text: str) -> str | None:
+    """Parse ruby version from Gemfile. Returns major.minor (e.g., '3.2')."""
+    m = GEMFILE_RUBY_RE.search(text)
+    return m.group("ver") if m else None
+
+
+def find_ruby_drift(gemfile_text: str, docs: dict[str, str]) -> list[dict]:
+    """Detect Ruby version drift between Gemfile and README mentions.
+
+    Returns list of {file, doc_version, gemfile_version, pos}.
+    Only flags when the doc's Ruby major.minor doesn't match Gemfile.
+    """
+    if not gemfile_text:
+        return []
+    gv = parse_gemfile_ruby_version(gemfile_text)
+    if not gv:
+        return []
+    gv_major_minor = ".".join(gv.split(".")[:2])
+    drifts = []
+    for fname, content in docs.items():
+        for m in RUBY_DOC_RE.finditer(content):
+            dv = m.group("ver") or m.group("ver2")
+            if dv is None:
+                continue
+            line_start = content.rfind('\n', 0, m.start()) + 1
+            line = content[line_start:m.end()].strip()
+            if re.match(r'^\d+\.', line):
+                continue
+            dv_major_minor = ".".join(dv.split(".")[:2])
+            if dv_major_minor != gv_major_minor:
+                drifts.append({
+                    "file": fname,
+                    "doc_version": dv,
+                    "gemfile_version": gv,
+                    "pos": m.start(),
+                })
+                break
+    return drifts
+
+
 COUNT_RE = re.compile(r'(?P<count>\d+)\s+skills?\b', re.I)
 
 def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
@@ -1245,6 +1295,10 @@ def scan_repo(root: Path = Path(".")) -> dict:
             if p.is_file():
                 helm_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
+    # Ruby project files (Gemfile)
+    gemfile_path = root / "Gemfile"
+    gemfile_text = gemfile_path.read_text(encoding="utf-8", errors="replace") if gemfile_path.exists() else ""
+
     # .NET / C# project files
     csproj_files = {}
     for pattern in ["*.csproj", "**/*.csproj", "src/**/*.csproj", "tests/**/*.csproj"]:
@@ -1273,6 +1327,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
     dc_drifts = find_docker_compose_drift(dc_files, docs)
     dependabot_drifts = find_dependabot_drift(root)
     dotnet_drifts = find_dotnet_drift(csproj_files, docs)
+    ruby_drifts = find_ruby_drift(gemfile_text, docs)
     
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -1302,4 +1357,5 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "ci_os_drifts": find_ci_os_drift(root),
         "k8s_drifts": k8s_drifts,
         "dotnet_drifts": dotnet_drifts,
+        "ruby_drifts": ruby_drifts,
     }

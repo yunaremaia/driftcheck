@@ -23,7 +23,7 @@ def main(argv=None) -> int:
     
     if args.as_json:
         print(json.dumps(result, indent=2))
-        has_blocking = (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts") or result.get("actions_drifts") or result.get("lineending_drifts") or result.get("docker_drifts") or result.get("java_drifts") or result.get("helm_drifts") or result.get("dc_drifts") or result.get("dependabot_drifts") or result.get("ci_os_drifts"))
+        has_blocking = (result.get("drifts") or result.get("rust_drifts") or result.get("node_drifts") or result.get("python_drifts") or result.get("go_drifts") or result.get("count_drifts") or result.get("actions_drifts") or result.get("lineending_drifts") or result.get("docker_drifts") or result.get("java_drifts") or result.get("helm_drifts") or result.get("dc_drifts") or result.get("dependabot_drifts") or result.get("ci_os_drifts") or result.get("ruby_drifts"))
         return 1 if has_blocking else 0
     
     drifts = result.get("drifts", [])
@@ -57,7 +57,7 @@ def main(argv=None) -> int:
         print("driftcheck: no toolchain version found")
         return 0
     
-    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts and not dc_drifts and not dependabot_drifts and not ci_os_drifts:
+    if not drifts and not rust_drifts and not node_drifts and not python_drifts and not go_drifts and not count_drifts and not actions_drifts and not lineending_drifts and not docker_drifts and not java_drifts and not maven_drifts and not terraform_drifts and not circleci_drifts and not gitlab_drifts and not gh_actions_version_drifts and not k8s_drifts and not helm_drifts and not dc_drifts and not dependabot_drifts and not ci_os_drifts and not ruby_drifts:
         parts = []
         if tv: parts.append(f"Rust {tv}")
         if cv: parts.append(f"Rust(Cargo) {cv}")
@@ -119,6 +119,9 @@ def main(argv=None) -> int:
             print(f"driftcheck: {d['file']}: incomplete — {d['detail']}")
     for d in ci_os_drifts:
         print(f"driftcheck: {d['file']}: {d['runner']} → should be {d['suggested']} (deprecated CI runner)")
+    ruby_drifts = result.get("ruby_drifts", [])
+    for d in ruby_drifts:
+        print(f"driftcheck: {d['file']}: Ruby {d['doc_version']} → should be {d['gemfile_version']} (Gemfile)")
     return 1
 
 if __name__ == "__main__":

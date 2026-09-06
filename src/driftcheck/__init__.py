@@ -1,2 +1,2 @@
 """driftcheck — detect version drift between docs and toolchain."""
-__version__ = "0.1.20"
+__version__ = "0.1.22"

@@ -1020,3 +1020,55 @@ def test_dotnet_in_scan_repo():
         assert len(result["dotnet_drifts"]) == 1
         assert result["dotnet_drifts"][0]["doc_version"] == "8.0"
         assert result["dotnet_drifts"][0]["csproj_version"] == "9.0"
+# ---- Ruby drift tests ----
+from driftcheck.detector import find_ruby_drift, parse_gemfile_ruby_version
+
+def test_parse_gemfile_ruby_version_basic():
+    gemfile = 'source "https://rubygems.org"\nruby "3.2.2"\n'
+    assert parse_gemfile_ruby_version(gemfile) == "3.2.2"
+
+def test_parse_gemfile_ruby_version_single_quotes():
+    gemfile = "source 'https://rubygems.org'\nruby '3.1.4'\n"
+    assert parse_gemfile_ruby_version(gemfile) == "3.1.4"
+
+def test_parse_gemfile_ruby_version_missing():
+    gemfile = 'source "https://rubygems.org"\ngem "rails", "~> 7.0"\n'
+    assert parse_gemfile_ruby_version(gemfile) is None
+
+def test_ruby_no_drift():
+    gemfile = 'ruby "3.2.2"\n'
+    docs = {"README.md": "Requires Ruby 3.2.0+"}
+    assert find_ruby_drift(gemfile, docs) == []
+
+def test_ruby_detects_drift():
+    gemfile = 'ruby "3.2.2"\n'
+    docs = {"README.md": "Requires Ruby 3.1.0+"}
+    drifts = find_ruby_drift(gemfile, docs)
+    assert len(drifts) == 1
+    assert drifts[0]["doc_version"] == "3.1.0"
+    assert drifts[0]["gemfile_version"] == "3.2.2"
+
+def test_ruby_drift_only_major_minor():
+    # Gemfile has 3.2.2, README says 3.2.0 — same major.minor, no drift
+    gemfile = 'ruby "3.2.2"\n'
+    docs = {"README.md": "Ruby 3.2.0 required"}
+    assert find_ruby_drift(gemfile, docs) == []
+
+def test_ruby_drift_skips_toc_numbered():
+    gemfile = 'ruby "3.2.2"\n'
+    docs = {"README.md": "1. Ruby 3.1 stuff\n2. Ruby 3.2 stuff"}
+    # Numbered list lines should be skipped
+    assert find_ruby_drift(gemfile, docs) == []
+
+def test_ruby_drift_included_in_scan():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "Gemfile").write_text('ruby "3.2.2"\n')
+        (root / "README.md").write_text("Requires Ruby 3.1+")
+        result = scan_repo(root)
+        assert "ruby_drifts" in result
+        assert len(result["ruby_drifts"]) == 1
+
+def test_ruby_no_gemfile_returns_empty():
+    assert find_ruby_drift("", {"README.md": "Ruby 3.1"}) == []
