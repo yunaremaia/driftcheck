@@ -2,6 +2,11 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- **Architecture**: split monolithic `detector.py` (1520 lines) into a modular `detectors/` subpackage with 24 focused modules — each detector lives in its own file (rust, node, python, go, docker, java, maven, terraform, circleci, gitlab, actions, k8s, helm, compose, dotnet, ruby, php, bun, lineending, external, count, dependabot, ci_os, fix). `detector.py` is now a thin orchestrator (272 lines) that re-exports all public APIs. All 42 tests pass.
+
 ## [0.1.23] - 2026-09-06
 
 ### Added
