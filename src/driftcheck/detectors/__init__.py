@@ -124,6 +124,12 @@ from .nvmrc import (
     find_nvmrc_drift,
     NVMRC_RE,
 )
+from .swift import (
+    parse_swift_version_from_package,
+    find_swift_drift,
+    SPM_VERSION_RE,
+    SWIFT_DOC_RE,
+)
 from .lineending import (
     find_lineending_drift,
     EOL_ATTR_RE,
@@ -270,6 +276,11 @@ __all__ = [
     "TOOL_VERSION_RE",
     # NVMRC
     "NVMRC_RE",
+    # Swift
+    "parse_swift_version_from_package",
+    "find_swift_drift",
+    "SPM_VERSION_RE",
+    "SWIFT_DOC_RE",
     # Fix
     "apply_fixes",
 ]

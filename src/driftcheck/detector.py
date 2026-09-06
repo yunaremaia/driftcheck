@@ -45,6 +45,8 @@ from .detectors import (
     find_lockfile_drift,
     find_tool_versions_drift,
     find_nvmrc_drift,
+    parse_swift_version_from_package,
+    find_swift_drift,
     apply_fixes,
 )
 
@@ -156,7 +158,10 @@ def scan_repo(root: Path = Path(".")) -> dict:
             if p.is_file():
                 csproj_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
-    
+    # Swift Package Manager
+    swift_path = root / "Package.swift"
+    swift_text = swift_path.read_text(encoding="utf-8", errors="replace") if swift_path.exists() else ""
+
     rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
@@ -183,7 +188,8 @@ def scan_repo(root: Path = Path(".")) -> dict:
     lockfile_drifts = find_lockfile_drift(root)
     tool_versions_drifts = find_tool_versions_drift(tool_versions_text, docs)
     nvmrc_drifts = find_nvmrc_drift(nvmrc_text, parse_node_version_from_package(package_text), docs)
-    
+    swift_drifts = find_swift_drift(swift_text, docs)
+
     return {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -218,6 +224,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "lockfile_drifts": lockfile_drifts,
         "tool_versions_drifts": tool_versions_drifts,
         "nvmrc_drifts": nvmrc_drifts,
+        "swift_drifts": swift_drifts,
     }
 
 
@@ -290,6 +297,9 @@ __all__ = [
     # NVMRC
     "parse_nvmrc_version",
     "find_nvmrc_drift",
+    # Swift
+    "parse_swift_version_from_package",
+    "find_swift_drift",
     # Fix
     "apply_fixes",
     # Orchestrator

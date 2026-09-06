@@ -17,6 +17,7 @@ DRIFT_KEYS = [
     "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
     "external_resource_drifts", "dependabot_drifts",
     "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
+    "swift_drifts",
 ]
 
 # Detector metadata: key -> (short_name, description)
@@ -49,6 +50,7 @@ DETECTOR_INFO = {
     "lockfile_drifts": ("lockfile", "Lockfile missing/stale/orphaned (informational)"),
     "tool_versions_drifts": ("tool-versions", ".tool-versions asdf/mise vs README"),
     "nvmrc_drifts": ("nvmrc", ".nvmrc vs package.json engines (informational)"),
+    "swift_drifts": ("swift", "Swift Package.swift version pins vs README"),
 }
 
 
@@ -233,6 +235,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: PHP {d['doc_version']} → should be {d['composer_version']} (composer.json)")
     for d in all_drifts.get("tool_versions_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['tool_versions_version']} (.tool-versions)")
+    for d in all_drifts.get("swift_drifts", []):
+        print(f"driftcheck: {d['file']}: Swift {d['doc_version']} → should be {d['package_version']} (Package.swift)")
 
 
 def _print_informational(all_drifts: dict) -> None:
