@@ -5,7 +5,7 @@ import json
 
 BUN_ENGINES_RE = re.compile(r'"bun"\s*:\s*"(?P<ver>[^\"]+)"')
 BUN_DOC_RE = re.compile(
-    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+Bun\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)Bun\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\\.|;)',
+    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+Bun\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)Bun\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\.|;)',
     re.I
 )
 

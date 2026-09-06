@@ -4,7 +4,7 @@ import re
 
 COMPOSER_PHP_RE = re.compile(r'"php"\s*:\s*"(?P<ver>[^\"]+)"')
 PHP_DOC_RE = re.compile(
-    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+PHP\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)PHP\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\\.|;)',
+    r'(?:requires?|minimum|supports?|version|with|needs?|running)\s+PHP\s+(?P<ver>\d+(?:\.\d+)?)|(?<!\w)PHP\s+(?P<ver2>\d+(?:\.\d+)?)(?=\s|$|,|\.|;)',
     re.I
 )
 
