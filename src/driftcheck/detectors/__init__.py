@@ -171,6 +171,16 @@ from .makefile import (
     MAKEFILE_VERSION_VAR_RE,
     MAKEFILE_TOOL_ASSIGN_RE,
 )
+from .elixir import (
+    parse_mix_elixir_version,
+    find_elixir_drift,
+    MIX_ELIXIR_RE,
+)
+from .cmake import (
+    parse_cmake_version,
+    find_cmake_drift,
+    CMAKE_VERSION_RE,
+)
 from .env_drift import (
     find_env_drift,
     find_compose_override_drift,

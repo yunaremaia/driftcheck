@@ -4,22 +4,11 @@ import argparse, json
 from pathlib import Path
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
+from .config import DRIFT_KEYS
+from .git_mode import get_changed_and_untracked, filter_detectors_by_files, DETECTOR_FILE_PATTERNS
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
 INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts"}
-
-# All drift type keys — shared across CLI modes
-DRIFT_KEYS = [
-    "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts", "go_drifts",
-    "count_drifts", "actions_drifts", "lineending_drifts", "docker_drifts",
-    "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
-    "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
-    "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
- "env_drifts",
- "external_resource_drifts", "dependabot_drifts",
-    "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
-    "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
-]
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
@@ -56,6 +45,8 @@ DETECTOR_INFO = {
     "deno_drifts": ("deno", "Deno deno.json version field vs README"),
     "dart_drifts": ("dart", "Dart pubspec.yaml SDK constraint vs README mentions"),
     "makefile_drifts": ("makefile", "Makefile tool version pins (CC, CMAKE, GO, etc.) vs README"),
+    "elixir_drifts": ("elixir", "Elixir mix.exs version vs README"),
+    "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
 }
 
 
@@ -76,6 +67,8 @@ def main(argv=None) -> int:
     ap.add_argument("--exclude", metavar="DETECTOR", help="exclude specified detectors (comma-separated)")
     ap.add_argument("--report", action="store_true", help="output a markdown report (for CI job summaries / PR comments)")
     ap.add_argument("--init", action="store_true", help="generate a .driftcheck.toml config file and exit)")
+    ap.add_argument("--git-mode", action="store_true", help="only scan files changed since --git-base (default: HEAD~1)")
+    ap.add_argument("--git-base", metavar="COMMIT", default="HEAD~1", help="base commit for --git-mode (default: HEAD~1)")
     args = ap.parse_args(argv)
 
     if args.list_detectors:
@@ -86,7 +79,19 @@ def main(argv=None) -> int:
         _init_config(Path(args.path))
         return 0
 
-    result = scan_repo(Path(args.path))
+    # Git-mode: determine which detectors to run based on changed files
+    enabled_detectors = None
+    if args.git_mode:
+        changed = get_changed_and_untracked(Path(args.path), args.git_base)
+        if not changed:
+            if not args.quiet:
+                print(f"driftcheck: no files changed since {args.git_base}")
+            return 0
+        enabled_detectors = filter_detectors_by_files(changed, DETECTOR_FILE_PATTERNS)
+        if not args.quiet:
+            print(f"driftcheck: git-mode — {len(changed)} file(s) changed, {len(enabled_detectors)} detector(s) relevant")
+
+    result = scan_repo(Path(args.path), enabled_detectors=enabled_detectors)
 
     if args.report:
         _print_report(result)
@@ -143,6 +148,7 @@ def main(argv=None) -> int:
             "Dockerfile.*", "docker/Dockerfile", "*.csproj", "*.sln", "composer.json",
             "pubspec.yaml", "Package.swift", "deno.json", "deno.jsonc", ".tool-versions", ".nvmrc",
             "Makefile", "makefile", "GNUmakefile", "Makefile.*", "make/*.mk",
+            "mix.exs", "CMakeLists.txt",
         ]
         for pattern in other_indicators:
             if list(path.glob(pattern)):
@@ -327,6 +333,14 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Makefile drifts
     for d in all_drifts.get("makefile_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['makefile_version']} (Makefile)")
+
+    # Elixir drifts
+    for d in all_drifts.get("elixir_drifts", []):
+        print(f"driftcheck: {d['file']}: Elixir {d['doc_version']} → should be {d['mix_version']} (mix.exs)")
+
+    # CMake drifts
+    for d in all_drifts.get("cmake_drifts", []):
+        print(f"driftcheck: {d['file']}: CMake {d['doc_version']} → should be {d['cmake_version']} (CMakeLists.txt)")
 
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):

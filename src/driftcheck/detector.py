@@ -65,6 +65,10 @@ from .detectors import (
     find_dart_drift,
     parse_makefile_versions,
     find_makefile_drift,
+    parse_mix_elixir_version,
+    find_elixir_drift,
+    parse_cmake_version,
+    find_cmake_drift,
     find_env_drift,
     find_env_drift_combined,
     apply_fixes,
@@ -99,14 +103,22 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
     return "\n".join(contents)
 
 
-def scan_repo(root: Path = Path(".")) -> dict:
+def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
     Configuration is loaded from .driftcheck.toml if present.
     File I/O is parallelized via ThreadPoolExecutor for large repos.
+    
+    Args:
+        root: repo root path
+        enabled_detectors: if set, only run these detector keys (skip others)
     """
     config = load_config(root)
     excluded = get_excluded_detectors(config)
+
+    # Filter detectors if git-mode is active
+    if enabled_detectors is not None:
+        excluded = excluded | (set(DRIFT_KEYS) - enabled_detectors)
 
     tc_path = root / "rust-toolchain.toml"
     toolchain_text = tc_path.read_text(encoding="utf-8", errors="replace") if tc_path.exists() else ""
@@ -271,8 +283,23 @@ def scan_repo(root: Path = Path(".")) -> dict:
         for p in root.glob(pattern):
             if p.is_file():
                 makefile_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+
     makefile_text = "\n".join(makefile_files.values()) if makefile_files else ""
     makefile_drifts = find_makefile_drift(makefile_text, docs)
+
+    # Elixir
+    mix_path = root / "mix.exs"
+    mix_text = mix_path.read_text(encoding="utf-8", errors="replace") if mix_path.exists() else ""
+    elixir_drifts = find_elixir_drift(mix_text, docs)
+
+    # CMake
+    cmake_files = {}
+    for pattern in ["CMakeLists.txt", "cmake/CMakeLists.txt", "src/CMakeLists.txt"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                cmake_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    cmake_text = "\n".join(cmake_files.values()) if cmake_files else ""
+    cmake_drifts = find_cmake_drift(cmake_text, docs)
 
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -313,6 +340,8 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "deno_drifts": deno_drifts,
         "dart_drifts": dart_drifts,
         "makefile_drifts": makefile_drifts,
+        "elixir_drifts": elixir_drifts,
+        "cmake_drifts": cmake_drifts,
     }
 
     # Run plugin detectors

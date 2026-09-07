@@ -7,6 +7,20 @@ import os
 from pathlib import Path
 from typing import Any
 
+# All drift type keys — shared across CLI modes
+DRIFT_KEYS = [
+    "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts", "go_drifts",
+    "count_drifts", "actions_drifts", "lineending_drifts", "docker_drifts",
+    "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
+    "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
+    "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
+    "env_drifts",
+    "external_resource_drifts", "dependabot_drifts",
+    "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
+    "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
+    "elixir_drifts", "cmake_drifts",
+]
+
 # Default configuration
 DEFAULT_CONFIG = {
     "exclude_detectors": [],
