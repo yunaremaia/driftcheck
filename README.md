@@ -40,6 +40,23 @@ Or with SARIF upload for GitHub Code Scanning:
     sarif_file: driftcheck.sarif
 ```
 
+### Markdown Report
+
+Generate a markdown summary for CI job summaries or PR comments:
+
+```bash
+driftcheck --report          # output markdown to stdout
+driftcheck --report >> $GITHUB_STEP_SUMMARY  # post to GitHub Actions
+```
+
+### Initialize Config
+
+Generate a starter `.driftcheck.toml`:
+
+```bash
+driftcheck --init            # creates .driftcheck.toml with examples
+```
+
 ### Configuration (`.driftcheck.toml`)
 
 Place a `.driftcheck.toml` file in your repo root to customize detection:
@@ -58,7 +75,7 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.28):
+### Checks (v0.1.29):
 - **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.) and `CC = gcc-13`, `GO = 1.22` style assignments — major.minor comparison (patch differences ignored)
 - **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
 - **Deno**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)

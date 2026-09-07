@@ -72,13 +72,24 @@ def main(argv=None) -> int:
     ap.add_argument("--list-detectors", action="store_true", help="list available detectors and exit")
     ap.add_argument("--only", metavar="DETECTOR", help="run only specified detectors (comma-separated)")
     ap.add_argument("--exclude", metavar="DETECTOR", help="exclude specified detectors (comma-separated)")
+    ap.add_argument("--report", action="store_true", help="output a markdown report (for CI job summaries / PR comments)")
+    ap.add_argument("--init", action="store_true", help="generate a .driftcheck.toml config file and exit)")
     args = ap.parse_args(argv)
 
     if args.list_detectors:
         _list_detectors()
         return 0
 
+    if args.init:
+        _init_config(Path(args.path))
+        return 0
+
     result = scan_repo(Path(args.path))
+
+    if args.report:
+        _print_report(result)
+        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+        return 1 if any(blocking.values()) else 0
 
     # Filter detectors if requested
     if args.only:
@@ -179,6 +190,70 @@ def main(argv=None) -> int:
 def _version() -> str:
     from . import __version__
     return f"%(prog)s {__version__}"
+
+
+def _init_config(root: Path) -> None:
+    """Generate a .driftcheck.toml config file."""
+    config_path = root / ".driftcheck.toml"
+    if config_path.exists():
+        print(f"driftcheck: {config_path} already exists — not overwriting")
+        return
+    config_path.write_text(
+        "[driftcheck]\n"
+        "# exclude_detectors = [\"lockfile\", \"nvmrc\"]\n"
+        "# fail_on_informational = false\n"
+    )
+    print(f"driftcheck: created {config_path}")
+
+
+def _print_report(result: dict) -> None:
+    """Output a markdown report of all drifts."""
+    blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+    informational = {k: result.get(k, []) for k in DRIFT_KEYS if k in INFORMATIONAL_DRIFTS}
+    has_blocking = any(blocking.values())
+    has_informational = any(informational.values())
+
+    print("## driftcheck report\n")
+    if not has_blocking and not has_informational:
+        print("✅ No drift detected — docs match toolchain.")
+        return
+
+    if has_blocking:
+        print("### ❌ Blocking drifts\n")
+        for key, drifts in blocking.items():
+            if not drifts:
+                continue
+            meta = DETECTOR_INFO.get(key)
+            if meta:
+                print(f"**{meta[1]}** ({key}):")
+            for d in drifts:
+                file = d.get("file", "?")
+                detail = d.get("detail", "")
+                if detail:
+                    print(f"- `{file}`: {detail}")
+                else:
+                    tool = d.get("tool", "")
+                    doc_v = d.get("doc_version", "")
+                    actual_v = d.get("makefile_version", d.get("package_version", d.get("gomod_version", d.get("pyproject_version", ""))))
+                    if tool:
+                        print(f"- `{file}`: {tool} {doc_v} → should be {actual_v}")
+                    else:
+                        print(f"- `{file}`: {d}")
+            print()
+
+    if has_informational:
+        print("### ℹ️  Informational\n")
+        for key, drifts in informational.items():
+            if not drifts:
+                continue
+            meta = DETECTOR_INFO.get(key)
+            if meta:
+                print(f"**{meta[1]}** ({key}):")
+            for d in drifts:
+                file = d.get("file", "?")
+                detail = d.get("detail", str(d))
+                print(f"- `{file}`: {detail}")
+            print()
 
 
 def _list_detectors() -> None:

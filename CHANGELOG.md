@@ -7,10 +7,12 @@ All notable changes to driftcheck will be documented in this file.
 ### Added
 - **Makefile drift detection**: detects when tool versions in Makefile variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.) or assignments (`CC = gcc-13`, `GO = 1.22`) differ from README mentions. Major.minor comparison (patch differences ignored). Supports recursive glob for `make/*.mk`.
 - **GitHub Action** (`action.yml`): add driftcheck to CI with a single `uses: yunaremaia/driftcheck@main` step. Supports `fail-on-drift`, `args`, and SARIF upload via `sarif: true`.
+- **Markdown reports** (`--report`): outputs a formatted markdown summary for CI job summaries or PR comments.
+- **Config initialization** (`--init`): generates a `.driftcheck.toml` file with commented examples.
 - SARIF rule `makefile-version-drift` (blocking level)
 
 ### Changed
-- Updated README with GitHub Action usage section
+- Updated README with GitHub Action and `--report`/`--init` sections
 - Bumped version to 0.1.29
 
 ## [0.1.28] - 2026-09-06
