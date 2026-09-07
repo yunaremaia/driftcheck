@@ -2,6 +2,20 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.32] - 2026-09-07
+
+### Added
+- SARIF rules for all v0.1.32 detectors: `requirements-version-drift`, `kotlin-version-drift`, `pipfile-version-drift`, `conda-unpinned-drift`
+- SARIF message formatting for requirements, kotlin, pipfile, and conda drifts
+- Tests: 5 new SARIF tests for the v0.1.32 drift types
+
+### Fixed
+- Fixed unterminated string literal in `test_detector.py` (Pipfile JSON test data)
+- Added missing imports (`find_pipfile_drift`, `find_conda_drift`) to `test_detector.py`
+
+### Changed
+- Bumped version to 0.1.32 (aligned `__init__.py` with `pyproject.toml`)
+
 ## [0.1.31] - 2026-09-07
 
 ### Added

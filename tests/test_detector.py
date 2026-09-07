@@ -1,5 +1,7 @@
 # ---- PHP/Composer drift tests ----
 from driftcheck.detector import find_php_drift, parse_composer_php_version, scan_repo
+from driftcheck.detectors.pipfile import find_pipfile_drift
+from driftcheck.detectors.conda import find_conda_drift
 
 def test_parse_composer_php_version_basic():
     composer = '{"require": {"php": "^8.2"}}'
@@ -189,12 +191,10 @@ flask = "==2.0.0"
 requests = ">=2.28.0"
 """)
         pipfile_lock = tmp_path / "Pipfile.lock"
-        pipfile_lock.write_text('{
-    "default": {
-        "flask": {"version": "==2.0.1"},
-        "requests": {"version": "==2.28.0"}
-    }
-}')
+        pipfile_lock.write_text(
+            '{"default": {"flask": {"version": "==2.0.1"}, '
+            '"requests": {"version": "==2.28.0"}}}'
+        )
         drifts = find_pipfile_drift(tmp_path)
         assert len(drifts) >= 1
         assert drifts[0]["package"] == "flask"
@@ -207,11 +207,9 @@ requests = ">=2.28.0"
 flask = "==2.0.0"
 """)
         pipfile_lock = tmp_path / "Pipfile.lock"
-        pipfile_lock.write_text('{
-    "default": {
-        "flask": {"version": "==2.0.0"}
-    }
-}')
+        pipfile_lock.write_text(
+            '{"default": {"flask": {"version": "==2.0.0"}}}'
+        )
         drifts = find_pipfile_drift(tmp_path)
         assert len(drifts) == 0
 

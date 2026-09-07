@@ -109,3 +109,87 @@ def test_sarif_cmake_drift():
     assert results[0]["ruleId"] == "cmake-version-drift"
     assert "3.20" in results[0]["message"]["text"]
     assert results[0]["level"] == "error"
+
+
+def test_sarif_requirements_drift():
+    result = {
+        "requirements_drifts": [
+            {
+                "file": "README.md",
+                "package": "requests",
+                "doc_version": "2.25.0",
+                "requirements_version": "2.28.0",
+                "pos": 10,
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.32")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "requirements-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "requirements-version-drift"
+    assert "requests" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
+
+
+def test_sarif_kotlin_drift():
+    result = {
+        "kotlin_drifts": [
+            {
+                "file": "README.md",
+                "doc_version": "1.8.0",
+                "gradle_version": "1.9.0",
+                "pos": 10,
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.32")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "kotlin-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "kotlin-version-drift"
+    assert "1.9.0" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
+
+
+def test_sarif_pipfile_drift():
+    result = {
+        "pipfile_drifts": [
+            {
+                "file": "Pipfile",
+                "package": "flask",
+                "pipfile_version": "==2.0.0",
+                "lock_version": "==2.0.1",
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.32")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "pipfile-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "pipfile-version-drift"
+    assert "flask" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
+
+
+def test_sarif_conda_drift():
+    result = {
+        "conda_drifts": [
+            {
+                "file": "environment.yml",
+                "package": "numpy",
+                "environment_version": "unpinned",
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.32")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "conda-unpinned-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "conda-unpinned-drift"
+    assert "numpy" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
