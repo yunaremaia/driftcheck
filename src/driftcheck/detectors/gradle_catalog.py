@@ -22,6 +22,13 @@ def parse_gradle_catalog(filepath):
         # Find [versions] section
         ver_match = LIBS_VERSIONS_RE.search(content)
         if ver_match:
+            # Parse simple key = "version" entries
+            for line in ver_match.group(1).split('\n'):
+                line = line.strip()
+                m = re.match(r'([a-zA-Z0-9_-]+)\s*=\s*["\']([0-9.]+)["\']', line)
+                if m:
+                    versions[m.group(1)] = m.group(2)
+            # Parse library version entries
             for m in LIBS_LIBRARY_VER_RE.finditer(ver_match.group(1)):
                 versions[m.group(1)] = m.group(2)
         # Find plugin versions in [plugins] section

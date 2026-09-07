@@ -1,5 +1,5 @@
 # ---- PHP/Composer drift tests ----
-from driftcheck.detector import find_php_drift, parse_composer_php_version, scan_repo
+from driftcheck.detector import find_php_drift, parse_composer_php_version, scan_repo, find_gradle_catalog_drift
 from driftcheck.detectors.pipfile import find_pipfile_drift
 from driftcheck.detectors.conda import find_conda_drift
 
@@ -272,9 +272,7 @@ compose = "1.5.0"
 core-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
 """)
         readme = tmp_path / "README.md"
-        readme.write_text("# Project
-
-Uses Kotlin 1.8.0 and Compose 1.5.0")
+        readme.write_text("# Project\n\nUses Kotlin 1.8.0 and Compose 1.5.0")
         drifts = find_gradle_catalog_drift(tmp_path)
         assert any(d["library"] == "kotlin" for d in drifts)
 
@@ -287,9 +285,7 @@ Uses Kotlin 1.8.0 and Compose 1.5.0")
 kotlin = "1.9.0"
 """)
         readme = tmp_path / "README.md"
-        readme.write_text("# Project
-
-Uses Kotlin 1.9.0")
+        readme.write_text("# Project\n\nUses Kotlin 1.9.0 and Compose 1.5.0")
         drifts = find_gradle_catalog_drift(tmp_path)
         assert len(drifts) == 0
 
