@@ -17,7 +17,7 @@ DRIFT_KEYS = [
     "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
     "external_resource_drifts", "dependabot_drifts",
     "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
-    "swift_drifts", "deno_drifts", "dart_drifts",
+    "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
 ]
 
 # Detector metadata: key -> (short_name, description)
@@ -53,6 +53,7 @@ DETECTOR_INFO = {
     "swift_drifts": ("swift", "Swift Package.swift version pins vs README"),
     "deno_drifts": ("deno", "Deno deno.json version field vs README"),
     "dart_drifts": ("dart", "Dart pubspec.yaml SDK constraint vs README mentions"),
+    "makefile_drifts": ("makefile", "Makefile tool version pins (CC, CMAKE, GO, etc.) vs README"),
 }
 
 
@@ -128,6 +129,7 @@ def main(argv=None) -> int:
             "Gemfile", "Dockerfile", "docker-compose.yml", "compose.yaml",
             "Dockerfile.*", "docker/Dockerfile", "*.csproj", "*.sln", "composer.json",
             "pubspec.yaml", "Package.swift", "deno.json", "deno.jsonc", ".tool-versions", ".nvmrc",
+            "Makefile", "makefile", "GNUmakefile", "Makefile.*", "make/*.mk",
         ]
         for pattern in other_indicators:
             if list(path.glob(pattern)):
@@ -244,6 +246,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: Deno {d['doc_version']} → should be {d['deno_json_version']} (deno.json)")
     for d in all_drifts.get("dart_drifts", []):
         print(f"driftcheck: {d['file']}: Dart {d['doc_version']} → should be {d['pubspec_version']} (pubspec.yaml)")
+
+    # Makefile drifts
+    for d in all_drifts.get("makefile_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['makefile_version']} (Makefile)")
 
     # Plugin drifts (generic handler)
     for key, drifts in all_drifts.items():

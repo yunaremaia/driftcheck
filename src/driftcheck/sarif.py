@@ -167,6 +167,11 @@ DRIFT_RULES = {
         "Dart SDK Version Drift",
         "README documentation references a Dart SDK version that doesn't match pubspec.yaml SDK constraint",
     ),
+    "makefile_drifts": (
+        "makefile-version-drift",
+        "Makefile Tool Version Drift",
+        "README documentation references a tool version that doesn't match Makefile variable assignments",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -274,6 +279,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Deno {d.get('doc_version')} in docs should be {d.get('deno_json_version')} (deno.json)"
     elif drift_type == "dart_drifts":
         return f"Dart {d.get('doc_version')} in docs should be {d.get('pubspec_version')} (pubspec.yaml)"
+    elif drift_type == "makefile_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('makefile_version')} (Makefile)"
     return str(d)
 
 
@@ -292,7 +299,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
-        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts",
+        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
     ]
 
     for drift_type in drift_keys:

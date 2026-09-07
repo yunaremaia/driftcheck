@@ -1,0 +1,70 @@
+name: 'driftcheck'
+description: 'Detect version drift between docs and toolchain files'
+author: 'Yunare Maia'
+branding:
+  icon: 'alert-triangle'
+  color: 'yellow'
+
+inputs:
+  path:
+    description: 'Repository root to scan'
+    required: false
+    default: '.'
+  args:
+    description: 'Extra CLI arguments (e.g., "--no-informational")'
+    required: false
+    default: ''
+  sarif:
+    description: 'Generate SARIF output and upload to GitHub Code Scanning'
+    required: false
+    default: 'false'
+  sarif-output:
+    description: 'Output SARIF file path'
+    required: false
+    default: 'driftcheck.sarif'
+  fail-on-drift:
+    description: 'Fail the step if blocking drifts are found (default: true)'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+
+    - name: Install driftcheck
+      shell: bash
+      run: pip install git+https://github.com/yunaremaia/driftcheck.git
+
+    - name: Run driftcheck
+      id: driftcheck
+      shell: bash
+      run: |
+        set +e
+        if [ "${{ inputs.sarif }}" = "true" ]; then
+          driftcheck "${{ inputs.path }}" --sarif ${{ inputs.args }} > "${{ inputs.sarif-output }}"
+          exit_code=$?
+        else
+          driftcheck "${{ inputs.path }}" ${{ inputs.args }}
+          exit_code=$?
+        fi
+        echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+        if [ "$exit_code" -ne 0 ]; then
+          echo "drift=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "drift=false" >> "$GITHUB_OUTPUT"
+        fi
+        if [ "${{ inputs.fail-on-drift }}" = "true" ]; then
+          exit $exit_code
+        fi
+        exit 0
+
+    - name: Upload SARIF
+      if: inputs.sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-output }}
+        wait-for-processing: false

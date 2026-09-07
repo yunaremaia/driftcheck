@@ -63,6 +63,8 @@ from .detectors import (
     find_swift_drift,
     parse_dart_sdk_version,
     find_dart_drift,
+    parse_makefile_versions,
+    find_makefile_drift,
     apply_fixes,
 )
 
@@ -261,6 +263,15 @@ def scan_repo(root: Path = Path(".")) -> dict:
     deno_text = "\n".join(deno_files.values()) if deno_files else ""
     deno_drifts = find_deno_drift(deno_text, docs)
 
+    # Makefile
+    makefile_files = {}
+    for pattern in ["Makefile", "makefile", "GNUmakefile", "make/*.mk", "Makefile.*"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                makefile_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    makefile_text = "\n".join(makefile_files.values()) if makefile_files else ""
+    makefile_drifts = find_makefile_drift(makefile_text, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -298,6 +309,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "swift_drifts": swift_drifts,
         "deno_drifts": deno_drifts,
         "dart_drifts": dart_drifts,
+        "makefile_drifts": makefile_drifts,
     }
 
     # Run plugin detectors

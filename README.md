@@ -18,6 +18,28 @@ driftcheck --no-informational  # skip informational drifts
 driftcheck --version
 ```
 
+### GitHub Action
+
+Add driftcheck to your CI with a single step:
+
+```yaml
+- uses: yunaremaia/driftcheck@main
+  with:
+    fail-on-drift: true   # default
+    args: "--no-informational"
+```
+
+Or with SARIF upload for GitHub Code Scanning:
+
+```yaml
+- uses: yunaremaia/driftcheck@main
+  with:
+    sarif: true
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: driftcheck.sarif
+```
+
 ### Configuration (`.driftcheck.toml`)
 
 Place a `.driftcheck.toml` file in your repo root to customize detection:
@@ -37,7 +59,8 @@ fail_on_informational = false
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
 ### Checks (v0.1.28):
-- **Dart/Flutter** (NEW): `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
+- **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.) and `CC = gcc-13`, `GO = 1.22` style assignments — major.minor comparison (patch differences ignored)
+- **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
 - **Deno**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
 - **Swift Package Manager**: `Package.swift` `swift-tools-version` and dependency version pins vs README mentions — major.minor comparison (patch differences ignored)
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift between `.tool-versions` declarations and README mentions for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
@@ -105,7 +128,7 @@ driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.28
+    rev: v0.1.29
     hooks:
       - id: driftcheck
         args: ["--no-informational"]

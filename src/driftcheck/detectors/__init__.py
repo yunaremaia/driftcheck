@@ -165,6 +165,12 @@ from .ci_os import (
     CI_OS_DEPRECATED,
     CI_OS_RE,
 )
+from .makefile import (
+    parse_makefile_versions,
+    find_makefile_drift,
+    MAKEFILE_VERSION_VAR_RE,
+    MAKEFILE_TOOL_ASSIGN_RE,
+)
 from .fix import apply_fixes
 
 __all__ = [
@@ -284,6 +290,11 @@ __all__ = [
     "find_ci_os_drift",
     "CI_OS_DEPRECATED",
     "CI_OS_RE",
+    # Makefile
+    "parse_makefile_versions",
+    "find_makefile_drift",
+    "MAKEFILE_VERSION_VAR_RE",
+    "MAKEFILE_TOOL_ASSIGN_RE",
     # Tool versions
     "TOOL_VERSION_RE",
     # NVMRC

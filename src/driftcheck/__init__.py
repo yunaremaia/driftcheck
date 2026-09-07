@@ -1,5 +1,5 @@
 """driftcheck — detect version drift between docs and toolchain."""
-__version__ = "0.1.28"
+__version__ = "0.1.29"
 
 from .sarif import to_sarif
 
