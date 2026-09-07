@@ -177,6 +177,16 @@ DRIFT_RULES = {
         "Makefile Tool Version Drift",
         "README documentation references a tool version that doesn't match Makefile variable assignments",
     ),
+    "elixir_drifts": (
+        "elixir-version-drift",
+        "Elixir Version Drift",
+        "README documentation references an Elixir version that doesn't match mix.exs elixir directive",
+    ),
+    "cmake_drifts": (
+        "cmake-version-drift",
+        "CMake Version Drift",
+        "README documentation references a CMake version that doesn't match CMakeLists.txt cmake_minimum_required",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -286,6 +296,10 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Dart {d.get('doc_version')} in docs should be {d.get('pubspec_version')} (pubspec.yaml)"
     elif drift_type == "makefile_drifts":
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('makefile_version')} (Makefile)"
+    elif drift_type == "elixir_drifts":
+        return f"Elixir {d.get('doc_version')} in docs should be {d.get('mix_version')} (mix.exs)"
+    elif drift_type == "cmake_drifts":
+        return f"CMake {d.get('doc_version')} in docs should be {d.get('cmake_version')} (CMakeLists.txt)"
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
@@ -307,6 +321,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
         "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts", "env_drifts",
+        "elixir_drifts", "cmake_drifts",
     ]
 
     for drift_type in drift_keys:

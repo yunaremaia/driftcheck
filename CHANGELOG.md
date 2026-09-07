@@ -2,6 +2,24 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.31] - 2026-09-07
+
+### Added
+- **Elixir drift detection**: `mix.exs` `elixir: "~> X.Y"` directive vs README mentions — major.minor comparison (patch differences ignored)
+- **CMake drift detection**: `CMakeLists.txt` `cmake_minimum_required(VERSION X.Y)` vs README mentions — major.minor comparison (patch differences ignored)
+- **Git-mode scanning** (`--git-mode`): incremental drift detection that only scans files changed since a base commit (default: HEAD~1). Uses `git diff --name-only` + `git ls-files --others` for CI/PR filtering
+- SARIF rules `elixir-version-drift` and `cmake-version-drift` (blocking level)
+- New tests: `test_elixir.py` (9 tests), `test_cmake.py` (7 tests), `test_git_mode.py` (15 tests)
+
+### Fixed
+- Restored `toolchain_version` to scan result dict (was accidentally removed in v0.1.30 WIP)
+- Added missing `elixir_drifts` and `cmake_drifts` entries to result dict
+- Fixed syntax error in `other_indicators` list (missing `]`)
+
+### Changed
+- Bumped version to 0.1.31
+- `DETECTOR_FILE_PATTERNS` mapping now includes `elixir_drifts` and `cmake_drifts` for git-mode filtering
+
 ## [0.1.30] - 2026-09-07
 
 ### Added

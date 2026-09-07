@@ -67,3 +67,45 @@ def test_sarif_swift_drift():
     assert results[0]["ruleId"] == "swift-package-version-drift"
     assert "5.9" in results[0]["message"]["text"]
     assert results[0]["level"] == "error"
+
+
+def test_sarif_elixir_drift():
+    result = {
+        "elixir_drifts": [
+            {
+                "file": "README.md",
+                "doc_version": "1.14",
+                "mix_version": "1.15",
+                "pos": 10,
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.31")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "elixir-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "elixir-version-drift"
+    assert "1.15" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
+
+
+def test_sarif_cmake_drift():
+    result = {
+        "cmake_drifts": [
+            {
+                "file": "README.md",
+                "doc_version": "3.16",
+                "cmake_version": "3.20",
+                "pos": 10,
+            }
+        ]
+    }
+    sarif = to_sarif(result, version="0.1.31")
+    rules = {r["id"]: r for r in sarif["runs"][0]["tool"]["driver"]["rules"]}
+    assert "cmake-version-drift" in rules
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "cmake-version-drift"
+    assert "3.20" in results[0]["message"]["text"]
+    assert results[0]["level"] == "error"
