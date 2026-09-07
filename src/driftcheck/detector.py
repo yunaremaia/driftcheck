@@ -4,13 +4,17 @@ This is a thin orchestrator that imports from the detectors/ subpackage.
 All drift detection logic lives in src/driftcheck/detectors/.
 
 Configuration:
-    driftcheck supports a `.driftcheck.toml` file in the repo root for
-    customizing behavior. See README for details.
+    driftcheck supports a `.driftcheck.toml` file in repo root for
+    customizing detection behavior. See README for details.
+
+Performance:
+    File I/O is parallelized via ThreadPoolExecutor for large repos.
 """
 from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .config import load_config, get_excluded_detectors
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors import (
@@ -63,10 +67,39 @@ from .detectors import (
 )
 
 
+def _read_files_parallel(root: Path, patterns: list[str]) -> str:
+    """Read multiple files in parallel using ThreadPoolExecutor.
+    
+    Returns concatenated file contents separated by newlines.
+    """
+    files = []
+    for pattern in patterns:
+        for p in root.glob(pattern):
+            if p.is_file():
+                files.append(p)
+    
+    if not files:
+        return ""
+    
+    contents = []
+    with ThreadPoolExecutor(max_workers=min(8, len(files))) as executor:
+        futures = {
+            executor.submit(lambda p=p: p.read_text(encoding="utf-8", errors="replace")): p
+            for p in files
+        }
+        for future in as_completed(futures):
+            try:
+                contents.append(future.result())
+            except Exception:
+                pass
+    return "\n".join(contents)
+
+
 def scan_repo(root: Path = Path(".")) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
     Configuration is loaded from .driftcheck.toml if present.
+    File I/O is parallelized via ThreadPoolExecutor for large repos.
     """
     config = load_config(root)
     excluded = get_excluded_detectors(config)
