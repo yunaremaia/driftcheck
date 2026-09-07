@@ -76,6 +76,7 @@ from .detectors import (
     find_kotlin_drift,
     find_pipfile_drift,
     find_conda_drift,
+    find_gradle_catalog_drift,
     apply_fixes,
 )
 
@@ -325,6 +326,8 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
 
     # Conda
     conda_drifts = find_conda_drift(root)
+    # Gradle Version Catalog
+    gradle_catalog_drifts = find_gradle_catalog_drift(root)
 
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
@@ -371,6 +374,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "kotlin_drifts": kotlin_drifts,
         "pipfile_drifts": pipfile_drifts,
         "conda_drifts": conda_drifts,
+        "gradle_catalog_drifts": gradle_catalog_drifts,
     }
 
     # Run plugin detectors

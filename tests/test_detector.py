@@ -254,3 +254,47 @@ dependencies:
         drifts = find_conda_drift(tmp_path)
         assert len(drifts) == 0
 
+
+
+class TestGradleCatalogDrift:
+    """Tests for Gradle Version Catalog drift detection."""
+
+    def test_gradle_catalog_drift_detected(self, tmp_path):
+        """Test drift when README has different version than catalog."""
+        catalog = tmp_path / "gradle" / "libs.versions.toml"
+        catalog.parent.mkdir()
+        catalog.write_text("""
+[versions]
+kotlin = "1.9.0"
+compose = "1.5.0"
+
+[libraries]
+core-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
+""")
+        readme = tmp_path / "README.md"
+        readme.write_text("# Project
+
+Uses Kotlin 1.8.0 and Compose 1.5.0")
+        drifts = find_gradle_catalog_drift(tmp_path)
+        assert any(d["library"] == "kotlin" for d in drifts)
+
+    def test_gradle_catalog_no_drift(self, tmp_path):
+        """Test no drift when versions match."""
+        catalog = tmp_path / "gradle" / "libs.versions.toml"
+        catalog.parent.mkdir()
+        catalog.write_text("""
+[versions]
+kotlin = "1.9.0"
+""")
+        readme = tmp_path / "README.md"
+        readme.write_text("# Project
+
+Uses Kotlin 1.9.0")
+        drifts = find_gradle_catalog_drift(tmp_path)
+        assert len(drifts) == 0
+
+    def test_gradle_catalog_missing(self, tmp_path):
+        """Test no drift when catalog doesn't exist."""
+        drifts = find_gradle_catalog_drift(tmp_path)
+        assert len(drifts) == 0
+

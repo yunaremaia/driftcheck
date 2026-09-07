@@ -198,6 +198,11 @@ from .env_drift import (
     find_env_drift_combined,
     parse_env_file,
 )
+from .gradle_catalog import (
+    parse_gradle_catalog,
+    find_gradle_catalog_drift,
+    LIBS_VERSIONS_RE,
+)
 from .pipfile import (
     parse_pipfile_versions,
     find_pipfile_drift,
@@ -361,6 +366,10 @@ __all__ = [
     "parse_kotlin_version",
     "find_kotlin_drift",
     "KOTLIN_PLUGIN_RE",
+    # Gradle Version Catalog
+    "parse_gradle_catalog",
+    "find_gradle_catalog_drift",
+    "LIBS_VERSIONS_RE",
     # Pipfile
     "parse_pipfile_versions",
     "find_pipfile_drift",

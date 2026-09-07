@@ -51,6 +51,7 @@ DETECTOR_INFO = {
     "kotlin_drifts": ("kotlin", "Kotlin build.gradle.kts plugin version vs README"),
     "pipfile_drifts": ("pipfile", "Pipfile vs Pipfile.lock version mismatches"),
     "conda_drifts": ("conda", "Conda environment.yml pinned versions"),
+    "gradle_catalog_drifts": ("gradle-catalog", "Gradle Version Catalog (libs.versions.toml) vs README"),
 }
 
 
@@ -361,6 +362,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Conda drift
     for d in all_drifts.get("conda_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']}: {d.get('environment_version', 'unpinned')} version pin")
+
+    # Gradle Version Catalog drift
+    for d in all_drifts.get("gradle_catalog_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['library']}: catalog={d['catalog_version']} vs README={d['readme_version']}")
 
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):
