@@ -75,42 +75,60 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.30):
-- **Environment drift**: `.env.example` vs `.env` (missing/extra keys), `docker-compose.yml` vs `docker-compose.prod.yml` (image tag differences), `values.yaml` vs `values.prod.yaml` (Helm value differences for `replicaCount`, `tag`, `repository`, `resources`)
-- **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.) and `CC = gcc-13`, `GO = 1.22` style assignments — major.minor comparison (patch differences ignored)
-- **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
-- **Deno**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
-- **Swift Package Manager**: `Package.swift` `swift-tools-version` and dependency version pins vs README mentions — major.minor comparison (patch differences ignored)
-- **Tool versions**: `.tool-versions` (asdf/mise) — detects drift between `.tool-versions` declarations and README mentions for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
-- **NVMRC**: `.nvmrc` vs `package.json` engines.node — catches Node version mismatches (informational)
-- **SARIF output**: `driftcheck --sarif` generates a SARIF 2.1.0 document with each drift as a finding, ready for upload to GitHub Code Scanning via `github/codeql-action/upload-sarif`. Blocking drifts are `error`-level; informational drifts (dependabot, external resources, lockfile, nvmrc) are `warning`-level.
-- Kubernetes: image tags in manifests (`k8s/**/*.yaml`, `deploy/**/*.yaml`) vs README mentions — handles variant tags
-- Helm: `Chart.yaml`/`values.yaml` image tags vs README mentions — handles variant tags (`tag:` and `version:` keys)
-- Docker Compose: `docker-compose.yml`/`compose.yaml` image tags vs README mentions — handles variant tags
-- Dependabot: ecosystems used by the repo but not covered by `.github/dependabot.yml` (informational, non-blocking)
-- GitHub Actions version: detect outdated `uses: action@version` in `.github/workflows/*.yml/.yaml` — compares against known latest versions for 18 popular actions
-- GitLab CI: `.gitlab-ci.yml` image tags vs README mentions
-- CircleCI: `.circleci/config.yml` docker image tags vs README mentions
-- Terraform: `versions.tf` `required_providers` block `version` vs README mentions
-- Maven: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README mentions
-- Docker: `Dockerfile` `FROM <image>:<tag>` vs README mentions
-- Java/Gradle: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README mentions
-- Rust: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md`
-  - Minor-aware: `channel = "1.96"` matches docs that say `Rust 1.96.1` (patch differences ignored); a real drift is a different major/minor.
-- Node: `package.json` `engines.node` vs README
-- Bun: `package.json` `engines.bun` vs README — major.minor comparison
-- Python: `pyproject.toml` `requires-python` vs README
-- Go: `go.mod` `go` directive vs README
-- PHP: `composer.json` `require.php` vs README — major.minor comparison (patch differences ignored)
-- Line endings: missing `* text=auto eol=lf` in `.gitattributes` (causes CRLF working-tree drift on Windows `core.autocrlf=true`) — only fires when repo has source files
-- Count: `skills/` directory count vs `README.md` mentions of "N skills" (e.g. 161 vs 163) — catches README/file-count drift like [K-Dense-AI/scientific-agent-skills#240](https://github.com/K-Dense-AI/scientific-agent-skills/issues/240)
-- Actions: GitHub Actions pinned to deprecated Node 20 runtime (`actions/checkout@v4`, `setup-node@v4`, `configure-pages@v5`, `deploy-pages@v4`, `pnpm/action-setup@v4`) → suggests `node24` fixed versions (fixes [tt-a1i/archify#217](https://github.com/tt-a1i/archify/issues/217))
-- .NET/C#: `*.csproj` `<TargetFramework>` vs README mentions — handles multi-targeting (first TFM wins); matches ".NET X.Y" in docs
-- External resources: delivered HTML fetching third-party CDN hosts (`fonts.googleapis.com`, `cdn.jsdelivr`, etc.) — breaks offline/air-gapped rendering (cf. [tt-a1i/archify#242](https://github.com/tt-a1i/archify/issues/242)) (informational, non-blocking)
-- Ruby: `Gemfile` `ruby "x.y.z"` directive vs README mentions — major.minor comparison (patch differences ignored); skips TOC numbered-list lines
-- Lockfile: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) — checks manifest-lockfile consistency and mtime freshness (informational, non-blocking)
+### Checks (v0.1.33):
 
-Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
+**Language runtimes:**
+- **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
+- **Node**: `package.json` `engines.node` vs README
+- **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
+- **Python**: `pyproject.toml` `requires-python` vs README
+- **Go**: `go.mod` `go` directive vs README
+- **PHP**: `composer.json` `require.php` vs README — major.minor comparison
+- **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
+- **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
+- **Elixir**: `mix.exs` `elixir:` version vs README
+- **Kotlin**: `build.gradle.kts` plugin version vs README
+- **Swift**: `Package.swift` `swift-tools-version` and dependency pins vs README
+- **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README
+
+**Package managers & lockfiles:**
+- **Pipfile**: `Pipfile` vs `Pipfile.lock` version mismatches
+- **Conda**: `environment.yml` unpinned packages
+- **Gradle Version Catalog**: `libs.versions.toml` vs README
+- **Lockfile**: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) (informational)
+
+**CI/CD:**
+- **GitHub Actions**: outdated `uses: action@version` — compares against known latest versions for 18 popular actions; detects deprecated Node 20 runtime
+- **GitLab CI**: `.gitlab-ci.yml` image tags vs README
+- **CircleCI**: `.circleci/config.yml` docker image tags vs README
+- **Jenkins**: `Jenkinsfile` version drift
+- **CI OS**: deprecated GitHub Actions runners (ubuntu-18.04, macos-11, windows-2016)
+
+**Infrastructure:**
+- **Docker**: `Dockerfile` `FROM <image>:<tag>` vs README
+- **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
+- **Kubernetes**: image tags in manifests vs README
+- **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
+- **Terraform**: `versions.tf` `required_providers` block `version` vs README
+- **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
+
+**Build tools:**
+- **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.)
+- **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
+- **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
+- **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
+
+**Configuration:**
+- **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
+- **NVMRC**: `.nvmrc` vs `package.json` engines.node (informational)
+- **Dependabot**: ecosystems used but not covered by `.github/dependabot.yml` (informational)
+- **SARIF output**: `driftcheck --sarif` generates SARIF 2.1.0 for GitHub Code Scanning
+
+**Other:**
+- **Line endings**: missing `* text=auto eol=lf` in `.gitattributes` (informational)
+- **External resources**: third-party CDN dependencies that break offline rendering (informational)
+- **Count**: `skills/` directory count vs README mentions of "N skills"
+- **Plugins**: custom drift detection via `.driftcheck_plugins/` directory
 
 ### Plugins
 
@@ -146,7 +164,7 @@ driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.30
+    rev: v0.1.33
     hooks:
       - id: driftcheck
         args: ["--no-informational"]
@@ -158,3 +176,14 @@ Or use it locally:
 pip install pre-commit
 pre-commit install
 ```
+
+### Stats
+
+- **40 detectors** covering 40+ toolchains and file types
+- **314 tests** with >95% code coverage
+- **SARIF 2.1.0** output for GitHub Code Scanning
+- **Plugin system** for custom detectors
+- **Pre-commit hook** support
+- **CI matrix**: Python 3.10-3.14, Linux/macOS/Windows
+
+Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
