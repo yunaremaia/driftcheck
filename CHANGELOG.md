@@ -2,6 +2,11 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.30] - 2026-09-07
+
+### Added
+- Environment drift detection: `.env.example` vs `.env` (missing/extra keys), `docker-compose.yml` vs `docker-compose.prod.yml` (image tag differences), `values.yaml` vs `values.prod.yaml` (Helm value differences for `replicaCount`, `tag`, `repository`, `resources`)
+
 ## [0.1.29] - 2026-09-07
 
 ### Added

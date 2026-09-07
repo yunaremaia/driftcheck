@@ -171,6 +171,13 @@ from .makefile import (
     MAKEFILE_VERSION_VAR_RE,
     MAKEFILE_TOOL_ASSIGN_RE,
 )
+from .env_drift import (
+    find_env_drift,
+    find_compose_override_drift,
+    find_helm_values_drift,
+    find_env_drift_combined,
+    parse_env_file,
+)
 from .fix import apply_fixes
 
 __all__ = [
@@ -295,6 +302,9 @@ __all__ = [
     "find_makefile_drift",
     "MAKEFILE_VERSION_VAR_RE",
     "MAKEFILE_TOOL_ASSIGN_RE",
+    # Environment drift
+    "find_env_drift_combined",
+    "parse_env_file",
     # Tool versions
     "TOOL_VERSION_RE",
     # NVMRC

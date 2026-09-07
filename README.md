@@ -75,7 +75,8 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.29):
+### Checks (v0.1.30):
+- **Environment drift**: `.env.example` vs `.env` (missing/extra keys), `docker-compose.yml` vs `docker-compose.prod.yml` (image tag differences), `values.yaml` vs `values.prod.yaml` (Helm value differences for `replicaCount`, `tag`, `repository`, `resources`)
 - **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.) and `CC = gcc-13`, `GO = 1.22` style assignments — major.minor comparison (patch differences ignored)
 - **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README mentions — handles `>=X.Y.Z <A.B.C`, `^X.Y.Z`, and exact constraints. Major.minor comparison (patch differences ignored). Intentionally excludes Flutter release versions (independent of Dart SDK).
 - **Deno**: `deno.json` / `deno.jsonc` `version` field vs README mentions — major.minor comparison (patch differences ignored)
@@ -145,7 +146,7 @@ driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.29
+    rev: v0.1.30
     hooks:
       - id: driftcheck
         args: ["--no-informational"]

@@ -65,6 +65,8 @@ from .detectors import (
     find_dart_drift,
     parse_makefile_versions,
     find_makefile_drift,
+    find_env_drift,
+    find_env_drift_combined,
     apply_fixes,
 )
 
@@ -303,6 +305,7 @@ def scan_repo(root: Path = Path(".")) -> dict:
         "dotnet_drifts": dotnet_drifts,
         "ruby_drifts": ruby_drifts,
         "php_drifts": php_drifts,
+        "env_drifts": find_env_drift_combined(root),
         "lockfile_drifts": lockfile_drifts,
         "tool_versions_drifts": tool_versions_drifts,
         "nvmrc_drifts": nvmrc_drifts,
@@ -405,6 +408,8 @@ __all__ = [
     "find_dart_drift",
     # Fix
     "apply_fixes",
+    # Environment drift
+    "find_env_drift_combined",
     # Orchestrator
     "scan_repo",
 ]

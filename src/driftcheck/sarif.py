@@ -101,6 +101,11 @@ DRIFT_RULES = {
         "PHP Version Drift",
         "README documentation references a PHP version that doesn't match composer.json require.php",
     ),
+    "env_drifts": (
+        "env-config-drift",
+        "Environment Config Drift",
+        "Environment configuration drift detected (.env.example vs .env, Docker Compose overrides, Helm values)",
+    ),
     "actions_drifts": (
         "github-actions-node20-deprecated",
         "GitHub Actions Node 20 Deprecation",
@@ -281,6 +286,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Dart {d.get('doc_version')} in docs should be {d.get('pubspec_version')} (pubspec.yaml)"
     elif drift_type == "makefile_drifts":
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('makefile_version')} (Makefile)"
+    elif drift_type == "env_drifts":
+        return d.get("detail", "Environment config drift detected")
     return str(d)
 
 
@@ -299,7 +306,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",
         "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
-        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
+        "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts", "env_drifts",
     ]
 
     for drift_type in drift_keys:

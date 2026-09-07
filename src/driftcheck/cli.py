@@ -15,7 +15,8 @@ DRIFT_KEYS = [
     "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
     "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
     "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
-    "external_resource_drifts", "dependabot_drifts",
+ "env_drifts",
+ "external_resource_drifts", "dependabot_drifts",
     "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
     "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
 ]
@@ -40,6 +41,7 @@ DETECTOR_INFO = {
     "dotnet_drifts": ("dotnet", ".NET csproj TargetFramework vs README"),
     "ruby_drifts": ("ruby", "Gemfile ruby directive vs README"),
     "php_drifts": ("php", "composer.json require.php vs README"),
+    "env_drifts": ("env", "Environment config drift (.env.example vs .env, compose overrides, Helm values)"),
     "actions_drifts": ("actions-node20", "GitHub Actions Node 20 deprecation"),
     "gh_actions_version_drifts": ("actions-outdated", "GitHub Actions outdated versions"),
     "ci_os_drifts": ("ci-os", "Deprecated CI runner (e.g., ubuntu-20.04)"),
@@ -325,6 +327,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Makefile drifts
     for d in all_drifts.get("makefile_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['makefile_version']} (Makefile)")
+
+    # Environment drifts
+    for d in all_drifts.get("env_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Plugin drifts (generic handler)
     for key, drifts in all_drifts.items():
