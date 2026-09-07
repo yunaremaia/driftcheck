@@ -175,3 +175,84 @@ def test_lockfile_drift_included_in_scan():
         result = scan_repo(root)
         assert "lockfile_drifts" in result
         assert len(result["lockfile_drifts"]) == 1
+
+
+class TestPipfileDrift:
+    """Tests for Pipfile vs Pipfile.lock drift detection."""
+
+    def test_pipfile_drift_detected(self, tmp_path):
+        """Test drift when Pipfile.lock has different version."""
+        pipfile = tmp_path / "Pipfile"
+        pipfile.write_text("""
+[packages]
+flask = "==2.0.0"
+requests = ">=2.28.0"
+""")
+        pipfile_lock = tmp_path / "Pipfile.lock"
+        pipfile_lock.write_text('{
+    "default": {
+        "flask": {"version": "==2.0.1"},
+        "requests": {"version": "==2.28.0"}
+    }
+}')
+        drifts = find_pipfile_drift(tmp_path)
+        assert len(drifts) >= 1
+        assert drifts[0]["package"] == "flask"
+
+    def test_pipfile_no_drift(self, tmp_path):
+        """Test no drift when versions match."""
+        pipfile = tmp_path / "Pipfile"
+        pipfile.write_text("""
+[packages]
+flask = "==2.0.0"
+""")
+        pipfile_lock = tmp_path / "Pipfile.lock"
+        pipfile_lock.write_text('{
+    "default": {
+        "flask": {"version": "==2.0.0"}
+    }
+}')
+        drifts = find_pipfile_drift(tmp_path)
+        assert len(drifts) == 0
+
+    def test_pipfile_missing(self, tmp_path):
+        """Test no drift when Pipfile doesn't exist."""
+        drifts = find_pipfile_drift(tmp_path)
+        assert len(drifts) == 0
+
+
+class TestCondaDrift:
+    """Tests for Conda environment.yml drift detection."""
+
+    def test_conda_unpinned_detected(self, tmp_path):
+        """Test drift for unpinned packages."""
+        env = tmp_path / "environment.yml"
+        env.write_text("""
+name: test
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas>=1.5
+""")
+        drifts = find_conda_drift(tmp_path)
+        # numpy is unpinned
+        assert any(d["package"] == "numpy" for d in drifts)
+
+    def test_conda_no_drift(self, tmp_path):
+        """Test no drift when all packages are pinned."""
+        env = tmp_path / "environment.yml"
+        env.write_text("""
+name: test
+dependencies:
+  - python=3.11
+  - numpy=1.24.0
+  - pandas=2.0.0
+""")
+        drifts = find_conda_drift(tmp_path)
+        assert len(drifts) == 0
+
+    def test_conda_missing(self, tmp_path):
+        """Test no drift when environment.yml doesn't exist."""
+        drifts = find_conda_drift(tmp_path)
+        assert len(drifts) == 0
+

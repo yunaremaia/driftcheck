@@ -181,12 +181,33 @@ from .cmake import (
     find_cmake_drift,
     CMAKE_VERSION_RE,
 )
+from .requirements import (
+    parse_requirements_packages,
+    find_requirements_drift,
+    REQUIREMENTS_PKG_RE,
+)
+from .kotlin import (
+    parse_kotlin_version,
+    find_kotlin_drift,
+    KOTLIN_PLUGIN_RE,
+)
 from .env_drift import (
     find_env_drift,
     find_compose_override_drift,
     find_helm_values_drift,
     find_env_drift_combined,
     parse_env_file,
+)
+from .pipfile import (
+    parse_pipfile_versions,
+    find_pipfile_drift,
+    PIPFILE_RE,
+    PIPFILE_LOCK_RE,
+)
+from .conda import (
+    parse_conda_environment,
+    find_conda_drift,
+    CONDA_ENV_RE,
 )
 from .fix import apply_fixes
 
@@ -332,6 +353,23 @@ __all__ = [
     "find_dart_drift",
     "DART_SDK_RE",
     "DART_DOC_RE",
+    # Requirements
+    "parse_requirements_packages",
+    "find_requirements_drift",
+    "REQUIREMENTS_PKG_RE",
+    # Kotlin
+    "parse_kotlin_version",
+    "find_kotlin_drift",
+    "KOTLIN_PLUGIN_RE",
+    # Pipfile
+    "parse_pipfile_versions",
+    "find_pipfile_drift",
+    "PIPFILE_RE",
+    "PIPFILE_LOCK_RE",
+    # Conda
+    "parse_conda_environment",
+    "find_conda_drift",
+    "CONDA_ENV_RE",
     # Fix
     "apply_fixes",
 ]

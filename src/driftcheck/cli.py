@@ -47,6 +47,10 @@ DETECTOR_INFO = {
     "makefile_drifts": ("makefile", "Makefile tool version pins (CC, CMAKE, GO, etc.) vs README"),
     "elixir_drifts": ("elixir", "Elixir mix.exs version vs README"),
     "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
+    "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
+    "kotlin_drifts": ("kotlin", "Kotlin build.gradle.kts plugin version vs README"),
+    "pipfile_drifts": ("pipfile", "Pipfile vs Pipfile.lock version mismatches"),
+    "conda_drifts": ("conda", "Conda environment.yml pinned versions"),
 }
 
 
@@ -242,7 +246,7 @@ def _print_report(result: dict) -> None:
                 else:
                     tool = d.get("tool", "")
                     doc_v = d.get("doc_version", "")
-                    actual_v = d.get("makefile_version", d.get("package_version", d.get("gomod_version", d.get("pyproject_version", ""))))
+                    actual_v = d.get("makefile_version", d.get("package_version", d.get("gomod_version", d.get("pyproject_version", d.get("requirements_version", d.get("gradle_version", ""))))))
                     if tool:
                         print(f"- `{file}`: {tool} {doc_v} → should be {actual_v}")
                     else:
@@ -341,6 +345,22 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # CMake drifts
     for d in all_drifts.get("cmake_drifts", []):
         print(f"driftcheck: {d['file']}: CMake {d['doc_version']} → should be {d['cmake_version']} (CMakeLists.txt)")
+
+    # Requirements drifts
+    for d in all_drifts.get("requirements_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
+
+    # Kotlin drifts
+    for d in all_drifts.get("kotlin_drifts", []):
+        print(f"driftcheck: {d['file']}: Kotlin {d['doc_version']} → should be {d['gradle_version']} (build.gradle.kts)")
+
+    # Pipfile drift
+    for d in all_drifts.get("pipfile_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']}: Pipfile={d['pipfile_version']} vs Pipfile.lock={d['lock_version']}")
+
+    # Conda drift
+    for d in all_drifts.get("conda_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']}: {d.get('environment_version', 'unpinned')} version pin")
 
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):

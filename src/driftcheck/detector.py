@@ -71,6 +71,11 @@ from .detectors import (
     find_cmake_drift,
     find_env_drift,
     find_env_drift_combined,
+    find_requirements_drift,
+    parse_kotlin_version,
+    find_kotlin_drift,
+    find_pipfile_drift,
+    find_conda_drift,
     apply_fixes,
 )
 
@@ -301,6 +306,26 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     cmake_text = "\n".join(cmake_files.values()) if cmake_files else ""
     cmake_drifts = find_cmake_drift(cmake_text, docs)
 
+    # Requirements.txt
+    req_path = root / "requirements.txt"
+    req_text = req_path.read_text(encoding="utf-8", errors="replace") if req_path.exists() else ""
+    requirements_drifts = find_requirements_drift(req_text, pyproject_text, docs)
+
+    # Kotlin (build.gradle.kts)
+    gradle_kts_files = {}
+    for pattern in ["build.gradle.kts", "gradle/build.gradle.kts"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                gradle_kts_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    gradle_kts_text = "\n".join(gradle_kts_files.values()) if gradle_kts_files else ""
+    kotlin_drifts = find_kotlin_drift(gradle_kts_text, docs)
+
+    # Pipfile
+    pipfile_drifts = find_pipfile_drift(root)
+
+    # Conda
+    conda_drifts = find_conda_drift(root)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -342,6 +367,10 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "makefile_drifts": makefile_drifts,
         "elixir_drifts": elixir_drifts,
         "cmake_drifts": cmake_drifts,
+        "requirements_drifts": requirements_drifts,
+        "kotlin_drifts": kotlin_drifts,
+        "pipfile_drifts": pipfile_drifts,
+        "conda_drifts": conda_drifts,
     }
 
     # Run plugin detectors
