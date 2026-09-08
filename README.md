@@ -75,7 +75,7 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.33):
+### Checks (v0.1.34):
 
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
@@ -180,7 +180,7 @@ pre-commit install
 ### Stats
 
 - **40 detectors** covering 40+ toolchains and file types
-- **314 tests** with >95% code coverage
+- **367 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
