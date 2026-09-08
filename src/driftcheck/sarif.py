@@ -212,6 +212,31 @@ DRIFT_RULES = {
         "Jenkins Tool Version Drift",
         "README documentation references a tool version that doesn't match Jenkinsfile nodejs/python/docker declarations",
     ),
+    "ruby_version_drifts": (
+        "ruby-version-file-drift",
+        "Ruby Version File Drift",
+        "README documentation references a Ruby version that doesn't match .ruby-version",
+    ),
+    "python_version_drifts": (
+        "python-version-file-drift",
+        "Python Version File Drift",
+        "README documentation references a Python version that doesn't match .python-version",
+    ),
+    "node_version_drifts": (
+        "node-version-file-drift",
+        "Node Version File Drift",
+        "README documentation references a Node.js version that doesn't match .node-version",
+    ),
+    "java_version_drifts": (
+        "java-version-file-drift",
+        "Java Version File Drift",
+        "README documentation references a Java version that doesn't match .java-version",
+    ),
+    "terraform_version_drifts": (
+        "terraform-version-file-drift",
+        "Terraform Version File Drift",
+        "README documentation references a Terraform version that doesn't match .terraform-version",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -333,6 +358,16 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"{d.get('package', 'package')}: Pipfile={d.get('pipfile_version')} vs Pipfile.lock={d.get('lock_version')}"
     elif drift_type == "conda_drifts":
         return f"{d.get('package', 'package')}: unpinned version in environment.yml"
+    elif drift_type == "ruby_version_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.ruby-version)"
+    elif drift_type == "python_version_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.python-version)"
+    elif drift_type == "node_version_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.node-version)"
+    elif drift_type == "java_version_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.java-version)"
+    elif drift_type == "terraform_version_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.terraform-version)"
     elif drift_type == "jenkins_drifts":
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('jenkins_version')} (Jenkinsfile)"
     elif drift_type == "env_drifts":
@@ -359,6 +394,8 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "elixir_drifts", "cmake_drifts", "requirements_drifts", "kotlin_drifts",
         "pipfile_drifts", "conda_drifts",
         "jenkins_drifts",
+        "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
+        "java_version_drifts", "terraform_version_drifts",
     ]
 
     for drift_type in drift_keys:

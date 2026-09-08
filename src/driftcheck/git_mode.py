@@ -150,4 +150,9 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "elixir_drifts": ["mix.exs", "README.md"],
     "cmake_drifts": ["CMakeLists.txt", "cmake/CMakeLists.txt", "src/CMakeLists.txt", "README.md"],
     "jenkins_drifts": ["Jenkinsfile", "jenkins/Jenkinsfile", "jenkinsfile", "Jenkinsfile.*", "README.md"],
+    "ruby_version_drifts": [".ruby-version", "README.md"],
+    "python_version_drifts": [".python-version", "README.md"],
+    "node_version_drifts": [".node-version", "README.md"],
+    "java_version_drifts": [".java-version", "README.md"],
+    "terraform_version_drifts": [".terraform-version", "README.md"],
 }

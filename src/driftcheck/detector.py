@@ -82,6 +82,12 @@ from .detectors import (
     parse_jenkins_python_version,
     parse_jenkins_docker_images,
     find_jenkins_drift,
+    parse_ruby_version,
+    parse_python_version,
+    parse_node_version,
+    parse_java_version,
+    parse_terraform_version,
+    find_version_file_drift,
     apply_fixes,
 )
 
@@ -343,6 +349,19 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
 
     jenkins_drifts = find_jenkins_drift(jenkins_files, docs)
 
+    # Version files (.ruby-version, .python-version, .node-version, .java-version, .terraform-version)
+    version_files = {}
+    for pattern in [".ruby-version", ".python-version", ".node-version", ".java-version", ".terraform-version"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                version_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+
+    ruby_version_drifts = find_version_file_drift(version_files, docs, "Ruby")
+    python_version_drifts = find_version_file_drift(version_files, docs, "Python")
+    node_version_drifts = find_version_file_drift(version_files, docs, "Node.js")
+    java_version_drifts = find_version_file_drift(version_files, docs, "Java")
+    terraform_version_drifts = find_version_file_drift(version_files, docs, "Terraform")
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -390,6 +409,11 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "conda_drifts": conda_drifts,
         "gradle_catalog_drifts": gradle_catalog_drifts,
         "jenkins_drifts": jenkins_drifts,
+        "ruby_version_drifts": ruby_version_drifts,
+        "python_version_drifts": python_version_drifts,
+        "node_version_drifts": node_version_drifts,
+        "java_version_drifts": java_version_drifts,
+        "terraform_version_drifts": terraform_version_drifts,
     }
 
     # Run plugin detectors

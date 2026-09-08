@@ -53,6 +53,11 @@ DETECTOR_INFO = {
     "conda_drifts": ("conda", "Conda environment.yml pinned versions"),
     "gradle_catalog_drifts": ("gradle-catalog", "Gradle Version Catalog (libs.versions.toml) vs README"),
     "jenkins_drifts": ("jenkins", "Jenkinsfile tool versions (nodejs, python, docker) vs README"),
+    "ruby_version_drifts": ("ruby-version", ".ruby-version vs README"),
+    "python_version_drifts": ("python-version", ".python-version vs README"),
+    "node_version_drifts": ("node-version", ".node-version vs README"),
+    "java_version_drifts": ("java-version", ".java-version vs README"),
+    "terraform_version_drifts": ("terraform-version", ".terraform-version vs README"),
 }
 
 
@@ -371,6 +376,18 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Jenkins drifts
     for d in all_drifts.get("jenkins_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['jenkins_version']} (Jenkinsfile)")
+
+    # Version file drifts
+    for d in all_drifts.get("ruby_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.ruby-version)")
+    for d in all_drifts.get("python_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.python-version)")
+    for d in all_drifts.get("node_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.node-version)")
+    for d in all_drifts.get("java_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.java-version)")
+    for d in all_drifts.get("terraform_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.terraform-version)")
 
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):

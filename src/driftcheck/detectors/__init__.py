@@ -225,6 +225,14 @@ from .jenkins import (
     JENKINS_PYTHON_RE,
     JENKINS_DOCKER_IMAGE_RE,
 )
+from .version_files import (
+    parse_ruby_version,
+    parse_python_version,
+    parse_node_version,
+    parse_java_version,
+    parse_terraform_version,
+    find_version_file_drift,
+)
 from .fix import apply_fixes
 
 __all__ = [

@@ -20,6 +20,8 @@ DRIFT_KEYS = [
     "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
     "elixir_drifts", "cmake_drifts", "requirements_drifts", "kotlin_drifts",
     "pipfile_drifts", "conda_drifts", "gradle_catalog_drifts", "jenkins_drifts",
+    "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
+    "java_version_drifts", "terraform_version_drifts",
 ]
 
 # Default configuration
