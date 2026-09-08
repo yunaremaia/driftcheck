@@ -19,7 +19,7 @@ DRIFT_KEYS = [
     "lockfile_drifts", "tool_versions_drifts", "nvmrc_drifts",
     "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts",
     "elixir_drifts", "cmake_drifts", "requirements_drifts", "kotlin_drifts",
-    "pipfile_drifts", "conda_drifts", "gradle_catalog_drifts",
+    "pipfile_drifts", "conda_drifts", "gradle_catalog_drifts", "jenkins_drifts",
 ]
 
 # Default configuration

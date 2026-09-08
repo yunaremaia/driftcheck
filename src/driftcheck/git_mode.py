@@ -149,4 +149,5 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "makefile_drifts": ["Makefile", "makefile", "GNUmakefile", "Makefile.*", "make/*.mk", "README.md"],
     "elixir_drifts": ["mix.exs", "README.md"],
     "cmake_drifts": ["CMakeLists.txt", "cmake/CMakeLists.txt", "src/CMakeLists.txt", "README.md"],
+    "jenkins_drifts": ["Jenkinsfile", "jenkins/Jenkinsfile", "jenkinsfile", "Jenkinsfile.*", "README.md"],
 }

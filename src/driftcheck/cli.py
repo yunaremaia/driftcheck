@@ -52,6 +52,7 @@ DETECTOR_INFO = {
     "pipfile_drifts": ("pipfile", "Pipfile vs Pipfile.lock version mismatches"),
     "conda_drifts": ("conda", "Conda environment.yml pinned versions"),
     "gradle_catalog_drifts": ("gradle-catalog", "Gradle Version Catalog (libs.versions.toml) vs README"),
+    "jenkins_drifts": ("jenkins", "Jenkinsfile tool versions (nodejs, python, docker) vs README"),
 }
 
 
@@ -153,7 +154,7 @@ def main(argv=None) -> int:
             "Dockerfile.*", "docker/Dockerfile", "*.csproj", "*.sln", "composer.json",
             "pubspec.yaml", "Package.swift", "deno.json", "deno.jsonc", ".tool-versions", ".nvmrc",
             "Makefile", "makefile", "GNUmakefile", "Makefile.*", "make/*.mk",
-            "mix.exs", "CMakeLists.txt",
+            "mix.exs", "CMakeLists.txt", "Jenkinsfile", "jenkinsfile",
         ]
         for pattern in other_indicators:
             if list(path.glob(pattern)):
@@ -366,6 +367,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Gradle Version Catalog drift
     for d in all_drifts.get("gradle_catalog_drifts", []):
         print(f"driftcheck: {d['file']}: {d['library']}: catalog={d['catalog_version']} vs README={d['readme_version']}")
+
+    # Jenkins drifts
+    for d in all_drifts.get("jenkins_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['jenkins_version']} (Jenkinsfile)")
 
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):

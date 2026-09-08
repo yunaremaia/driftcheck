@@ -77,6 +77,11 @@ from .detectors import (
     find_pipfile_drift,
     find_conda_drift,
     find_gradle_catalog_drift,
+    parse_jenkins_node_agent,
+    parse_jenkins_nodejs_version,
+    parse_jenkins_python_version,
+    parse_jenkins_docker_images,
+    find_jenkins_drift,
     apply_fixes,
 )
 
@@ -329,6 +334,15 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Gradle Version Catalog
     gradle_catalog_drifts = find_gradle_catalog_drift(root)
 
+    # Jenkins
+    jenkins_files = {}
+    for pattern in ["Jenkinsfile", "jenkins/Jenkinsfile", "jenkinsfile", "Jenkinsfile.*"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                jenkins_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+
+    jenkins_drifts = find_jenkins_drift(jenkins_files, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -375,6 +389,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "pipfile_drifts": pipfile_drifts,
         "conda_drifts": conda_drifts,
         "gradle_catalog_drifts": gradle_catalog_drifts,
+        "jenkins_drifts": jenkins_drifts,
     }
 
     # Run plugin detectors

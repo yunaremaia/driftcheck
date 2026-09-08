@@ -207,6 +207,11 @@ DRIFT_RULES = {
         "Conda Unpinned Package",
         "environment.yml contains unpinned package versions",
     ),
+    "jenkins_drifts": (
+        "jenkins-version-drift",
+        "Jenkins Tool Version Drift",
+        "README documentation references a tool version that doesn't match Jenkinsfile nodejs/python/docker declarations",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -328,6 +333,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"{d.get('package', 'package')}: Pipfile={d.get('pipfile_version')} vs Pipfile.lock={d.get('lock_version')}"
     elif drift_type == "conda_drifts":
         return f"{d.get('package', 'package')}: unpinned version in environment.yml"
+    elif drift_type == "jenkins_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('jenkins_version')} (Jenkinsfile)"
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
@@ -351,6 +358,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "tool_versions_drifts", "nvmrc_drifts", "swift_drifts", "deno_drifts", "dart_drifts", "makefile_drifts", "env_drifts",
         "elixir_drifts", "cmake_drifts", "requirements_drifts", "kotlin_drifts",
         "pipfile_drifts", "conda_drifts",
+        "jenkins_drifts",
     ]
 
     for drift_type in drift_keys:

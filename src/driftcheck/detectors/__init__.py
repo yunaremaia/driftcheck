@@ -214,6 +214,17 @@ from .conda import (
     find_conda_drift,
     CONDA_ENV_RE,
 )
+from .jenkins import (
+    parse_jenkins_node_agent,
+    parse_jenkins_nodejs_version,
+    parse_jenkins_python_version,
+    parse_jenkins_docker_images,
+    find_jenkins_drift,
+    JENKINS_NODE_RE,
+    JENKINS_NODEJS_RE,
+    JENKINS_PYTHON_RE,
+    JENKINS_DOCKER_IMAGE_RE,
+)
 from .fix import apply_fixes
 
 __all__ = [

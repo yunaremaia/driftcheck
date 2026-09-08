@@ -101,7 +101,7 @@ You can also use CLI flags `--only` and `--exclude` to filter detectors at runti
 - **GitHub Actions**: outdated `uses: action@version` — compares against known latest versions for 18 popular actions; detects deprecated Node 20 runtime
 - **GitLab CI**: `.gitlab-ci.yml` image tags vs README
 - **CircleCI**: `.circleci/config.yml` docker image tags vs README
-- **Jenkins**: `Jenkinsfile` version drift
+- **Jenkins**: `Jenkinsfile` tool versions (`nodejs`, `python`, `docker.image`) vs README
 - **CI OS**: deprecated GitHub Actions runners (ubuntu-18.04, macos-11, windows-2016)
 
 **Infrastructure:**

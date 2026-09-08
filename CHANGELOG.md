@@ -2,6 +2,21 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.34] - 2026-09-08
+
+### Added
+- **Jenkins drift detection**: `Jenkinsfile` tool versions (`nodejs`, `python`, `docker.image`) vs README mentions — major.minor comparison (patch differences ignored)
+- SARIF rule `jenkins-version-drift` (blocking level)
+- New tests: `test_jenkins.py` (16 tests)
+
+### Changed
+- Bumped version to 0.1.34
+
+## [0.1.33] - 2026-09-07
+
+### Changed
+- README: listed Jenkins as planned detector (implemented in v0.1.34)
+
 ## [0.1.32] - 2026-09-07
 
 ### Added
