@@ -4,7 +4,7 @@ import re
 
 GRADLE_JAVA_RE = re.compile(r'sourceCompatibility\s*=\s*["\']?(?P<ver>\d+(?:\.\d+)?)["\']?|JavaVersion\.VERSION_(?P<ver2>_\d+|(?:\d+))', re.I)
 GRADLE_KOTLIN_RE = re.compile(r'jvmTarget\s*=\s*["\']?(?P<ver>\d+(?:\.\d+)?)["\']?', re.I)
-JAVA_DOC_RE = re.compile(r'(?:Java|JDK|JRE)\s+(?P<ver>\d+(?:\.\d+)?)', re.I)
+JAVA_DOC_RE = re.compile(r'(?:Java|JDK|JRE|JVM)\s+(?P<ver>\d+(?:\.\d+)?)', re.I)
 
 
 def parse_gradle_java_version(text: str) -> str | None:

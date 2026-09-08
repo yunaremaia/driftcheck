@@ -2,7 +2,7 @@
 from __future__ import annotations
 import re
 
-TERRAFORM_PROVIDER_RE = re.compile(r'required_providers\s*=?\s*\{[^}]*source\s*=\s*"(?P<source>[^"]+)"[^}]*version\s*=\s*"(?P<ver>[^"]+)"', re.S)
+TERRAFORM_PROVIDER_RE = re.compile(r'source\s*=\s*"(?P<source>[^"]+)"[^}]*version\s*=\s*"(?P<ver>[^"]+)"', re.S)
 TERRAFORM_VER_RE = re.compile(r'(?:provider|terraform|version)\s+"?(?P<ver>\d+\.\d+(?:\.\d+)?)"?', re.I)
 
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 import re
 
-MAVEN_VER_RE = re.compile(r'<(?:java\.version|maven\.compiler\.source|maven\.compiler\.target|release)>(?P<ver>\d+(?:\.\d+)?)</')
+MAVEN_VER_RE = re.compile(r'<(?:java\.version|maven\.compiler\.source|maven\.compiler\.target|maven\.compiler\.release)>(?P<ver>\d+(?:\.\d+)?)</')
 MAVEN_DOC_RE = re.compile(r'(?:Java|JDK|JRE|requires)\s+(?P<ver>\d+(?:\.\d+)?)', re.I)
 
 
