@@ -75,7 +75,7 @@ fail_on_informational = false
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
 
-### Checks (v0.1.34):
+### Checks (v0.1.35):
 
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
@@ -120,6 +120,7 @@ You can also use CLI flags `--only` and `--exclude` to filter detectors at runti
 
 **Configuration:**
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
+- **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
 - **NVMRC**: `.nvmrc` vs `package.json` engines.node (informational)
 - **Dependabot**: ecosystems used but not covered by `.github/dependabot.yml` (informational)
 - **SARIF output**: `driftcheck --sarif` generates SARIF 2.1.0 for GitHub Code Scanning
@@ -179,8 +180,8 @@ pre-commit install
 
 ### Stats
 
-- **42 detectors** covering 40+ toolchains and file types
-- **367 tests** with >95% code coverage
+- **47 detectors** covering 50+ toolchains and file types
+- **388 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support

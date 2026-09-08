@@ -2,6 +2,16 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.35] - 2026-09-08
+
+### Added
+- **Version file drift detection**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README mentions — major.minor comparison (patch differences ignored)
+- SARIF rules for all 5 version file types (blocking level)
+- New tests: `test_version_files.py` (21 tests)
+
+### Changed
+- Bumped version to 0.1.35
+
 ## [0.1.34] - 2026-09-08
 
 ### Added
