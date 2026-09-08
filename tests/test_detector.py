@@ -179,6 +179,30 @@ def test_lockfile_drift_included_in_scan():
         assert len(result["lockfile_drifts"]) == 1
 
 
+def test_lockfile_bun_lock_missing():
+    """bun.lock is a valid lockfile for package.json — should not flag missing."""
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text('{"dependencies": {}}')
+        (root / "bun.lock").write_text('{"name": "test"}')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 0
+
+
+def test_lockfile_bun_lockb_missing():
+    """bun.lockb (binary) is a valid lockfile for package.json — should not flag missing."""
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "package.json").write_text('{"dependencies": {}}')
+        (root / "bun.lockb").write_text('binary')
+        drifts = find_lockfile_drift(root)
+        assert len(drifts) == 0
+
+
 class TestPipfileDrift:
     """Tests for Pipfile vs Pipfile.lock drift detection."""
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Manifest -> lockfile mapping
 MANIFEST_LOCKFILE = {
-    "package.json": ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
+    "package.json": ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb"],
     "Cargo.toml": ["Cargo.lock"],
     "go.mod": ["go.sum"],
     "Gemfile": ["Gemfile.lock"],
