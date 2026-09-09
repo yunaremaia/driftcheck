@@ -69,8 +69,9 @@ exclude_detectors = ["lockfile", "nvmrc", "ci_os"]
 # Treat informational drifts as blocking
 fail_on_informational = false
 
-# Custom doc paths (default: auto-detects README.md, CONTRIBUTING.md, docs/README*.md)
-# doc_paths = ["README.md", "docs/guide.md"]
+# Custom doc paths — additional files to scan for version mentions
+# Supports glob patterns (e.g., "docs/*.md")
+doc_paths = ["docs/setup.md", "CHANGELOG.md"]
 ```
 
 You can also use CLI flags `--only` and `--exclude` to filter detectors at runtime.
