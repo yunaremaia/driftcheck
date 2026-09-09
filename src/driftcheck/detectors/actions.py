@@ -13,24 +13,25 @@ ACTIONS_NODE24_FIX = {
 ACTIONS_RE = re.compile(r'uses:\s*(?P<action>[A-Za-z0-9_.\-\/]+)\s*@\s*(?P<ver>v\d+(?:\.\d+)*)', re.I)
 
 # Known latest versions for popular actions (update periodically)
+# Last updated: 2026-09-09
 GH_ACTIONS_LATEST = {
-    "actions/checkout": "v5",
-    "actions/setup-node": "v5",
-    "actions/setup-python": "v6",
-    "actions/setup-java": "v5",
-    "actions/setup-go": "v6",
+    "actions/checkout": "v7",
+    "actions/setup-node": "v7",
+    "actions/setup-python": "v7",
+    "actions/setup-java": "v6",
+    "actions/setup-go": "v7",
     "actions/cache": "v6",
-    "actions/upload-artifact": "v5",
-    "actions/download-artifact": "v5",
+    "actions/upload-artifact": "v7",
+    "actions/download-artifact": "v8",
     "pnpm/action-setup": "v5",
     "actions/configure-pages": "v6",
     "actions/deploy-pages": "v6",
-    "actions/stale": "v10",
-    "actions/labeler": "v6",
+    "actions/stale": "v11",
+    "actions/labeler": "v7",
     "actions/dependency-review-action": "v5",
     "github/codeql-action/init": "v4",
     "github/codeql-action/analyze": "v4",
-    "codecov/codecov-action": "v5",
+    "codecov/codecov-action": "v7",
     "dorny/test-reporter": "v2",
 }
 
@@ -87,7 +88,10 @@ def find_gh_actions_version_drift(root: Path) -> list[dict]:
             latest = GH_ACTIONS_LATEST.get(action)
             if not latest:
                 continue
-            if ver != latest:
+            # Compare major versions only
+            ver_major = ver.split(".")[0]
+            latest_major = latest.split(".")[0]
+            if ver_major != latest_major:
                 drifts.append({
                     "file": rel,
                     "action": action,
