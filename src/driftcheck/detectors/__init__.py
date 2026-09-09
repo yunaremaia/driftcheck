@@ -263,6 +263,11 @@ from .editorconfig import (
     parse_editorconfig,
     find_editorconfig_drift,
 )
+from .taskfile import (
+    find_taskfile_drift,
+    parse_taskfile,
+    parse_makefile,
+)
 from .fix import apply_fixes
 
 __all__ = [

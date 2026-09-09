@@ -104,6 +104,7 @@ from .detectors import (
     find_vscode_extensions_drift,
     parse_editorconfig,
     find_editorconfig_drift,
+    find_taskfile_drift,
 )
 
 
@@ -415,6 +416,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     vscode_settings_text = vscode_settings_path.read_text(encoding="utf-8", errors="replace") if vscode_settings_path.exists() else None
     editorconfig_drifts = find_editorconfig_drift(editorconfig_text, docs, vscode_settings_text)
 
+    # Taskfile
+    taskfile_drifts = find_taskfile_drift(root)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -474,6 +478,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "package_manager_drifts": package_manager_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
+        "taskfile_drifts": taskfile_drifts,
     }
 
     # Run plugin detectors

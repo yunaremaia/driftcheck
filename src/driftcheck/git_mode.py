@@ -158,4 +158,8 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "npmrc_drifts": [".npmrc", "README.md"],
     "yarnrc_drifts": [".yarnrc.yml", "README.md"],
     "pnpm_workspace_drifts": ["pnpm-workspace.yaml", "package.json", "README.md"],
+    "package_manager_drifts": ["package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
+    "vscode_ext_drifts": [".vscode/extensions.json", "README.md"],
+    "editorconfig_drifts": [".editorconfig", ".vscode/settings.json", "README.md"],
+    "taskfile_drifts": ["Taskfile.yml", "Taskfile.yaml", "Makefile"],
 }

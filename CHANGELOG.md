@@ -2,6 +2,17 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.37] - 2026-09-09
+
+### Added
+- **Taskfile drift detection**: `Taskfile.yml` tasks vs `Makefile` targets — detects tasks defined in Taskfile but missing from Makefile, and vice versa
+- SARIF rule `taskfile-drift` (blocking level)
+- New tests: `test_taskfile.py` (17 tests)
+
+### Changed
+- Bumped version to 0.1.37
+- 49 detectors total, 539 tests total
+
 ## [0.1.36] - 2026-09-09
 
 ### Added

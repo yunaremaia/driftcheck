@@ -272,6 +272,11 @@ DRIFT_RULES = {
         "EditorConfig Drift",
         ".editorconfig settings conflict with README or IDE settings",
     ),
+    "taskfile_drifts": (
+        "taskfile-drift",
+        "Taskfile Drift",
+        "Tasks in Taskfile.yml missing from Makefile, or vice versa",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -413,6 +418,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "VSCode extensions drift detected")
     elif drift_type == "editorconfig_drifts":
         return d.get("detail", "EditorConfig drift detected")
+    elif drift_type == "taskfile_drifts":
+        return d.get("detail", "Taskfile drift detected")
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
@@ -440,7 +447,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
         "java_version_drifts", "terraform_version_drifts",
         "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
-        "vscode_ext_drifts", "editorconfig_drifts",
+        "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts",
     ]
 
     for drift_type in drift_keys:
