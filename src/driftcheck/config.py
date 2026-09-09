@@ -111,3 +111,8 @@ def get_excluded_detectors(config: dict[str, Any]) -> set[str]:
         else:
             excluded.add(key)
     return excluded
+
+
+def get_custom_detectors(config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Get list of custom detector definitions from config."""
+    return config.get("custom_detectors", [])
