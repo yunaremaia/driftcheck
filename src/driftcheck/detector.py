@@ -148,6 +148,13 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # collect doc files
     candidates = [root / "README.md", root / "CONTRIBUTING.md", root / "CONTRIBUTING-BEGINNERS.md"]
     candidates += list((root / "docs").glob("README*.md"))
+    # Support custom doc_paths from config
+    custom_doc_paths = config.get("doc_paths")
+    if custom_doc_paths:
+        for pattern in custom_doc_paths:
+            for p in root.glob(pattern):
+                if p.is_file():
+                    candidates.append(p)
     docs = {}
     for p in candidates:
         if p.exists():

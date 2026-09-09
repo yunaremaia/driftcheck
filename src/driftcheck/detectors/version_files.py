@@ -92,8 +92,9 @@ def find_version_file_drift(
                         "version_file": version,
                         "pos": m.start(),
                     })
-                    break
-            break  # one per file
+                    break  # one drift per doc file
+            if any(d["file"] == doc_fname for d in drifts):
+                break  # stop checking more docs for this version file
 
     return drifts
 
