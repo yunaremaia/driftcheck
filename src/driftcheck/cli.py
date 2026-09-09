@@ -63,6 +63,8 @@ DETECTOR_INFO = {
     "yarnrc_drifts": ("yarnrc", ".yml Yarn version vs README"),
     "pnpm_workspace_drifts": ("pnpm", "pnpm-workspace.yaml vs package.json workspaces"),
     "package_manager_drifts": ("package-manager", "packageManager field vs lockfile"),
+    "vscode_ext_drifts": ("vscode-ext", "VSCode extensions.json vs README recommendations"),
+    "editorconfig_drifts": ("editorconfig", ".editorconfig vs README/IDE indent and style"),
 }
 
 
@@ -418,6 +420,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
 
     # VSCode extensions drifts
     for d in all_drifts.get("vscode_ext_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
+
+    # EditorConfig drifts
+    for d in all_drifts.get("editorconfig_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Environment drifts

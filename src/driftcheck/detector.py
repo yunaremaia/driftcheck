@@ -102,6 +102,8 @@ from .detectors import (
     find_package_manager_drift,
     parse_vscode_extensions,
     find_vscode_extensions_drift,
+    parse_editorconfig,
+    find_editorconfig_drift,
 )
 
 
@@ -406,6 +408,13 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     vscode_ext_text = vscode_ext_path.read_text(encoding="utf-8", errors="replace") if vscode_ext_path.exists() else None
     vscode_ext_drifts = find_vscode_extensions_drift(vscode_ext_text, docs)
 
+    # EditorConfig drift
+    editorconfig_path = root / ".editorconfig"
+    editorconfig_text = editorconfig_path.read_text(encoding="utf-8", errors="replace") if editorconfig_path.exists() else None
+    vscode_settings_path = root / ".vscode" / "settings.json"
+    vscode_settings_text = vscode_settings_path.read_text(encoding="utf-8", errors="replace") if vscode_settings_path.exists() else None
+    editorconfig_drifts = find_editorconfig_drift(editorconfig_text, docs, vscode_settings_text)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -464,6 +473,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
         "package_manager_drifts": package_manager_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
+        "editorconfig_drifts": editorconfig_drifts,
     }
 
     # Run plugin detectors

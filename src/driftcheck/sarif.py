@@ -267,6 +267,11 @@ DRIFT_RULES = {
         "VSCode Extensions Drift",
         "README recommends extensions not in .vscode/extensions.json",
     ),
+    "editorconfig_drifts": (
+        "editorconfig-drift",
+        "EditorConfig Drift",
+        ".editorconfig settings conflict with README or IDE settings",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -406,6 +411,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"packageManager={d.get('package_manager_field')} but {d.get('actual_manager')} lockfile found"
     elif drift_type == "vscode_ext_drifts":
         return d.get("detail", "VSCode extensions drift detected")
+    elif drift_type == "editorconfig_drifts":
+        return d.get("detail", "EditorConfig drift detected")
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
@@ -433,7 +440,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
         "java_version_drifts", "terraform_version_drifts",
         "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
-        "vscode_ext_drifts",
+        "vscode_ext_drifts", "editorconfig_drifts",
     ]
 
     for drift_type in drift_keys:

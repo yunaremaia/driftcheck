@@ -259,6 +259,10 @@ from .vscode import (
     parse_vscode_extensions,
     find_vscode_extensions_drift,
 )
+from .editorconfig import (
+    parse_editorconfig,
+    find_editorconfig_drift,
+)
 from .fix import apply_fixes
 
 __all__ = [
