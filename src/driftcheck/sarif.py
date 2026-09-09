@@ -237,6 +237,21 @@ DRIFT_RULES = {
         "Terraform Version File Drift",
         "README documentation references a Terraform version that doesn't match .terraform-version",
     ),
+    "npmrc_drifts": (
+        "npmrc-registry-drift",
+        "NPMRC Registry Drift",
+        "README documentation references an npm registry that doesn't match .npmrc",
+    ),
+    "yarnrc_drifts": (
+        "yarnrc-version-drift",
+        "Yarn RC Version Drift",
+        "README documentation references a Yarn version that doesn't match .yml",
+    ),
+    "pnpm_workspace_drifts": (
+        "pnpm-workspace-drift",
+        "PNPM Workspace Drift",
+        "pnpm-workspace.yaml packages don't match package.json workspaces",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -396,6 +411,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "jenkins_drifts",
         "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
         "java_version_drifts", "terraform_version_drifts",
+        "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts",
     ]
 
     for drift_type in drift_keys:

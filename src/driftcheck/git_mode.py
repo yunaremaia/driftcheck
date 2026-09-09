@@ -155,4 +155,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "node_version_drifts": [".node-version", "README.md"],
     "java_version_drifts": [".java-version", "README.md"],
     "terraform_version_drifts": [".terraform-version", "README.md"],
+    "npmrc_drifts": [".npmrc", "README.md"],
+    "yarnrc_drifts": [".yarnrc.yml", "README.md"],
+    "pnpm_workspace_drifts": ["pnpm-workspace.yaml", "package.json", "README.md"],
 }

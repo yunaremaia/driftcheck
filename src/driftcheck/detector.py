@@ -89,6 +89,12 @@ from .detectors import (
     parse_terraform_version,
     find_version_file_drift,
     apply_fixes,
+    parse_npmrc_registry,
+    find_npmrc_drift,
+    parse_yarnrc_version,
+    find_yarnrc_drift,
+    parse_pnpm_workspace,
+    find_pnpm_workspace_drift,
 )
 
 
@@ -362,6 +368,21 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     java_version_drifts = find_version_file_drift(version_files, docs, "Java")
     terraform_version_drifts = find_version_file_drift(version_files, docs, "Terraform")
 
+    # NPMRC
+    npmrc_path = root / ".npmrc"
+    npmrc_text = npmrc_path.read_text(encoding="utf-8", errors="replace") if npmrc_path.exists() else None
+    npmrc_drifts = find_npmrc_drift(npmrc_text, docs)
+
+    # Yarn RC
+    yarnrc_path = root / ".yarnrc.yml"
+    yarnrc_text = yarnrc_path.read_text(encoding="utf-8", errors="replace") if yarnrc_path.exists() else None
+    yarnrc_drifts = find_yarnrc_drift(yarnrc_text, docs)
+
+    # PNPM workspace
+    pnpm_workspace_path = root / "pnpm-workspace.yaml"
+    pnpm_workspace_text = pnpm_workspace_path.read_text(encoding="utf-8", errors="replace") if pnpm_workspace_path.exists() else None
+    pnpm_workspace_drifts = find_pnpm_workspace_drift(pnpm_workspace_text, package_text or None, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -414,6 +435,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "node_version_drifts": node_version_drifts,
         "java_version_drifts": java_version_drifts,
         "terraform_version_drifts": terraform_version_drifts,
+        "npmrc_drifts": npmrc_drifts,
+        "yarnrc_drifts": yarnrc_drifts,
+        "pnpm_workspace_drifts": pnpm_workspace_drifts,
     }
 
     # Run plugin detectors

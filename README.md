@@ -130,6 +130,9 @@ You can also use CLI flags `--only` and `--exclude` to filter detectors at runti
 - **External resources**: third-party CDN dependencies that break offline rendering (informational)
 - **Count**: `skills/` directory count vs README mentions of "N skills"
 - **Plugins**: custom drift detection via `.driftcheck_plugins/` directory
+- **NPMRC**: `.npmrc` registry vs README mentions
+- **Yarn RC**: `.yml` Yarn version vs README mentions
+- **PNPM workspace**: `pnpm-workspace.yaml` packages vs `package.json` workspaces
 
 ### Plugins
 
@@ -180,8 +183,8 @@ pre-commit install
 
 ### Stats
 
-- **47 detectors** covering 50+ toolchains and file types
-- **388 tests** with >95% code coverage
+- **50 detectors** covering 50+ toolchains and file types
+- **421 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support

@@ -233,6 +233,18 @@ from .version_files import (
     parse_terraform_version,
     find_version_file_drift,
 )
+from .npmrc import (
+    parse_npmrc_registry,
+    find_npmrc_drift,
+)
+from .yarnrc import (
+    parse_yarnrc_version,
+    find_yarnrc_drift,
+)
+from .pnpm import (
+    parse_pnpm_workspace,
+    find_pnpm_workspace_drift,
+)
 from .fix import apply_fixes
 
 __all__ = [
