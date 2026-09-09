@@ -58,7 +58,7 @@ DETECTOR_INFO = {
     "node_version_drifts": ("node-version", ".node-version vs README"),
     "java_version_drifts": ("java-version", ".java-version vs README"),
     "terraform_version_drifts": ("terraform-version", ".terraform-version vs README"),
-    "npmrc_drifts": ("npmrc", ".npmrc registry vs README mentions"),
+    "npmrc_drifts": ("npmrc", ".npmrc vs package.json settings (engine-strict, registry, tag-prefix)"),
     "yarnrc_drifts": ("yarnrc", ".yml Yarn version vs README"),
     "pnpm_workspace_drifts": ("pnpm", "pnpm-workspace.yaml vs package.json workspaces"),
 }
@@ -375,6 +375,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Gradle Version Catalog drift
     for d in all_drifts.get("gradle_catalog_drifts", []):
         print(f"driftcheck: {d['file']}: {d['library']}: catalog={d['catalog_version']} vs README={d['readme_version']}")
+
+    # NPMRC drifts
+    for d in all_drifts.get("npmrc_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Jenkins drifts
     for d in all_drifts.get("jenkins_drifts", []):

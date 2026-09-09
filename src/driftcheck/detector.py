@@ -89,7 +89,7 @@ from .detectors import (
     parse_terraform_version,
     find_version_file_drift,
     apply_fixes,
-    parse_npmrc_registry,
+    parse_npmrc,
     find_npmrc_drift,
     parse_yarnrc_version,
     find_yarnrc_drift,
@@ -378,7 +378,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # NPMRC
     npmrc_path = root / ".npmrc"
     npmrc_text = npmrc_path.read_text(encoding="utf-8", errors="replace") if npmrc_path.exists() else None
-    npmrc_drifts = find_npmrc_drift(npmrc_text, docs)
+    npmrc_drifts = find_npmrc_drift(npmrc_text, package_text or None, docs)
 
     # Yarn RC
     yarnrc_path = root / ".yarnrc.yml"

@@ -238,9 +238,9 @@ DRIFT_RULES = {
         "README documentation references a Terraform version that doesn't match .terraform-version",
     ),
     "npmrc_drifts": (
-        "npmrc-registry-drift",
-        "NPMRC Registry Drift",
-        "README documentation references an npm registry that doesn't match .npmrc",
+        "npmrc-config-drift",
+        "NPMRC Config Drift",
+        ".npmrc setting conflicts with package.json (engine-strict, registry, tag-prefix)",
     ),
     "yarnrc_drifts": (
         "yarnrc-version-drift",

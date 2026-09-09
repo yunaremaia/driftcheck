@@ -234,7 +234,7 @@ from .version_files import (
     find_version_file_drift,
 )
 from .npmrc import (
-    parse_npmrc_registry,
+    parse_npmrc,
     find_npmrc_drift,
 )
 from .yarnrc import (
