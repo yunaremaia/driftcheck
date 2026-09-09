@@ -14,7 +14,7 @@ EXTENSION_RE = re.compile(
 
 # Match VSCode recommendations mentions
 RECOMMENDATIONS_RE = re.compile(
-    r'(?:recommend|suggest)(?:ed|s)?\s+(?:the\s+)?(?:[\w\s]+?\s+)?extension[s]?\s+(?P<ids>[\w.-]+(?:\s*,\s*[\w.-]+)*)',
+    r'(?:recommend|suggest)(?:ed|s)?\s+(?:the\s+)?(?:[\w\s]+?\s+)?(?:(?:extension|plugin)\s+)?(?P<ids>[\w.-]+(?:\s*,\s*[\w.-]+)*)',
     re.I,
 )
 

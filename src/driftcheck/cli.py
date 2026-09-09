@@ -416,6 +416,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     for d in all_drifts.get("package_manager_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
+    # VSCode extensions drifts
+    for d in all_drifts.get("vscode_ext_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
+
     # Environment drifts
     for d in all_drifts.get("env_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")

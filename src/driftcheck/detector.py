@@ -100,6 +100,8 @@ from .detectors import (
     parse_package_manager_field,
     detect_lockfile_manager,
     find_package_manager_drift,
+    parse_vscode_extensions,
+    find_vscode_extensions_drift,
 )
 
 
@@ -399,6 +401,11 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Package manager drift (packageManager field vs lockfile)
     package_manager_drifts = find_package_manager_drift(package_text or None, root, docs)
 
+    # VSCode extensions drift
+    vscode_ext_path = root / ".vscode" / "extensions.json"
+    vscode_ext_text = vscode_ext_path.read_text(encoding="utf-8", errors="replace") if vscode_ext_path.exists() else None
+    vscode_ext_drifts = find_vscode_extensions_drift(vscode_ext_text, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -456,6 +463,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "yarnrc_drifts": yarnrc_drifts,
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
         "package_manager_drifts": package_manager_drifts,
+        "vscode_ext_drifts": vscode_ext_drifts,
     }
 
     # Run plugin detectors

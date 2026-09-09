@@ -255,6 +255,10 @@ from .package_manager import (
     detect_lockfile_manager,
     find_package_manager_drift,
 )
+from .vscode import (
+    parse_vscode_extensions,
+    find_vscode_extensions_drift,
+)
 from .fix import apply_fixes
 
 __all__ = [
