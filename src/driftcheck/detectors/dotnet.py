@@ -13,7 +13,7 @@ def parse_dotnet_tfm(csproj_text: str) -> str | None:
         return None
     tfm = m.group("tf").strip()
     first = tfm.split(";")[0].strip()  # multi-targeting → first TFM
-    if first.startswith("net"):
+    if first.lower().startswith("net"):
         return first[3:]  # "net8.0" → "8.0"
     return None
 

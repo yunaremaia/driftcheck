@@ -28,8 +28,8 @@ def parse_gradle_catalog(filepath):
                 m = re.match(r'([a-zA-Z0-9_-]+)\s*=\s*["\']([0-9.]+)["\']', line)
                 if m:
                     versions[m.group(1)] = m.group(2)
-            # Parse library version entries
-            for m in LIBS_LIBRARY_VER_RE.finditer(ver_match.group(1)):
+            # Parse library version entries across entire file
+            for m in LIBS_LIBRARY_VER_RE.finditer(content):
                 versions[m.group(1)] = m.group(2)
         # Find plugin versions in [plugins] section
         plugins_match = re.search(r'\[plugins?\]\s*(.+?)(?=\[|$)', content, re.DOTALL)
