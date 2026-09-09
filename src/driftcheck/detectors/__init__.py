@@ -32,6 +32,11 @@ from .docker import (
     DOCKER_FROM_RE,
     DOCKER_TAG_RE,
 )
+from .docker_multistage import (
+    parse_from_stages,
+    find_dockerfile_multistage_drift,
+    FROM_RE,
+)
 from .java import (
     parse_gradle_java_version,
     find_java_drift,
