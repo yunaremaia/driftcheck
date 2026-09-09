@@ -61,6 +61,7 @@ DETECTOR_INFO = {
     "npmrc_drifts": ("npmrc", ".npmrc vs package.json settings (engine-strict, registry, tag-prefix)"),
     "yarnrc_drifts": ("yarnrc", ".yml Yarn version vs README"),
     "pnpm_workspace_drifts": ("pnpm", "pnpm-workspace.yaml vs package.json workspaces"),
+    "package_manager_drifts": ("package-manager", "packageManager field vs lockfile"),
 }
 
 
@@ -406,6 +407,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
 
     # PNPM workspace drifts
     for d in all_drifts.get("pnpm_workspace_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
+
+    # Package manager drifts
+    for d in all_drifts.get("package_manager_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Environment drifts

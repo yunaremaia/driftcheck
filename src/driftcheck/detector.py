@@ -95,6 +95,9 @@ from .detectors import (
     find_yarnrc_drift,
     parse_pnpm_workspace,
     find_pnpm_workspace_drift,
+    parse_package_manager_field,
+    detect_lockfile_manager,
+    find_package_manager_drift,
 )
 
 
@@ -390,6 +393,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     pnpm_workspace_text = pnpm_workspace_path.read_text(encoding="utf-8", errors="replace") if pnpm_workspace_path.exists() else None
     pnpm_workspace_drifts = find_pnpm_workspace_drift(pnpm_workspace_text, package_text or None, docs)
 
+    # Package manager drift (packageManager field vs lockfile)
+    package_manager_drifts = find_package_manager_drift(package_text or None, root, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -445,6 +451,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "npmrc_drifts": npmrc_drifts,
         "yarnrc_drifts": yarnrc_drifts,
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
+        "package_manager_drifts": package_manager_drifts,
     }
 
     # Run plugin detectors

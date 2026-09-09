@@ -250,7 +250,12 @@ DRIFT_RULES = {
     "pnpm_workspace_drifts": (
         "pnpm-workspace-drift",
         "PNPM Workspace Drift",
-        "pnpm-workspace.yaml packages don't match package.json workspaces",
+        "package.json workspaces do not match pnpm-workspace.yaml",
+    ),
+    "package_manager_drifts": (
+        "package-manager-drift",
+        "Package Manager Drift",
+        "packageManager field in package.json does not match the lockfile found",
     ),
 }
 
@@ -385,6 +390,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('version_file')} (.terraform-version)"
     elif drift_type == "jenkins_drifts":
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('jenkins_version')} (Jenkinsfile)"
+    elif drift_type == "package_manager_drifts":
+        return f"packageManager={d.get('package_manager_field')} but {d.get('actual_manager')} lockfile found"
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
@@ -411,7 +418,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "jenkins_drifts",
         "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
         "java_version_drifts", "terraform_version_drifts",
-        "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts",
+        "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
     ]
 
     for drift_type in drift_keys:

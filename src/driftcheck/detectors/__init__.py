@@ -245,6 +245,11 @@ from .pnpm import (
     parse_pnpm_workspace,
     find_pnpm_workspace_drift,
 )
+from .package_manager import (
+    parse_package_manager_field,
+    detect_lockfile_manager,
+    find_package_manager_drift,
+)
 from .fix import apply_fixes
 
 __all__ = [

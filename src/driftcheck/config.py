@@ -22,7 +22,7 @@ DRIFT_KEYS = [
     "pipfile_drifts", "conda_drifts", "gradle_catalog_drifts", "jenkins_drifts",
     "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
     "java_version_drifts", "terraform_version_drifts",
-    "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts",
+    "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
 ]
 
 # Default configuration
