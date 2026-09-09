@@ -13,7 +13,9 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Changed
 - Bumped version to 0.1.36
-- 50 detectors total, 421 tests total
+- 43 detectors total, 423 tests total
+
+## [0.1.35] - 2026-09-09
 
 ### Added
 - **Version file drift detection**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README mentions — major.minor comparison (patch differences ignored)
