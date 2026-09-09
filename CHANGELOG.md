@@ -2,7 +2,18 @@
 
 All notable changes to driftcheck will be documented in this file.
 
-## [0.1.35] - 2026-09-08
+## [0.1.36] - 2026-09-09
+
+### Added
+- **NPMRC drift detection**: `.npmrc` registry vs README mentions — detects when README references a different registry than what `.npmrc` configures
+- **Yarn RC drift detection**: `.yml` Yarn version vs README mentions — handles both `yarnPath` and `yarnVersion` fields
+- **PNPM workspace drift detection**: `pnpm-workspace.yaml` packages vs `package.json` workspaces — catches mismatches between the two workspace definitions
+- SARIF rules for all 3 new detectors: `npmrc-registry-drift`, `yarnrc-version-drift`, `pnpm-workspace-drift`
+- New tests: `test_npmrc.py` (9 tests), `test_yarnrc.py` (12 tests), `test_pnpm.py` (12 tests)
+
+### Changed
+- Bumped version to 0.1.36
+- 50 detectors total, 421 tests total
 
 ### Added
 - **Version file drift detection**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README mentions — major.minor comparison (patch differences ignored)
