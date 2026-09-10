@@ -59,6 +59,7 @@ DETECTOR_INFO = {
     "node_version_drifts": ("node-version", ".node-version vs README"),
     "java_version_drifts": ("java-version", ".java-version vs README"),
     "terraform_version_drifts": ("terraform-version", ".terraform-version vs README"),
+    "taskfile_drifts": ("taskfile", "Taskfile.yml tool versions vs README"),
     "npmrc_drifts": ("npmrc", ".npmrc vs package.json settings (engine-strict, registry, tag-prefix)"),
     "yarnrc_drifts": ("yarnrc", ".yml Yarn version vs README"),
     "pnpm_workspace_drifts": ("pnpm", "pnpm-workspace.yaml vs package.json workspaces"),
@@ -343,6 +344,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: PHP {d['doc_version']} → should be {d['composer_version']} (composer.json)")
     for d in all_drifts.get("tool_versions_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['tool_versions_version']} (.tool-versions)")
+    for d in all_drifts.get("taskfile_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['taskfile_version']} (Taskfile.yml)")
     for d in all_drifts.get("swift_drifts", []):
         print(f"driftcheck: {d['file']}: Swift {d['doc_version']} → should be {d['package_version']} (Package.swift)")
     for d in all_drifts.get("deno_drifts", []):

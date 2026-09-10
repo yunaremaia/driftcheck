@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 CIRCLECI_IMAGE_RE = re.compile(r'image:\s*(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)')
-CIRCLECI_VER_RE = re.compile(r'(?:image|docker|version)\s+(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)|(?:version|tag)\s+(?P<tag2>[\d.]+[\w.\-]*)', re.I)
+CIRCLECI_VER_RE = re.compile(r'(?:image|docker|version)\s*:?\s*(?P<image>[\w.\-/]+):(?P<tag>[\w.\-]+)|(?:version|tag)\s*:?\s+(?P<tag2>[\d.]+[\w.\-]*)', re.I)
 
 
 def parse_circleci_images(text: str) -> dict[str, str]:
