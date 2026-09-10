@@ -14,7 +14,8 @@ def parse_pipfile_versions(filepath):
         content = Path(filepath).read_text()
         for match in PIPFILE_RE.finditer(content):
             pkg, ver = match.groups()
-            if pkg not in ('source', 'requires', 'pipfile'):
+            # Skip section headers and non-package keys
+            if pkg not in ('source', 'requires', 'pipfile', 'python_version', 'python_full_version', 'url', 'verify_ssl', 'name'):
                 versions[pkg.lower()] = ver
     except (FileNotFoundError, PermissionError):
         pass
