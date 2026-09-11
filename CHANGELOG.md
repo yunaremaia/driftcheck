@@ -11,7 +11,7 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Changed
 - Bumped version to 0.1.37
-- 49 detectors total, 539 tests total
+- 48 detectors total, 887 tests total
 
 ## [0.1.36] - 2026-09-09
 
