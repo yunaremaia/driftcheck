@@ -108,6 +108,7 @@ from .detectors import (
     find_git_tag_drift,
     parse_editorconfig,
     find_editorconfig_drift,
+    find_devcontainer_drift,
     find_taskfile_drift,
 )
 
@@ -426,6 +427,15 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Git tag drift (latest git tag vs README)
     git_tag_drifts = find_git_tag_drift(root, docs)
 
+    # Devcontainer
+    devcontainer_files = {}
+    for pattern in [".devcontainer/devcontainer.json", ".devcontainer/*.devcontainer.json", "devcontainer.json"]:
+        for p in root.glob(pattern):
+            if p.is_file():
+                devcontainer_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
+    devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
+    devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -489,6 +499,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
         "git_tag_drifts": git_tag_drifts,
+        "devcontainer_drifts": devcontainer_drifts,
         "taskfile_drifts": taskfile_drifts,
     }
 
@@ -585,6 +596,8 @@ __all__ = [
     "find_dart_drift",
     # Fix
     "apply_fixes",
+    # Devcontainer
+    "find_devcontainer_drift",
     # Environment drift
     "find_env_drift_combined",
     # Orchestrator

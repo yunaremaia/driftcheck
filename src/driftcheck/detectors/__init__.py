@@ -269,6 +269,11 @@ from .editorconfig import (
     parse_editorconfig,
     find_editorconfig_drift,
 )
+from .devcontainer import (
+    parse_devcontainer_image,
+    parse_devcontainer_features,
+    find_devcontainer_drift,
+)
 from .taskfile import (
     find_taskfile_drift,
     parse_taskfile,
@@ -446,4 +451,8 @@ __all__ = [
     "find_git_tag_drift",
     "parse_semver",
     "SEMVER_RE",
+    # Devcontainer
+    "parse_devcontainer_image",
+    "parse_devcontainer_features",
+    "find_devcontainer_drift",
 ]
