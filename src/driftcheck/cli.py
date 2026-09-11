@@ -66,6 +66,7 @@ DETECTOR_INFO = {
     "package_manager_drifts": ("package-manager", "packageManager field vs lockfile"),
     "vscode_ext_drifts": ("vscode-ext", "VSCode extensions.json vs README recommendations"),
     "editorconfig_drifts": ("editorconfig", ".editorconfig vs README/IDE indent and style"),
+    "git_tag_drifts": ("git-tag", "Latest git tag vs README version mentions"),
 }
 
 
@@ -427,6 +428,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
 
     # EditorConfig drifts
     for d in all_drifts.get("editorconfig_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
+
+    # Git tag drifts
+    for d in all_drifts.get("git_tag_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Environment drifts

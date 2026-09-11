@@ -272,6 +272,11 @@ DRIFT_RULES = {
         "EditorConfig Drift",
         ".editorconfig settings conflict with README or IDE settings",
     ),
+    "git_tag_drifts": (
+        "git-tag-drift",
+        "Git Tag Drift",
+        "README version mentions do not match the latest git tag",
+    ),
     "taskfile_drifts": (
         "taskfile-drift",
         "Taskfile Drift",
@@ -418,6 +423,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "VSCode extensions drift detected")
     elif drift_type == "editorconfig_drifts":
         return d.get("detail", "EditorConfig drift detected")
+    elif drift_type == "git_tag_drifts":
+        return d.get("detail", "Git tag drift detected")
     elif drift_type == "taskfile_drifts":
         return d.get("detail", "Taskfile drift detected")
     elif drift_type == "env_drifts":

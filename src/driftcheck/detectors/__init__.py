@@ -259,6 +259,10 @@ from .vscode import (
     parse_vscode_extensions,
     find_vscode_extensions_drift,
 )
+from .git_tag import (
+    get_latest_git_tag,
+    find_git_tag_drift,
+)
 from .editorconfig import (
     parse_editorconfig,
     find_editorconfig_drift,
@@ -267,6 +271,10 @@ from .taskfile import (
     find_taskfile_drift,
     parse_taskfile,
     parse_makefile,
+)
+from .git_tag import (
+    get_latest_git_tag,
+    find_git_tag_drift,
 )
 from .fix import apply_fixes
 

@@ -102,6 +102,8 @@ from .detectors import (
     find_package_manager_drift,
     parse_vscode_extensions,
     find_vscode_extensions_drift,
+    get_latest_git_tag,
+    find_git_tag_drift,
     parse_editorconfig,
     find_editorconfig_drift,
     find_taskfile_drift,
@@ -419,6 +421,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Taskfile
     taskfile_drifts = find_taskfile_drift(root)
 
+    # Git tag drift (latest git tag vs README)
+    git_tag_drifts = find_git_tag_drift(root, docs)
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -478,6 +483,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "package_manager_drifts": package_manager_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
+        "git_tag_drifts": git_tag_drifts,
         "taskfile_drifts": taskfile_drifts,
     }
 
