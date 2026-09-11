@@ -76,9 +76,10 @@ class TestSarifHelmValues:
 class TestSarifVersionAuto:
     def test_version_none_uses_package_version(self):
         """When version=None, should auto-detect from package __version__."""
+        from driftcheck import __version__
         result = {"drifts": [{"doc_version": "1.0", "toolchain_version": "2.0", "file": "README.md"}]}
         sarif = to_sarif(result, version=None)
-        assert sarif["runs"][0]["tool"]["driver"]["version"] == "0.1.40"
+        assert sarif["runs"][0]["tool"]["driver"]["version"] == __version__
 
     def test_version_explicit(self):
         result = {"drifts": [{"doc_version": "1.0", "toolchain_version": "2.0", "file": "README.md"}]}

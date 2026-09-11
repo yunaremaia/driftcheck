@@ -1,4 +1,8 @@
 # driftcheck
+[![CI](https://github.com/yunaremaia/driftcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yunaremaia/driftcheck/actions)
+[![PyPI](https://img.shields.io/pypi/v/driftcheck)](https://pypi.org/project/driftcheck/)
+[![License](https://img.shields.io/github/license/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
+
 
 **Detect version drift between docs and toolchain files.**
 
