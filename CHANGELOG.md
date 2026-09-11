@@ -2,6 +2,13 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.39] - 2026-09-11
+
+### Changed
+- Merged combined test files into individual detector test files (elixir_cmake, maven_terraform_java removed)
+- Each detector now has its own test file with no duplicates
+- Bumped version to 0.1.39
+
 ## [0.1.38] - 2026-09-11
 
 ### Added

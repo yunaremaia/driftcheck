@@ -73,3 +73,40 @@ class TestNvmrcIntegration:
         })
         result = scan_repo(tmp_path)
         assert len(result["nvmrc_drifts"]) == 0
+
+
+class TestIntegration:
+    """Integration tests via scan_repo."""
+
+    def test_elixir_drift_via_scan(self, tmp_path):
+        from driftcheck.detector import scan_repo
+        (tmp_path / "mix.exs").write_text('elixir: "~> 1.15"')
+        (tmp_path / "README.md").write_text("This project uses Elixir 1.14")
+        (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
+        result = scan_repo(tmp_path)
+        assert len(result["elixir_drifts"]) == 1
+
+    def test_cmake_drift_via_scan(self, tmp_path):
+        from driftcheck.detector import scan_repo
+        (tmp_path / "CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.20)")
+        (tmp_path / "README.md").write_text("Requires CMake 3.16")
+        (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
+        result = scan_repo(tmp_path)
+        assert len(result["cmake_drifts"]) == 1
+
+    def test_elixir_no_drift_via_scan(self, tmp_path):
+        from driftcheck.detector import scan_repo
+        (tmp_path / "mix.exs").write_text('elixir: "~> 1.15"')
+        (tmp_path / "README.md").write_text("This project uses Elixir 1.15")
+        (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
+        result = scan_repo(tmp_path)
+        assert len(result["elixir_drifts"]) == 0
+
+    def test_cmake_no_drift_via_scan(self, tmp_path):
+        from driftcheck.detector import scan_repo
+        (tmp_path / "CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.20)")
+        (tmp_path / "README.md").write_text("CMake 3.20")
+        (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
+        result = scan_repo(tmp_path)
+        assert len(result["cmake_drifts"]) == 0
+

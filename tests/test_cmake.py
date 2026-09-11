@@ -26,6 +26,32 @@ class TestParseCmakeVersion:
         assert parse_cmake_version("some other content") is None
 
 
+
+    def test_case_insensitive(self):
+        assert parse_cmake_version("CMAKE_MINIMUM_REQUIRED(VERSION 3.20)") == "3.20"
+
+
+
+    def test_empty(self):
+        assert parse_cmake_version("") is None
+
+
+
+    def test_no_cmake(self):
+        assert parse_cmake_version("project(MyProject)") is None
+
+
+
+    def test_standard(self):
+        assert parse_cmake_version("cmake_minimum_required(VERSION 3.16)") == "3.16"
+
+
+
+    def test_with_patch(self):
+        assert parse_cmake_version("cmake_minimum_required(VERSION 3.16.3)") == "3.16.3"
+
+
+
 class TestFindCmakeDrift:
     def test_drift_detected(self):
         cmake = "cmake_minimum_required(VERSION 3.20)"
@@ -66,3 +92,41 @@ class TestFindCmakeDrift:
         }
         result = find_cmake_drift(cmake, docs)
         assert len(result) == 2
+
+
+    def test_drift_major(self):
+        cmake = "cmake_minimum_required(VERSION 3.20)"
+        docs = {"README.md": "CMake 3.16 required"}
+        result = find_cmake_drift(cmake, docs)
+        assert len(result) == 1
+        assert result[0]["doc_version"] == "3.16"
+        assert result[0]["cmake_version"] == "3.20"
+
+
+
+    def test_drift_minor(self):
+        cmake = "cmake_minimum_required(VERSION 3.18)"
+        docs = {"README.md": "CMake 3.16"}
+        result = find_cmake_drift(cmake, docs)
+        assert len(result) == 1
+
+
+
+    def test_empty_cmake(self):
+        assert find_cmake_drift("", {"README.md": "CMake 3.16"}) == []
+
+
+
+    def test_no_cmake_in_docs(self):
+        cmake = "cmake_minimum_required(VERSION 3.16)"
+        docs = {"README.md": "A great project"}
+        assert find_cmake_drift(cmake, docs) == []
+
+
+
+    def test_patch_ignored(self):
+        cmake = "cmake_minimum_required(VERSION 3.16.3)"
+        docs = {"README.md": "CMake 3.16.7"}
+        assert find_cmake_drift(cmake, docs) == []
+
+
