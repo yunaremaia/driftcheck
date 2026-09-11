@@ -1,7 +1,7 @@
 """Tests for Taskfile drift detection."""
 import pytest
 from pathlib import Path
-from driftcheck.detectors.taskfile import (
+from src.driftcheck.detectors.taskfile import (
     parse_taskfile,
     parse_makefile,
     find_taskfile_drift,
