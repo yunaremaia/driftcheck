@@ -378,9 +378,11 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
 
     # Jenkins
     jenkins_files = {}
-    for pattern in ["Jenkinsfile", "jenkins/Jenkinsfile", "jenkinsfile", "Jenkinsfile.*"]:
+    seen_jenkins_paths = set()
+    for pattern in ["Jenkinsfile", "jenkins/Jenkinsfile", "Jenkinsfile.*"]:
         for p in root.glob(pattern):
-            if p.is_file():
+            if p.is_file() and p not in seen_jenkins_paths:
+                seen_jenkins_paths.add(p)
                 jenkins_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
     jenkins_drifts = find_jenkins_drift(jenkins_files, docs)

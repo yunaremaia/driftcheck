@@ -53,7 +53,7 @@ def find_actions_node_drift(root: Path) -> list[dict]:
             text = wf.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        rel = str(wf.relative_to(root))
+        rel = wf.relative_to(root).as_posix()
         for m in ACTIONS_RE.finditer(text):
             action = m.group("action")
             ver = m.group("ver").lower()
@@ -81,7 +81,7 @@ def find_gh_actions_version_drift(root: Path) -> list[dict]:
             text = wf.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        rel = str(wf.relative_to(root))
+        rel = wf.relative_to(root).as_posix()
         for m in GH_ACTIONS_RE.finditer(text):
             action = m.group("action")
             ver = m.group("ver").lower()
