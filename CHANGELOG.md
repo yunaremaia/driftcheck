@@ -4,6 +4,10 @@ All notable changes to driftcheck will be documented in this file.
 
 ## [0.1.39] - 2026-09-11
 
+### Fixed
+- Synced `__version__` in `src/driftcheck/__init__.py` to `0.1.39` (was `0.1.38`) — CLI `--version` and SARIF output now match `pyproject.toml`
+- Updated README stats: 50 detectors (was 49)
+
 ### Changed
 - Merged combined test files into individual detector test files (elixir_cmake, maven_terraform_java removed)
 - Each detector now has its own test file with no duplicates
