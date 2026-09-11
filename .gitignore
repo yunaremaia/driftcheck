@@ -3,3 +3,4 @@ __pycache__/
 src/driftcheck.egg-info/
 dist/
 .pytest_cache/
+site/
