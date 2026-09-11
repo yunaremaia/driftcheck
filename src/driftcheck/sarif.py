@@ -282,6 +282,21 @@ DRIFT_RULES = {
         "Taskfile Drift",
         "Tasks in Taskfile.yml missing from Makefile, or vice versa",
     ),
+    "devcontainer_drifts": (
+        "devcontainer-version-drift",
+        "Devcontainer Version Drift",
+        "README documentation references a version that doesn't match devcontainer.json image or features",
+    ),
+    "compose_override_drifts": (
+        "compose-override-drift",
+        "Docker Compose Override Drift",
+        "Image version in docker-compose.override.yml (or .prod/.dev) conflicts with docker-compose.yml",
+    ),
+    "helm_values_drifts": (
+        "helm-values-drift",
+        "Helm Values Drift",
+        "Environment-specific Helm values file (values.prod.yaml) conflicts with default values.yaml",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -427,13 +442,26 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "Git tag drift detected")
     elif drift_type == "taskfile_drifts":
         return d.get("detail", "Taskfile drift detected")
+    elif drift_type == "devcontainer_drifts":
+        feature = d.get("feature", "image")
+        return f"{feature} {d.get('doc_version')} in docs should be {d.get('devcontainer_version')} (devcontainer.json)"
+    elif drift_type == "compose_override_drifts":
+        return d.get("detail", "Docker Compose override drift detected")
+    elif drift_type == "helm_values_drifts":
+        key = d.get("key", "value")
+        return f"{key}: {d.get('override_value')} in override vs {d.get('default_value')} in values.yaml"
     elif drift_type == "env_drifts":
         return d.get("detail", "Environment config drift detected")
     return str(d)
 
 
-def to_sarif(result: dict, version: str = "0.1.24") -> dict:
+def to_sarif(result: dict, version: str | None = None) -> dict:
     """Convert driftcheck scan result to SARIF 2.1.0 document."""
+    if version is None:
+        try:
+            from . import __version__ as version
+        except ImportError:
+            version = "0.1.40"
     rules: list[dict] = []
     results: list[dict] = []
     rule_set: set[str] = set()
@@ -455,6 +483,7 @@ def to_sarif(result: dict, version: str = "0.1.24") -> dict:
         "java_version_drifts", "terraform_version_drifts",
         "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
         "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts",
+        "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
     ]
 
     for drift_type in drift_keys:

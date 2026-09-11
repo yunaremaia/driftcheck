@@ -2,6 +2,17 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.40] - 2026-09-11
+
+### Fixed
+- **SARIF**: added missing `devcontainer_drifts`, `compose_override_drifts`, `helm_values_drifts` to `DRIFT_RULES`, `drift_keys`, and `_drift_message` — these three detectors now produce valid SARIF output for GitHub Code Scanning
+- **SARIF**: `to_sarif()` now auto-detects package `__version__` when `version=None` (was hardcoded `0.1.24`)
+- **git_mode**: added `devcontainer_drifts` to `DETECTOR_FILE_PATTERNS` so devcontainer.json changes trigger the detector in incremental mode
+- Synced README stats: 50 modules, 53 detectors, 928 tests
+
+### Tests
+- Added `test_sarif_new_types.py` (6 tests) covering new SARIF drift types and version auto-detection
+
 ## [0.1.39] - 2026-09-11
 
 ### Fixed

@@ -165,4 +165,5 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "vscode_ext_drifts": [".vscode/extensions.json", "README.md"],
     "editorconfig_drifts": [".editorconfig", ".vscode/settings.json", "README.md"],
     "taskfile_drifts": ["Taskfile.yml", "Taskfile.yaml", "Makefile"],
+    "devcontainer_drifts": [".devcontainer/devcontainer.json", ".devcontainer/*.devcontainer.json", "devcontainer.json", "README.md"],
 }
