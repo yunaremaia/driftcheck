@@ -262,6 +262,8 @@ from .vscode import (
 from .git_tag import (
     get_latest_git_tag,
     find_git_tag_drift,
+    parse_semver,
+    SEMVER_RE,
 )
 from .editorconfig import (
     parse_editorconfig,
@@ -271,10 +273,6 @@ from .taskfile import (
     find_taskfile_drift,
     parse_taskfile,
     parse_makefile,
-)
-from .git_tag import (
-    get_latest_git_tag,
-    find_git_tag_drift,
 )
 from .fix import apply_fixes
 
