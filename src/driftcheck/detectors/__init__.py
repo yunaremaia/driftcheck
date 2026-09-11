@@ -443,4 +443,9 @@ __all__ = [
     "CONDA_ENV_RE",
     # Fix
     "apply_fixes",
+    # Git Tag
+    "get_latest_git_tag",
+    "find_git_tag_drift",
+    "parse_semver",
+    "SEMVER_RE",
 ]

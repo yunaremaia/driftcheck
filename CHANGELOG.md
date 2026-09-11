@@ -2,6 +2,21 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.38] - 2026-09-11
+
+### Added
+- **Git Tag drift detection**: latest git tag vs README version mentions — detects when README references a stale version
+- SARIF rule `git-tag-drift` (informational level)
+- New tests: `test_git_tag.py` (11 tests), `test_fix.py` (17 tests)
+
+### Fixed
+- Restored `get_latest_git_tag` and `find_git_tag_drift` to `detectors/__init__.py` (were accidentally removed)
+- Added missing exports to `__all__`: `get_latest_git_tag`, `find_git_tag_drift`, `parse_semver`, `SEMVER_RE`
+
+### Changed
+- Bumped version to 0.1.38
+- Updated README stats: 49 detectors, 915 tests
+
 ## [0.1.37] - 2026-09-09
 
 ### Added
