@@ -185,7 +185,7 @@ pre-commit install
 
 ### Stats
 
-- **50 detectors** covering 50+ toolchains and file types
+- **49 detectors** covering 50+ toolchains and file types
 - **902 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
