@@ -297,6 +297,11 @@ DRIFT_RULES = {
         "Helm Values Drift",
         "Environment-specific Helm values file (values.prod.yaml) conflicts with default values.yaml",
     ),
+    "mise_drifts": (
+        "mise-version-drift",
+        "Mise Tool Version Drift",
+        "README documentation references a tool version that doesn't match mise.toml",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -398,6 +403,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "Lockfile drift detected")
     elif drift_type == "tool_versions_drifts":
         return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('tool_versions_version')} (.tool-versions)"
+    elif drift_type == "mise_drifts":
+        return f"{d.get('tool', 'tool')} {d.get('doc_version')} in docs should be {d.get('mise_version')} (mise.toml)"
     elif drift_type == "nvmrc_drifts":
         return f"Node {d.get('doc_version')} in docs should be {d.get('nvmrc_version')} (.nvmrc)"
     elif drift_type == "swift_drifts":
@@ -484,6 +491,7 @@ def to_sarif(result: dict, version: str | None = None) -> dict:
         "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
         "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts",
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
+        "mise_drifts",
     ]
 
     for drift_type in drift_keys:

@@ -44,6 +44,7 @@ DETECTOR_INFO = {
     "dependabot_drifts": ("dependabot", "Dependabot coverage gaps (informational)"),
     "lockfile_drifts": ("lockfile", "Lockfile missing/stale/orphaned (informational)"),
     "tool_versions_drifts": ("tool-versions", ".tool-versions asdf/mise vs README"),
+    "mise_drifts": ("mise", "mise.toml tool versions vs README"),
     "nvmrc_drifts": ("nvmrc", ".nvmrc vs package.json engines (informational)"),
     "swift_drifts": ("swift", "Swift Package.swift version pins vs README"),
     "deno_drifts": ("deno", "Deno deno.json version field vs README"),

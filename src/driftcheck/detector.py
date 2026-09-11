@@ -110,6 +110,8 @@ from .detectors import (
     find_editorconfig_drift,
     find_devcontainer_drift,
     find_taskfile_drift,
+    find_mise_drift,
+    parse_mise_tools,
 )
 
 
@@ -255,6 +257,10 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     composer_path = root / "composer.json"
     composer_text = composer_path.read_text(encoding="utf-8", errors="replace") if composer_path.exists() else ""
 
+    # Mise.toml (successor to .tool-versions / asdf)
+    mise_path = root / "mise.toml"
+    mise_text = mise_path.read_text(encoding="utf-8", errors="replace") if mise_path.exists() else ""
+
     # .tool-versions (asdf/mise)
     tv_path = root / ".tool-versions"
     tool_versions_text = tv_path.read_text(encoding="utf-8", errors="replace") if tv_path.exists() else ""
@@ -308,6 +314,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     php_drifts = find_php_drift(composer_text, docs)
     lockfile_drifts = find_lockfile_drift(root)
     tool_versions_drifts = find_tool_versions_drift(tool_versions_text, docs)
+    mise_drifts = find_mise_drift(mise_text, docs)
     nvmrc_drifts = find_nvmrc_drift(nvmrc_text, parse_node_version_from_package(package_text), docs)
     swift_drifts = find_swift_drift(swift_text, docs)
 
@@ -474,6 +481,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "helm_values_drifts": find_helm_values_drift(root),
         "lockfile_drifts": lockfile_drifts,
         "tool_versions_drifts": tool_versions_drifts,
+        "mise_drifts": mise_drifts,
         "nvmrc_drifts": nvmrc_drifts,
         "swift_drifts": swift_drifts,
         "deno_drifts": deno_drifts,

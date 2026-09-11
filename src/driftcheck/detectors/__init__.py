@@ -274,6 +274,11 @@ from .devcontainer import (
     parse_devcontainer_features,
     find_devcontainer_drift,
 )
+from .mise import (
+    parse_mise_tools,
+    find_mise_drift,
+)
+
 from .taskfile import (
     find_taskfile_drift,
     parse_taskfile,
@@ -455,4 +460,6 @@ __all__ = [
     "parse_devcontainer_image",
     "parse_devcontainer_features",
     "find_devcontainer_drift",
+    "parse_mise_tools",
+    "find_mise_drift",
 ]
