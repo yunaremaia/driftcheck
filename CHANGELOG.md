@@ -2,6 +2,17 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.41] - 2026-09-11
+
+### Added
+- **Mise.toml drift detection**: `mise.toml` `[tools]` section vs README mentions — detects when README references a version that doesn't match `mise.toml`
+  - Supports plain string specs (`node = "22"`) and dict specs (`python = {version = "3.12"}`)
+  - 12 new tests, 946 total
+
+### Changed
+- Bumped version to 0.1.41
+- Synced README stats: 52 modules, 60 detectors, 946 tests
+
 ## [0.1.40] - 2026-09-11
 
 ### Fixed

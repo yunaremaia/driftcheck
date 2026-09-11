@@ -121,6 +121,7 @@ You can also use CLI flags `--only` and `--exclude` to filter detectors at runti
 
 **Configuration:**
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
+- **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
 - **NVMRC**: `.nvmrc` vs `package.json` engines.node (informational)
 - **Dependabot**: ecosystems used but not covered by `.github/dependabot.yml` (informational)
