@@ -556,6 +556,7 @@ __all__ = [
     "find_bun_drift",
     # Docker
     "find_docker_drift",
+    "find_dockerfile_bases_drift",
     # Java/Gradle
     "parse_gradle_java_version",
     "find_java_drift",

@@ -320,8 +320,12 @@ __all__ = [
     # Docker
     "parse_dockerfile_from",
     "find_docker_drift",
+    "parse_dockerfile_bases",
+    "find_dockerfile_bases_drift",
     "DOCKER_FROM_RE",
     "DOCKER_TAG_RE",
+    "FROM_LINE_RE",
+    "FLOATING_TAGS",
     # Java
     "parse_gradle_java_version",
     "find_java_drift",
