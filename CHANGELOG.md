@@ -2,6 +2,16 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.42] - 2026-09-12
+
+### Added
+- **Engines drift detection**: `package.json` `engines.node` vs `.nvmrc` and `volta.node` — detects when Node.js version constraints conflict across files
+  - Supports semver prefixes (`>=`, `^`, `~`, `v`) and LTS aliases
+  - 24 new tests, 970 total
+
+### Changed
+- Bumped version to 0.1.42
+
 ## [0.1.41] - 2026-09-11
 
 ### Added

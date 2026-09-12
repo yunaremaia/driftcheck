@@ -144,6 +144,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "external_resource_drift": ["*.html", "*.md"],
     "dependabot_drifts": [".github/dependabot.yml", "package.json", "Cargo.toml", "go.mod", "Gemfile"],
     "lockfile_drifts": ["package-lock.json", "yarn.lock", "Cargo.lock", "go.sum", "Gemfile.lock", "composer.lock", "poetry.lock", "uv.lock"],
+    "engines_drifts": ["package.json", ".nvmrc"],
     "tool_versions_drifts": [".tool-versions", "README.md"],
     "nvmrc_drifts": [".nvmrc", "package.json", "README.md"],
     "swift_drifts": ["Package.swift", "README.md"],
