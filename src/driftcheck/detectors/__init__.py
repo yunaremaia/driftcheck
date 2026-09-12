@@ -119,6 +119,7 @@ from .bun import (
     BUN_DOC_RE,
 )
 from .lockfile import find_lockfile_drift
+from .engines import find_engines_drift
 from .deno import (
     parse_deno_version,
     find_deno_drift,
