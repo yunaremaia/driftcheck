@@ -175,7 +175,7 @@ driftcheck ships a pre-commit hook. Add to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.33
+    rev: v0.1.43
     hooks:
       - id: driftcheck
         args: ["--no-informational"]
@@ -191,7 +191,7 @@ pre-commit install
 ### Stats
 
 - **54 detector modules** covering 50+ toolchains and file types
-- **62 independent detectors** (including split environment detectors)
+- **61 independent detectors** (including split environment detectors)
 - **984 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
