@@ -2,6 +2,18 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.44] - 2026-09-12
+
+### Added
+- **Typosquat drift detection**: flags suspiciously-named dependencies in lockfiles (`requirements.txt`, `package.json`, `Cargo.toml`) by comparing against curated known-package lists for PyPI, npm, and crates ecosystems
+  - Uses edit-distance-2 heuristic with proportional length thresholds to minimize false positives
+  - Bridges into `taintrace`'s security-focused detection from driftcheck's scanning pipeline
+  - 17 new tests, 1001 total
+
+### Changed
+- Bumped version to 0.1.44
+- Updated README test count to 1001
+
 ## [0.1.43] - 2026-09-12
 
 ### Added
