@@ -56,6 +56,7 @@ from .detectors import (
     find_external_resource_drift,
     find_count_drift,
     find_dependabot_drift,
+    find_typosquat_drift,
     find_ci_os_drift,
     find_lockfile_drift,
     find_engines_drift,
@@ -312,6 +313,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     helm_drifts = find_helm_drift(helm_files, docs)
     dc_drifts = find_docker_compose_drift(dc_files, docs)
     dependabot_drifts = find_dependabot_drift(root)
+    typosquat_drifts = find_typosquat_drift(root)
     dotnet_drifts = find_dotnet_drift(csproj_files, docs)
     ruby_drifts = find_ruby_drift(gemfile_text, docs)
     php_drifts = find_php_drift(composer_text, docs)
@@ -477,6 +479,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "helm_drifts": helm_drifts,
         "dc_drifts": dc_drifts,
         "dependabot_drifts": dependabot_drifts,
+        "typosquat_drifts": typosquat_drifts,
         "ci_os_drifts": find_ci_os_drift(root),
         "k8s_drifts": k8s_drifts,
         "dotnet_drifts": dotnet_drifts,
@@ -592,6 +595,8 @@ __all__ = [
     "find_count_drift",
     # Dependabot
     "find_dependabot_drift",
+    # Typosquat
+    "find_typosquat_drift",
     # CI OS
     "find_ci_os_drift",
     # Lockfile

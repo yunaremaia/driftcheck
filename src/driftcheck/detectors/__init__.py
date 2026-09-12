@@ -292,6 +292,7 @@ from .taskfile import (
     parse_makefile,
 )
 from .fix import apply_fixes
+from .typosquat import find_typosquat_drift
 
 __all__ = [
     # Rust
@@ -460,6 +461,7 @@ __all__ = [
     "parse_conda_environment",
     "find_conda_drift",
     "CONDA_ENV_RE",
+    "find_typosquat_drift",
     # Fix
     "apply_fixes",
     # Git Tag

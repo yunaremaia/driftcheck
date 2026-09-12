@@ -142,7 +142,10 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "lineending_drifts": [".gitattributes", "*.py", "*.js", "*.ts", "*.rs", "*.go", "*.java"],
     "count_drifts": ["skills/**", "README.md"],
     "external_resource_drift": ["*.html", "*.md"],
+
     "dependabot_drifts": [".github/dependabot.yml", "package.json", "Cargo.toml", "go.mod", "Gemfile"],
+    "typosquat_drifts": ["requirements.txt", "pyproject.toml", "Pipfile", "package.json", "Cargo.toml"],
+
     "lockfile_drifts": ["package-lock.json", "yarn.lock", "Cargo.lock", "go.sum", "Gemfile.lock", "composer.lock", "poetry.lock", "uv.lock"],
     "engines_drifts": ["package.json", ".nvmrc"],
     "tool_versions_drifts": [".tool-versions", "README.md"],
