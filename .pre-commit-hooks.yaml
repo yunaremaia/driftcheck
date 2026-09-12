@@ -4,5 +4,5 @@
   language: python
   types: [text]
   additional_dependencies:
-    - "git+https://github.com/yunaremaia/driftcheck.git@v0.1.29"
+    - "git+https://github.com/yunaremaia/driftcheck.git@v0.1.43"
   args: ["--no-informational"]
