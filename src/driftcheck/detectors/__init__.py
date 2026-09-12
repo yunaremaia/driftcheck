@@ -32,6 +32,12 @@ from .docker import (
     DOCKER_FROM_RE,
     DOCKER_TAG_RE,
 )
+from .docker_bases import (
+    parse_dockerfile_bases,
+    find_dockerfile_bases_drift,
+    FROM_LINE_RE,
+    FLOATING_TAGS,
+)
 from .docker_multistage import (
     parse_from_stages,
     find_dockerfile_multistage_drift,

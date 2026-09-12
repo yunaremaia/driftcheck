@@ -2,6 +2,15 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [0.1.43] - 2026-09-12
+
+### Added
+- **Dockerfile base image drift detection**: flags floating tags (`:latest`, `:stable`, `:nightly`, no tag) and sibling Dockerfile drift (e.g., `Dockerfile.dev` pins `node:18` while `Dockerfile.prod` pins `node:20`)
+  - 14 new tests, 984 total
+
+### Changed
+- Bumped version to 0.1.43
+
 ## [0.1.42] - 2026-09-12
 
 ### Added

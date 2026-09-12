@@ -51,6 +51,11 @@ DRIFT_RULES = {
         "Docker Multi-Stage Drift",
         "Multi-stage Dockerfile uses conflicting tags for the same base image",
     ),
+    "docker_bases_drifts": (
+        "docker-bases-drift",
+        "Docker Base Image Drift",
+        "Dockerfile uses a floating/unpinned base image tag or sibling Dockerfiles pin different versions",
+    ),
     "java_drifts": (
         "java-gradle-version-drift",
         "Java Gradle Version Drift",
@@ -366,6 +371,10 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"Docker image {d.get('doc_image')} in docs should be {d.get('dockerfile_image')}"
     elif drift_type == "docker_multistage_drifts":
         return d.get("detail", "Multi-stage Dockerfile drift detected")
+    elif drift_type == "docker_bases_drifts":
+        if "tags" in d:
+            return f"{d['image']} pinned differently across Dockerfiles: {', '.join(d['tags'])}"
+        return f"{d['image']}:{d.get('tag', '(none)')} uses floating/unpinned tag"
     elif drift_type == "java_drifts":
         return f"Java {d.get('doc_version')} in docs should be {d.get('gradle_version')}"
     elif drift_type == "maven_drifts":
@@ -484,7 +493,7 @@ def to_sarif(result: dict, version: str | None = None) -> dict:
     drift_keys = [
         "drifts", "rust_drifts", "node_drifts", "bun_drifts", "python_drifts",
         "go_drifts", "count_drifts", "actions_drifts", "lineending_drifts",
-        "docker_drifts", "docker_multistage_drifts", "java_drifts", "maven_drifts", "terraform_drifts",
+        "docker_drifts", "docker_multistage_drifts", "docker_bases_drifts", "java_drifts", "maven_drifts", "terraform_drifts",
         "circleci_drifts", "gitlab_drifts", "gh_actions_version_drifts",
         "k8s_drifts", "helm_drifts", "dc_drifts", "ci_os_drifts",
         "dotnet_drifts", "ruby_drifts", "php_drifts",

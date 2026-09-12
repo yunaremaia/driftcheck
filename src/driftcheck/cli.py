@@ -20,6 +20,7 @@ DETECTOR_INFO = {
     "go_drifts": ("go", "Go go.mod directive vs README"),
     "docker_drifts": ("docker", "Dockerfile FROM tag vs README"),
     "docker_multistage_drifts": ("docker-multistage", "Multi-stage Dockerfile conflicting tags"),
+    "docker_bases_drifts": ("docker-bases", "Floating/unpinned base images and sibling Dockerfile drift"),
     "java_drifts": ("gradle", "Gradle build.gradle sourceCompatibility vs README"),
     "maven_drifts": ("maven", "Maven pom.xml java.version vs README"),
     "terraform_drifts": ("terraform", "Terraform versions.tf provider vs README"),
@@ -321,6 +322,11 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['dockerfile_image']} (Dockerfile)")
     for d in all_drifts.get("docker_multistage_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
+    for d in all_drifts.get("docker_bases_drifts", []):
+        if 'tags' in d:
+            print(f"driftcheck: {d['image']} pinned differently across {', '.join(d['tags'])}")
+        else:
+            print(f"driftcheck: {d['file']}:{d['line']}: {d['image']}:{d.get('tag', '(none)')} uses floating tag")
     for d in all_drifts.get("java_drifts", []):
         print(f"driftcheck: {d['file']}: Java {d['doc_version']} → should be {d['gradle_version']} (build.gradle)")
     for d in all_drifts.get("maven_drifts", []):
