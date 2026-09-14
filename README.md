@@ -309,9 +309,9 @@ pre-commit install
 
 ### Stats
 
-- **58 detector modules** covering 50+ toolchains and file types
+- **57 detector modules** covering 50+ toolchains and file types
 - **61 independent detectors** (including split environment detectors)
-- **1063 tests** with >95% code coverage
+- **1055 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
@@ -368,7 +368,9 @@ Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READ
 | Node | bun | `bun_drifts` | Bun package.json engines.bun |
 | Node | node | `node_drifts` | Node.js package.json engines |
 | Node | node-version | `node_version_drifts` | .node-version vs README |
-
+| Node | npmrc | `npmrc_drifts` | .npmrc vs package.json settings |
+| Node | pnpm | `pnpm_workspace_drifts` | pnpm-workspace.yaml vs package.json workspaces |
+| Node | yarnrc | `yarnrc_drifts` | .yarnrc.yml Yarn version |
 | PHP | php | `php_drifts` | composer.json require.php |
 | Python | conda | `conda_drifts` | Conda environment.yml pinned versions |
 | Python | pipfile | `pipfile_drifts` | Pipfile vs Pipfile.lock version mismatches |
