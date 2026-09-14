@@ -10,6 +10,14 @@ inputs:
     description: 'Repository root to scan'
     required: false
     default: '.'
+  detectors:
+    description: 'Comma-separated list of detectors to run (default: all)'
+    required: false
+    default: ''
+  exclude:
+    description: 'Comma-separated list of detectors to exclude'
+    required: false
+    default: ''
   args:
     description: 'Extra CLI arguments (e.g., "--no-informational")'
     required: false
@@ -26,6 +34,14 @@ inputs:
     description: 'Fail the step if blocking drifts are found (default: true)'
     required: false
     default: 'true'
+  fail-on-informational:
+    description: 'Treat informational drifts as blocking'
+    required: false
+    default: 'false'
+  output-format:
+    description: 'Output format: text, json, csv, sarif'
+    required: false
+    default: 'text'
 
 runs:
   using: 'composite'
@@ -35,20 +51,52 @@ runs:
       with:
         python-version: '3.11'
 
+    - name: Cache driftcheck
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip/driftcheck
+        key: ${{ runner.os }}-driftcheck-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-driftcheck-
+
     - name: Install driftcheck
       shell: bash
       run: pip install git+https://github.com/yunaremaia/driftcheck.git
+
+    - name: Build driftcheck args
+      id: build-args
+      shell: bash
+      run: |
+        ARGS="${{ inputs.args }}"
+        if [ -n "${{ inputs.detectors }}" ]; then
+          ARGS="$ARGS --only ${{ inputs.detectors }}"
+        fi
+        if [ -n "${{ inputs.exclude }}" ]; then
+          ARGS="$ARGS --exclude ${{ inputs.exclude }}"
+        fi
+        if [ "${{ inputs.fail-on-informational }}" != "true" ]; then
+          ARGS="$ARGS --no-informational"
+        fi
+        if [ "${{ inputs.output-format }}" = "json" ]; then
+          ARGS="$ARGS --json"
+        elif [ "${{ inputs.output-format }}" = "csv" ]; then
+          ARGS="$ARGS --csv"
+        elif [ "${{ inputs.output-format }}" = "sarif" ] || [ "${{ inputs.sarif }}" = "true" ]; then
+          ARGS="$ARGS --sarif"
+        fi
+        echo "driftcheck_args=$ARGS" >> $GITHUB_OUTPUT
 
     - name: Run driftcheck
       id: driftcheck
       shell: bash
       run: |
         set +e
-        if [ "${{ inputs.sarif }}" = "true" ]; then
-          driftcheck "${{ inputs.path }}" --sarif ${{ inputs.args }} > "${{ inputs.sarif-output }}"
+        DRIFT_ARGS="${{ steps.build-args.outputs.driftcheck_args }}"
+        if echo "$DRIFT_ARGS" | grep -q "\-\-sarif"; then
+          driftcheck "${{ inputs.path }}" $DRIFT_ARGS > "${{ inputs.sarif-output }}" 2>&1
           exit_code=$?
         else
-          driftcheck "${{ inputs.path }}" ${{ inputs.args }}
+          driftcheck "${{ inputs.path }}" $DRIFT_ARGS
           exit_code=$?
         fi
         echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
@@ -63,8 +111,14 @@ runs:
         exit 0
 
     - name: Upload SARIF
-      if: inputs.sarif == 'true' && always()
+      if: inputs.sarif == 'true' || inputs.output-format == 'sarif'
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: ${{ inputs.sarif-output }}
         wait-for-processing: false
+
+    - name: Post to job summary
+      if: always() && steps.driftcheck.outputs.drift != 'true'
+      shell: bash
+      run: |
+        echo "## ✅ Driftcheck: No blocking drift found" >> $GITHUB_STEP_SUMMARY

@@ -45,6 +45,42 @@ Or with SARIF upload for GitHub Code Scanning:
     sarif_file: driftcheck.sarif
 ```
 
+### Reusable Workflow (Zero-Config CI)
+
+For the simplest setup, use driftcheck's reusable workflow — no YAML to write in your repo:
+
+```yaml
+# .github/workflows/driftcheck.yml in YOUR repo
+name: Driftcheck
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  driftcheck:
+    uses: yunaremaia/driftcheck/.github/workflows/driftcheck.yml@main
+    with:
+      fail-on-drift: true
+      detectors: 'docker,compose,github-actions,node,python,rust'
+```
+
+With SARIF upload for GitHub Code Scanning alerts:
+
+```yaml
+jobs:
+  driftcheck:
+    uses: yunaremaia/driftcheck/.github/workflows/driftcheck.yml@main
+    with:
+      fail-on-drift: true
+      output-format: sarif
+      sarif-upload: true
+    permissions:
+      contents: read
+      security-events: write
+```
+
 ### CSV Export
 
 Output drift findings as CSV — useful for spreadsheets, data pipelines, and CI artifact collection:
