@@ -8,7 +8,7 @@ from .config import DRIFT_KEYS
 from .git_mode import get_changed_and_untracked, filter_detectors_by_files, DETECTOR_FILE_PATTERNS
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
-INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts"}
+INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts"}
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
@@ -65,6 +65,7 @@ DETECTOR_INFO = {
     "java_version_drifts": ("java-version", ".java-version vs README"),
     "terraform_version_drifts": ("terraform-version", ".terraform-version vs README"),
     "taskfile_drifts": ("taskfile", "Taskfile.yml tool versions vs README"),
+    "typosquat_drifts": ("typosquat", "Typosquat detection in dependencies (informational)"),
     "npmrc_drifts": ("npmrc", ".npmrc vs package.json settings (engine-strict, registry, tag-prefix)"),
     "yarnrc_drifts": ("yarnrc", ".yml Yarn version vs README"),
     "pnpm_workspace_drifts": ("pnpm", "pnpm-workspace.yaml vs package.json workspaces"),
