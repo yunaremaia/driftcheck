@@ -20,6 +20,7 @@ from .python import (
     find_python_drift,
     PY_RE,
 )
+from .python_version import find_python_version_file_drift
 from .go import (
     parse_go_version_from_gomod,
     find_go_drift,
@@ -323,6 +324,7 @@ __all__ = [
     # Python
     "parse_python_version_from_pyproject",
     "find_python_drift",
+    "find_python_version_file_drift",
     "PY_RE",
     # Go
     "parse_go_version_from_gomod",

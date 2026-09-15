@@ -8,7 +8,7 @@ from .config import DRIFT_KEYS
 from .git_mode import get_changed_and_untracked, filter_detectors_by_files, DETECTOR_FILE_PATTERNS
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
-INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts"}
+INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts", "python_version_parse_drifts"}
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
@@ -62,6 +62,8 @@ DETECTOR_INFO = {
     "jenkins_drifts": ("jenkins", "Jenkinsfile tool versions (nodejs, python, docker) vs README"),
     "ruby_version_drifts": ("ruby-version", ".ruby-version vs README"),
     "python_version_drifts": ("python-version", ".python-version vs README"),
+    "python_version_file_drifts": ("python-version-file", ".python-version vs requires-python minimum"),
+    "python_version_parse_drifts": ("python-version-parse", "Unsupported .python-version content (informational)"),
     "node_version_drifts": ("node-version", ".node-version vs README"),
     "java_version_drifts": ("java-version", ".java-version vs README"),
     "terraform_version_drifts": ("terraform-version", ".terraform-version vs README"),
@@ -360,6 +362,7 @@ def _print_csv(result: dict) -> None:
                 or d.get("package_version")
                 or d.get("gomod_version")
                 or d.get("pyproject_version")
+                or d.get("required_version")
                 or d.get("makefile_version")
                 or d.get("cargo_version")
                 or d.get("gradle_version")
@@ -528,6 +531,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.ruby-version)")
     for d in all_drifts.get("python_version_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.python-version)")
+    for d in all_drifts.get("python_version_file_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
     for d in all_drifts.get("node_version_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.node-version)")
     for d in all_drifts.get("java_version_drifts", []):
@@ -578,6 +583,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
 
 def _print_informational(all_drifts: dict) -> None:
     """Print informational (non-blocking) drift types."""
+    for d in all_drifts.get("python_version_parse_drifts", []):
+        print(f"driftcheck: info: {d['file']}: {d['detail']}")
     for d in all_drifts.get("external_resource_drifts", []):
         print(f"driftcheck: info: {d['file']}: {d['detail']} ({d['url']})")
     for d in all_drifts.get("dependabot_drifts", []):

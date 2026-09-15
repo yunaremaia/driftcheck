@@ -210,6 +210,9 @@ driftcheck --git-mode --git-base v1.0.0
 - **Node**: `package.json` `engines.node` vs README
 - **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
 - **Python**: `pyproject.toml` `requires-python` vs README
+- **Python version pin**: `.python-version` vs the minimum in `pyproject.toml`
+  `requires-python`, falling back to `[options] python_requires` in `setup.cfg`.
+  Below-minimum pins are blocking; unsupported pin syntax is informational.
 - **Go**: `go.mod` `go` directive vs README
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
@@ -316,7 +319,7 @@ pre-commit install
 
 - **58 detector modules** covering 50+ toolchains and file formats
 - **43 independent detectors** (including split environment detectors, lockfile variants, and plugin system)
-- **1063 tests** with >95% code coverage
+- **1111 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
@@ -379,6 +382,8 @@ pre-commit install
 | Python | poetry | `poetry_drifts` | Poetry pyproject.toml [tool.poetry] dependencies |
 | Python | python | `python_drifts` | Python pyproject.toml requires-python |
 | Python | python-version | `python_version_drifts` | .python-version vs README |
+| Python | python-version-file | `python_version_file_drifts` | .python-version vs project minimum |
+| Python | python-version-parse | `python_version_parse_drifts` | Unsupported .python-version content (informational) |
 | Python | requirements | `requirements_drifts` | requirements.txt package versions |
 | Ruby | ruby | `ruby_drifts` | Gemfile ruby directive |
 | Ruby | ruby-version | `ruby_version_drifts` | .ruby-version vs README |

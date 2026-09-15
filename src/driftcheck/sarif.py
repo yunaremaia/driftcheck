@@ -237,6 +237,16 @@ DRIFT_RULES = {
         "Python Version File Drift",
         "README documentation references a Python version that doesn't match .python-version",
     ),
+    "python_version_file_drifts": (
+        "python-version-minimum-drift",
+        "Python Version Minimum Drift",
+        ".python-version pins Python below the project's minimum requirement",
+    ),
+    "python_version_parse_drifts": (
+        "python-version-parse-drift",
+        "Unsupported Python Version Pin",
+        ".python-version cannot be compared with the project's minimum requirement",
+    ),
     "node_version_drifts": (
         "node-version-file-drift",
         "Node Version File Drift",
@@ -315,7 +325,7 @@ DRIFT_RULES = {
 }
 
 # Drift types that are informational (SARIF level: warning)
-INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts"}
+INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "python_version_parse_drifts"}
 
 
 def _make_rule(rule_id: str, name: str, description: str) -> dict:
@@ -354,6 +364,8 @@ def _make_result(
 
 def _drift_message(drift_type: str, d: dict) -> str:
     """Generate human-readable message for a drift entry."""
+    if drift_type in {"python_version_file_drifts", "python_version_parse_drifts"}:
+        return d["detail"]
     if drift_type == "drifts":
         return f"Rust {d.get('doc_version')} in docs should be {d.get('toolchain_version')}"
     elif drift_type == "rust_drifts":
@@ -504,6 +516,7 @@ def to_sarif(result: dict, version: str | None = None) -> dict:
         "pipfile_drifts", "conda_drifts",
         "jenkins_drifts",
         "ruby_version_drifts", "python_version_drifts", "node_version_drifts",
+        "python_version_file_drifts", "python_version_parse_drifts",
         "java_version_drifts", "terraform_version_drifts",
         "npmrc_drifts", "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
         "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts",

@@ -2,6 +2,13 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Detect `.python-version` pins below the project's `requires-python` minimum,
+  falling back to `setup.cfg` `python_requires`; report unsupported pins as
+  informational findings.
+
 ## [0.1.44] - 2026-09-12
 
 ### Added

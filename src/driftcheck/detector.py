@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .config import load_config, get_excluded_detectors
+from .config import DRIFT_KEYS, load_config, get_excluded_detectors
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors import (
     parse_toolchain_version,
@@ -26,6 +26,7 @@ from .detectors import (
     find_node_drift,
     parse_python_version_from_pyproject,
     find_python_drift,
+    find_python_version_file_drift,
     parse_go_version_from_gomod,
     find_go_drift,
     find_docker_drift,
@@ -412,6 +413,11 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
 
     ruby_version_drifts = find_version_file_drift(version_files, docs, "Ruby")
     python_version_drifts = find_version_file_drift(version_files, docs, "Python")
+    setup_cfg_path = root / "setup.cfg"
+    setup_cfg_text = setup_cfg_path.read_text(encoding="utf-8", errors="replace") if setup_cfg_path.is_file() else ""
+    python_version_findings = find_python_version_file_drift(
+        version_files.get(".python-version"), pyproject_text, setup_cfg_text
+    )
     node_version_drifts = find_version_file_drift(version_files, docs, "Node.js")
     java_version_drifts = find_version_file_drift(version_files, docs, "Java")
     terraform_version_drifts = find_version_file_drift(version_files, docs, "Terraform")
@@ -524,6 +530,8 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "jenkins_drifts": jenkins_drifts,
         "ruby_version_drifts": ruby_version_drifts,
         "python_version_drifts": python_version_drifts,
+        "python_version_file_drifts": [d for d in python_version_findings if not d.get("informational")],
+        "python_version_parse_drifts": [d for d in python_version_findings if d.get("informational")],
         "node_version_drifts": node_version_drifts,
         "java_version_drifts": java_version_drifts,
         "terraform_version_drifts": terraform_version_drifts,

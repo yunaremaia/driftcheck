@@ -1,6 +1,6 @@
 # Detectors
 
-driftcheck ships **48 detector modules** covering **64 registered detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
+driftcheck ships **58 detector modules** covering **66 registered detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
 
 ## Language Runtimes
 
@@ -71,10 +71,19 @@ driftcheck ships **48 detector modules** covering **64 registered detectors**. E
 | `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `mise_drifts` | `mise.toml` `[tools]` section vs README. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
+| `python_version_file_drifts` | `.python-version` below `pyproject.toml` `requires-python`, with `setup.cfg` `python_requires` fallback. |
+| `python_version_parse_drifts` | Unsupported `.python-version` syntax (informational). |
 | `nvmrc_drifts` | `.nvmrc` vs `package.json` engines.node (informational). |
 | `dependabot_drifts` | Ecosystems used but not covered by `.github/dependabot.yml` (informational). |
 || `git_tag_drifts` | Latest git tag vs README version mentions. |
 || `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
+
+The Python version pin detector accepts one numeric version, with optional blank
+lines and `#` comments. Prereleases such as `3.13.0rc1` use their base release;
+partial pins such as `3` or `3.10` are compared at their stated precision. Missing
+pin files or requirements without a lower bound do not produce a finding. This
+checks the minimum requirement, not upper bounds or excluded versions. Select it
+with `--only python_version_file_drifts,python_version_parse_drifts`.
 
 ## Other
 
