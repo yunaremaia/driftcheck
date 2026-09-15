@@ -254,6 +254,7 @@ from .version_files import (
 from .python_version import (
     parse_python_version_file,
     parse_requires_python,
+    parse_python_requires_from_setup_py,
     find_python_version_file_drift,
 )
 from .npmrc import (

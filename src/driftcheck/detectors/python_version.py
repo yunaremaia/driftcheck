@@ -69,10 +69,28 @@ def parse_requires_python(text: str) -> tuple[int, int, int] | None:
     return None
 
 
+def parse_python_requires_from_setup_py(text: str) -> tuple[int, int, int] | None:
+    """Parse python_requires from setup.py files.
+
+    Handles patterns like:
+        python_requires='>=3.8'
+        python_requires=">=3.8,<3.13"
+        python_requires >= 3.10
+
+    Returns the floor version (major, minor, patch) or None if not found.
+    """
+    # Match python_requires='>=3.8' or python_requires=">=3.8,<3.13" or python_requires >= 3.10
+    m = re.search(r'python_requires\s*=\s*["\']?[>=~<]*\s*(\d+\.\d+(?:\.\d+)?)', text)
+    if m:
+        return _normalize_version(m.group(1))
+    return None
+
+
 def find_python_version_file_drift(
     python_version_text: str | None,
-    pyproject_text: str | None,
+    pyproject_text: str | None = None,
     setup_cfg_text: str | None = None,
+    setup_py_text: str | None = None,
 ) -> list[dict]:
     """Detect drift between .python-version and requires-python floor.
 
@@ -80,6 +98,8 @@ def find_python_version_file_drift(
 
     Drift occurs when .python-version pins a version strictly below the
     requires-python floor — meaning the pin file would break for users.
+
+    Sources checked in priority order: pyproject.toml > setup.cfg > setup.py
     """
     drifts = []
 
@@ -90,7 +110,7 @@ def find_python_version_file_drift(
     if pin is None:
         return drifts  # Unparseable — informational, not blocking
 
-    # Determine floor from pyproject.toml or setup.cfg
+    # Determine floor from pyproject.toml, setup.cfg, or setup.py (in priority order)
     floor = None
     source = None
     if pyproject_text:
@@ -99,6 +119,9 @@ def find_python_version_file_drift(
     if floor is None and setup_cfg_text:
         floor = parse_requires_python(setup_cfg_text)
         source = "setup.cfg"
+    if floor is None and setup_py_text:
+        floor = parse_python_requires_from_setup_py(setup_py_text)
+        source = "setup.py"
 
     if floor is None:
         return drifts  # No floor to compare against

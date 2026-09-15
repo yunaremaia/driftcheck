@@ -3,6 +3,7 @@ import pytest
 from driftcheck.detectors.python_version import (
     parse_python_version_file,
     parse_requires_python,
+    parse_python_requires_from_setup_py,
     find_python_version_file_drift,
     _normalize_version,
 )
@@ -65,6 +66,35 @@ class TestParseRequiresPython:
         assert parse_requires_python("[project]\nname = 'foo'") is None
 
 
+class TestParsePythonRequiresFromSetupPy:
+    def test_single_quotes(self):
+        assert parse_python_requires_from_setup_py("python_requires='>=3.8'") == (3, 8, 0)
+
+    def test_double_quotes(self):
+        assert parse_python_requires_from_setup_py('python_requires=">=3.10"') == (3, 10, 0)
+
+    def test_range(self):
+        assert parse_python_requires_from_setup_py('python_requires=">=3.8,<3.13"') == (3, 8, 0)
+
+    def test_space_around_equals(self):
+        assert parse_python_requires_from_setup_py("python_requires = '>=3.9'") == (3, 9, 0)
+
+    def test_missing(self):
+        setup_py = "from setuptools import setup\nsetup(name='foo')"
+        assert parse_python_requires_from_setup_py(setup_py) is None
+
+    def test_with_other_args(self):
+        setup_py = """
+from setuptools import setup
+setup(
+    name='foo',
+    version='1.0',
+    python_requires='>=3.9',
+)
+"""
+        assert parse_python_requires_from_setup_py(setup_py) == (3, 9, 0)
+
+
 class TestFindPythonVersionFileDrift:
     def test_no_drift_pin_above_floor(self):
         result = find_python_version_file_drift("3.12", 'requires-python = ">=3.10"')
@@ -105,3 +135,43 @@ class TestFindPythonVersionFileDrift:
     def test_unparseable_pin(self):
         result = find_python_version_file_drift("not-a-version", 'requires-python = ">=3.10"')
         assert result == []
+
+    def test_setup_py_detects_drift(self):
+        result = find_python_version_file_drift(
+            "3.7",
+            None,
+            None,
+            "python_requires='>=3.9'",
+        )
+        assert len(result) == 1
+        assert result[0]["floor_source"] == "setup.py"
+        assert result[0]["floor_version"] == "3.9.0"
+
+    def test_setup_py_no_drift(self):
+        result = find_python_version_file_drift(
+            "3.10",
+            None,
+            None,
+            "python_requires='>=3.8'",
+        )
+        assert result == []
+
+    def test_pyproject_takes_precedence_over_setup_py(self):
+        result = find_python_version_file_drift(
+            "3.7",
+            'requires-python = ">=3.10"',
+            None,
+            "python_requires='>=3.9'",
+        )
+        assert len(result) == 1
+        assert result[0]["floor_source"] == "pyproject.toml"
+
+    def test_setup_cfg_takes_precedence_over_setup_py(self):
+        result = find_python_version_file_drift(
+            "3.7",
+            None,
+            "python_requires = >=3.9",
+            "python_requires='>=3.10'",
+        )
+        assert len(result) == 1
+        assert result[0]["floor_source"] == "setup.cfg"

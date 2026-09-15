@@ -415,10 +415,13 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Python version file drift (.python-version vs requires-python floor)
     setup_cfg_path = root / "setup.cfg"
     setup_cfg_text = setup_cfg_path.read_text(encoding="utf-8", errors="replace") if setup_cfg_path.exists() else None
+    setup_py_path = root / "setup.py"
+    setup_py_text = setup_py_path.read_text(encoding="utf-8", errors="replace") if setup_py_path.exists() else None
     python_version_file_drifts = find_python_version_file_drift(
         version_files.get(".python-version"),
         pyproject_text or None,
         setup_cfg_text,
+        setup_py_text,
     )
 
     ruby_version_drifts = find_version_file_drift(version_files, docs, "Ruby")
