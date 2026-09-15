@@ -74,6 +74,8 @@ DETECTOR_INFO = {
     "vscode_ext_drifts": ("vscode-ext", "VSCode extensions.json vs README recommendations"),
     "editorconfig_drifts": ("editorconfig", ".editorconfig vs README/IDE indent and style"),
     "git_tag_drifts": ("git-tag", "Latest git tag vs README version mentions"),
+    "devcontainer_drifts": ("devcontainer", "Devcontainer.json features/base image vs README"),
+    "pre_commit_drifts": ("pre-commit", "Pre-commit hook versions vs .pre-commit-config.yaml"),
 }
 
 

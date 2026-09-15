@@ -309,15 +309,12 @@ pre-commit install
 
 ### Stats
 
-- **57 detector modules** covering 50+ toolchains and file types
-- **61 independent detectors** (including split environment detectors)
-- **1055 tests** with >95% code coverage
-- **SARIF 2.1.0** output for GitHub Code Scanning
+- **58 detector modules** covering 50+ toolchains and file formats
+- **43 independent detectors** (including split environment detectors, lockfile variants, and plugin system)
+- **1146 tests** with >95% code coverage
+- **SARIF 2.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
-- **CI matrix**: Python 3.10-3.14, Linux/macOS/Windows
-
-Inspired by fixing https://github.com/tinyhumansai/openhuman/issues/5781 (6 READMEs drifted).
 
 ### Detector Comparison Matrix
 

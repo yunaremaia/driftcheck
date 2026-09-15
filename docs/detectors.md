@@ -1,6 +1,6 @@
 # Detectors
 
-driftcheck ships **57 detector modules** covering **61 independent detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
+driftcheck ships **57 detector modules** covering **73 independent detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
 
 ## Language Runtimes
 
@@ -51,7 +51,8 @@ driftcheck ships **57 detector modules** covering **61 independent detectors**. 
 | `k8s_drifts` | Kubernetes manifest image tags vs README. |
 | `helm_drifts` | `Chart.yaml`/`values.yaml` image tags vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
-| `env_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
+|| `env_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
+|| `devcontainer_drifts` | Devcontainer.json features/base image vs README. |
 
 ## Build Tools
 
@@ -72,7 +73,8 @@ driftcheck ships **57 detector modules** covering **61 independent detectors**. 
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
 | `nvmrc_drifts` | `.nvmrc` vs `package.json` engines.node (informational). |
 | `dependabot_drifts` | Ecosystems used but not covered by `.github/dependabot.yml` (informational). |
-| `git_tag_drifts` | Latest git tag vs README version mentions. |
+|| `git_tag_drifts` | Latest git tag vs README version mentions. |
+|| `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
 
 ## Other
 
