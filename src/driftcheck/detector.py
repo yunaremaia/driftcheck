@@ -97,6 +97,8 @@ from .detectors import (
     parse_java_version,
     parse_terraform_version,
     find_version_file_drift,
+    parse_python_version_file,
+    find_python_version_file_drift,
     apply_fixes,
     parse_npmrc,
     find_npmrc_drift,
@@ -410,6 +412,15 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
             if p.is_file():
                 version_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
 
+    # Python version file drift (.python-version vs requires-python floor)
+    setup_cfg_path = root / "setup.cfg"
+    setup_cfg_text = setup_cfg_path.read_text(encoding="utf-8", errors="replace") if setup_cfg_path.exists() else None
+    python_version_file_drifts = find_python_version_file_drift(
+        version_files.get(".python-version"),
+        pyproject_text or None,
+        setup_cfg_text,
+    )
+
     ruby_version_drifts = find_version_file_drift(version_files, docs, "Ruby")
     python_version_drifts = find_version_file_drift(version_files, docs, "Python")
     node_version_drifts = find_version_file_drift(version_files, docs, "Node.js")
@@ -524,6 +535,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "jenkins_drifts": jenkins_drifts,
         "ruby_version_drifts": ruby_version_drifts,
         "python_version_drifts": python_version_drifts,
+        "python_version_file_drifts": python_version_file_drifts,
         "node_version_drifts": node_version_drifts,
         "java_version_drifts": java_version_drifts,
         "terraform_version_drifts": terraform_version_drifts,

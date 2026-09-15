@@ -251,6 +251,11 @@ from .version_files import (
     parse_terraform_version,
     find_version_file_drift,
 )
+from .python_version import (
+    parse_python_version_file,
+    parse_requires_python,
+    find_python_version_file_drift,
+)
 from .npmrc import (
     parse_npmrc,
     find_npmrc_drift,
