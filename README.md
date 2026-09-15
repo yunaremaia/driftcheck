@@ -218,12 +218,17 @@ driftcheck --git-mode --git-base v1.0.0
 - **Kotlin**: `build.gradle.kts` plugin version vs README
 - **Swift**: `Package.swift` `swift-tools-version` and dependency pins vs README
 - **Dart/Flutter**: `pubspec.yaml` `environment.sdk` constraint vs README
+- **Deno**: `deno.json` version pins vs README
+- **Python Version**: `.python-version` vs `pyproject.toml` `requires-python` floor
 
 **Package managers & lockfiles:**
 - **Pipfile**: `Pipfile` vs `Pipfile.lock` version mismatches
 - **Conda**: `environment.yml` unpinned packages
 - **Gradle Version Catalog**: `libs.versions.toml` vs README
 - **Lockfile**: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) (informational)
+- **Nix**: `flake.lock` nixpkgs pins vs README mentions
+- **Engines**: `package.json` `engines` field consistency across package managers
+- **Requirements**: `requirements.txt` unpinned packages vs known latest
 
 **CI/CD:**
 - **GitHub Actions**: outdated `uses: action@version` — compares against known latest versions for 18 popular actions; detects deprecated Node 20 runtime
@@ -234,6 +239,8 @@ driftcheck --git-mode --git-base v1.0.0
 
 **Infrastructure:**
 - **Docker**: `Dockerfile` `FROM <image>:<tag>` vs README
+- **Docker Bases**: floating/unpinned Dockerfile base images
+- **Docker Multistage**: multi-stage Dockerfile `FROM` consistency across stages
 - **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
@@ -251,11 +258,15 @@ driftcheck --git-mode --git-base v1.0.0
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
+- **EditorConfig**: `.editorconfig` `indent_size`/`indent_style` vs project convention
 - **Devcontainer**: `.devcontainer/devcontainer.json` image/tags vs README
 - **Renovate**: `renovate.json` configuration drift vs README
 - **NVMRC**: `.nvmrc` vs `package.json` engines.node (informational)
 - **Dependabot**: ecosystems used but not covered by `.github/dependabot.yml` (informational)
 - **SARIF output**: `driftcheck --sarif` generates SARIF 2.1.0 for GitHub Code Scanning
+
+**Security:**
+- **Typosquat**: suspicious package names similar to popular packages
 
 **Other:**
 - **Line endings**: missing `* text=auto eol=lf` in `.gitattributes` (informational)
