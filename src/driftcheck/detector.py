@@ -122,6 +122,7 @@ from .detectors import (
     parse_pre_commit_revs,
     find_pre_commit_drift,
     find_renovate_drift,
+    find_bazel_drift,
 )
 
 
@@ -371,6 +372,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     req_path = root / "requirements.txt"
     req_text = req_path.read_text(encoding="utf-8", errors="replace") if req_path.exists() else ""
     requirements_drifts = find_requirements_drift(req_text, pyproject_text, docs)
+    bazel_drifts = find_bazel_drift(root)
 
     # Poetry (pyproject.toml with [tool.poetry] section)
     poetry_pyproject_path = root / "pyproject.toml"
@@ -530,6 +532,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "elixir_drifts": elixir_drifts,
         "cmake_drifts": cmake_drifts,
         "requirements_drifts": requirements_drifts,
+        "bazel_drifts": bazel_drifts,
         "poetry_drifts": poetry_drifts,
         "kotlin_drifts": kotlin_drifts,
         "pipfile_drifts": pipfile_drifts,

@@ -498,3 +498,5 @@ __all__ = [
     "find_mise_drift",
     "find_renovate_drift",
 ]
+
+from .bazel import find_bazel_drift

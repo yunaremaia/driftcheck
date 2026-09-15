@@ -33,6 +33,7 @@ DRIFT_KEYS = [
     "typosquat_drifts",
     "poetry_drifts",
     "renovate_drifts",
+    "bazel_drifts",
 ]
 
 # Default configuration

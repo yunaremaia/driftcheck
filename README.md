@@ -241,6 +241,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 
 **Build tools:**
+- **Bazel**: `.bazelversion`, `MODULE.bazel` `bazel_dep`, and `WORKSPACE.bazel` `http_archive` pins vs README
 - **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.)
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
