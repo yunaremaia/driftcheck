@@ -208,8 +208,12 @@ driftcheck --git-mode --git-base v1.0.0
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
 - **Node**: `package.json` `engines.node` vs README
+- **Engines**: `package.json` `engines` vs `.nvmrc` / `packageManager` field — internal pin consistency
+- **Deno**: `deno.json` / `deno.jsonc` version vs README mentions of "Deno x.y"
 - **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
 - **Python**: `pyproject.toml` `requires-python` vs README
+- **Python version**: `.python-version` (pyenv/asdf) vs `pyproject.toml` `requires-python` — pin below the declared floor
+- **Requirements**: `requirements.txt` package pins vs `pyproject.toml` / README mentions
 - **Go**: `go.mod` `go` directive vs README
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
@@ -234,6 +238,9 @@ driftcheck --git-mode --git-base v1.0.0
 
 **Infrastructure:**
 - **Docker**: `Dockerfile` `FROM <image>:<tag>` vs README
+- **Docker base images**: unpinned/`latest`/floating base image tags, and sibling Dockerfiles pinning different versions of the same image
+- **Docker multi-stage**: conflicting base image tags across `FROM` stages of a multi-stage Dockerfile vs README
+- **Nix**: `flake.lock` nixpkgs input vs README mentions ("nixpkgs 24.05", "nixos-unstable")
 - **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
@@ -248,6 +255,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
 
 **Configuration:**
+- **EditorConfig**: `.editorconfig` indent/line-ending settings vs README, VSCode `settings.json`, and Prettier/ESLint config
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
@@ -258,6 +266,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **SARIF output**: `driftcheck --sarif` generates SARIF 2.1.0 for GitHub Code Scanning
 
 **Other:**
+- **Typosquat**: lockfile dependency names within edit distance 1–2 of well-known packages (classic typosquatting signature) (informational)
 - **Line endings**: missing `* text=auto eol=lf` in `.gitattributes` (informational)
 - **External resources**: third-party CDN dependencies that break offline rendering (informational)
 - **Count**: `skills/` directory count vs README mentions of "N skills"
