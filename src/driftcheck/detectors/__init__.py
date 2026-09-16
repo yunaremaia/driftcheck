@@ -32,6 +32,11 @@ from .docker import (
     DOCKER_FROM_RE,
     DOCKER_TAG_RE,
 )
+from .dockerfile_instructions import (
+    parse_dockerfile_instructions,
+    find_dockerfile_instruction_drift,
+    DOCKERFILE_INSTRUCTIONS,
+)
 from .docker_bases import (
     parse_dockerfile_bases,
     find_dockerfile_bases_drift,

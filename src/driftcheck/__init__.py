@@ -17,6 +17,7 @@ from .detectors.dependabot import find_dependabot_drift
 from .detectors.devcontainer import find_devcontainer_drift
 from .detectors.compose import find_docker_compose_drift
 from .detectors.docker import find_docker_drift
+from .detectors.dockerfile_instructions import find_dockerfile_instruction_drift
 from .detectors.docker_bases import find_dockerfile_bases_drift
 from .detectors.docker_multistage import find_dockerfile_multistage_drift
 from .detectors.dotnet import find_dotnet_drift
@@ -83,6 +84,7 @@ __all__ = [
     "find_devcontainer_drift",
     "find_docker_compose_drift",
     "find_docker_drift",
+    "find_dockerfile_instruction_drift",
     "find_dockerfile_bases_drift",
     "find_dockerfile_multistage_drift",
     "find_dotnet_drift",

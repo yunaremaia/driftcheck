@@ -29,6 +29,7 @@ from .detectors import (
     parse_go_version_from_gomod,
     find_go_drift,
     find_docker_drift,
+    find_dockerfile_instruction_drift,
     find_dockerfile_bases_drift,
     parse_from_stages,
     find_dockerfile_multistage_drift,
@@ -313,6 +314,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     docker_drifts = find_docker_drift(dockerfiles, docs)
     docker_multistage_drifts = find_dockerfile_multistage_drift(dockerfiles, docs)
     docker_bases_drifts = find_dockerfile_bases_drift(dockerfiles, docs)
+    dockerfile_instruction_drifts = find_dockerfile_instruction_drift(dockerfiles, docs)
     java_drifts = find_java_drift("\n".join(gradle_files.values()), docs)
     maven_drifts = find_maven_drift("\n".join(maven_files.values()), docs)
     terraform_drifts = find_terraform_drift(terraform_files, docs)
@@ -504,6 +506,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "docker_drifts": docker_drifts,
         "docker_multistage_drifts": docker_multistage_drifts,
         "docker_bases_drifts": docker_bases_drifts,
+        "dockerfile_instruction_drifts": dockerfile_instruction_drifts,
         "java_drifts": java_drifts,
         "maven_drifts": maven_drifts,
         "terraform_drifts": terraform_drifts,
