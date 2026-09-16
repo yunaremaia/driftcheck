@@ -6,11 +6,15 @@ PY_RE = re.compile(r'Python\s+(?P<ver>[0-9]+\.[0-9]+)', re.I)
 
 
 def parse_python_version_from_pyproject(text: str) -> str | None:
-    # naive parse: requires-python = ">=3.10" or ">=3.10,<3.13"
-    m = re.search(r'requires-python\s*=\s*"[^"]*?([0-9]+\.[0-9]+)', text)
+    # Match requires-python = ">=3.10" or ">=3.10,<3.13" or '>=3.10'
+    m = re.search(r'requires-python\s*=\s*[\'"][^\'"]*?([0-9]+\.[0-9]+)', text)
     if m:
         return m.group(1)
-    # also PEP 621 via [project] requires-python
+    # Also support Poetry style: [tool.poetry.dependencies] python = "^3.10" or ">=3.10"
+    m_poetry = re.search(r'(?m)^\s*python\s*=\s*[\'"][^\'"]*?([0-9]+\.[0-9]+)', text)
+    if m_poetry:
+        return m_poetry.group(1)
+    # Also support Flit / Hatch / Setup.tools table syntax
     return None
 
 

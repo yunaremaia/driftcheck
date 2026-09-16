@@ -19,6 +19,16 @@ class TestParsePythonVersion:
     def test_missing(self):
         assert parse_python_version_from_pyproject('[project]\nname = "test"') is None
 
+    def test_poetry_python_version(self):
+        assert parse_python_version_from_pyproject(
+            '[tool.poetry.dependencies]\npython = "^3.10"'
+        ) == "3.10"
+
+    def test_single_quoted_requires_python(self):
+        assert parse_python_version_from_pyproject(
+            "[project]\nrequires-python = '>=3.9'"
+        ) == "3.9"
+
 
 class TestFindPythonDrift:
     def test_drift_detected(self):
