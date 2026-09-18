@@ -4,6 +4,18 @@ All notable changes to driftcheck will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.46] - 2026-09-18
+
+### Added
+- **`driftcheck init` subcommand**: auto-detects project type and generates `.driftcheck.toml` config
+  - Detects 30+ project types (Rust, Node, Python, Go, Docker, Java, etc.)
+  - Enables relevant detectors based on project files
+  - `--force` to overwrite existing config
+  - `--dry-run` to preview without writing
+  - Lists detected project files and enabled detectors in config comments
+
+## [Unreleased]
+
 ### Added
 - **Kotlin Multiplatform (KMP) drift detection**: detects version mismatch between `gradle/libs.versions.toml` KMP version catalog and README badges/mentions for Kotlin, Compose, Coroutines, KGP, AGP, KSP
   - Parses `[versions]` and `[plugins]` sections of TOML catalog

@@ -21,7 +21,7 @@ def test_init_does_not_overwrite(tmp_path, capsys):
     config.write_text("# existing config\n")
     result = main(["--init", str(tmp_path)])
     assert config.read_text() == "# existing config\n"
-    assert result == 0
+    assert result == 1  # exit 1 indicates "already exists, use --force"
 
 
 def test_report_no_drifts(tmp_path, capsys):
