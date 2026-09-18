@@ -52,7 +52,68 @@ class TestGetChangedFiles:
             result = get_changed_files(Path("/tmp"), "main")
             mock_run.assert_called_once()
             call_args = mock_run.call_args
-            assert call_args[0][0] == ["git", "diff", "--name-only", "main", "--"]
+            assert call_args[0][0] == ["git", "diff", "--name-only", "--", "main"]
+
+    def test_rejects_malicious_base_commit_with_dash(self):
+        """Rejects base commit starting with dash (option injection)."""
+        result = get_changed_files(Path("/tmp"), "--upload-pack=evil")
+        assert result == set()
+
+    def test_rejects_malicious_base_commit_with_semicolons(self):
+        """Rejects base commit with shell metacharacters."""
+        result = get_changed_files(Path("/tmp"), "main; rm -rf /")
+        assert result == set()
+
+    def test_rejects_malicious_base_commit_with_backticks(self):
+        """Rejects base commit with command substitution."""
+        result = get_changed_files(Path("/tmp"), "$(whoami)")
+        assert result == set()
+
+    def test_rejects_empty_base_commit(self):
+        """Rejects empty base commit."""
+        result = get_changed_files(Path("/tmp"), "")
+        assert result == set()
+
+    def test_accepts_valid_commit_hash(self):
+        """Accepts valid hex commit hash."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "file.py\n"
+        with patch("subprocess.run", return_value=mock_result):
+            result = get_changed_files(Path("/tmp"), "abc123def456")
+        assert result == {"file.py"}
+
+    def test_accepts_valid_branch_name(self):
+        """Accepts valid branch name with slashes."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "file.py\n"
+        with patch("subprocess.run", return_value=mock_result):
+            result = get_changed_files(Path("/tmp"), "feature/my-branch")
+        assert result == {"file.py"}
+
+    def test_accepts_head_tilde(self):
+        """Accepts HEAD~1 syntax."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "file.py\n"
+        with patch("subprocess.run", return_value=mock_result):
+            result = get_changed_files(Path("/tmp"), "HEAD~1")
+        assert result == {"file.py"}
+
+    def test_accepts_refs_heads_main(self):
+        """Accepts refs/heads/main."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "file.py\n"
+        with patch("subprocess.run", return_value=mock_result):
+            result = get_changed_files(Path("/tmp"), "refs/heads/main")
+        assert result == {"file.py"}
+
+    def test_rejects_path_traversal(self):
+        """Rejects path traversal attempt."""
+        result = get_changed_files(Path("/tmp"), "../../etc/passwd")
+        assert result == set()
 
 
 class TestGetChangedAndUntracked:

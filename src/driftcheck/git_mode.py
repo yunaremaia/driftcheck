@@ -5,8 +5,27 @@ that changed relative to a base commit (default: HEAD~1).
 """
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
+
+# Strict regex for git ref validation: only allow safe characters
+# Allows: hex commit hashes, branch names, tags, refs/heads/main, etc.
+# Rejects: paths with .., anything starting with -, shell metacharacters
+_GIT_REF_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/~-]*$")
+
+
+def _validate_git_ref(ref: str) -> str:
+    """Validate a git ref/commit string for safety.
+    
+    Raises ValueError if the ref contains unsafe characters.
+    """
+    if not _GIT_REF_RE.match(ref):
+        raise ValueError(
+            f"Invalid git ref '{ref}'. Only alphanumeric characters, dots, "
+            "slashes, underscores, and hyphens (not at start) are allowed."
+        )
+    return ref
 
 
 def get_changed_files(root: Path, base_commit: str = "HEAD~1") -> set[str]:
@@ -16,8 +35,9 @@ def get_changed_files(root: Path, base_commit: str = "HEAD~1") -> set[str]:
     if git is not available or base_commit doesn't exist.
     """
     try:
+        _validate_git_ref(base_commit)
         result = subprocess.run(
-            ["git", "diff", "--name-only", base_commit, "--"],
+            ["git", "diff", "--name-only", "--", base_commit],
             cwd=root,
             capture_output=True,
             text=True,
@@ -27,7 +47,7 @@ def get_changed_files(root: Path, base_commit: str = "HEAD~1") -> set[str]:
             return set()
         files = {line.strip() for line in result.stdout.splitlines() if line.strip()}
         return files
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError, ValueError):
         return set()
 
 

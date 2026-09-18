@@ -12,7 +12,6 @@ INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfi
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
-    "drifts": ("rust-toolchain", "Rust toolchain.toml channel vs README"),
     "rust_drifts": ("rust-cargo", "Rust Cargo.toml rust-version vs README"),
     "node_drifts": ("node", "Node.js package.json engines vs README"),
     "bun_drifts": ("bun", "Bun package.json engines.bun vs README"),
@@ -417,8 +416,6 @@ def _list_detectors() -> None:
 
 def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     """Print all blocking drift types."""
-    for d in all_drifts.get("drifts", []):
-        print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {d['toolchain_version']}")
     for d in all_drifts.get("rust_drifts", []):
         target = d.get("toolchain_version") or d.get("cargo_version")
         print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {target}")

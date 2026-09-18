@@ -301,7 +301,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
                 pubspec_files[str(p.relative_to(root))] = p.read_text(encoding="utf-8", errors="replace")
     pubspec_text = "\n".join(pubspec_files.values()) if pubspec_files else ""
 
-    rust_drifts = find_rust_drift(toolchain_text, docs)
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
     bun_drifts = find_bun_drift(package_text, docs)
@@ -492,7 +491,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "package_node": parse_node_version_from_package(package_text),
         "pyproject_python": parse_python_version_from_pyproject(pyproject_text),
         "gomod_version": parse_go_version_from_gomod(gomod_text),
-        "drifts": rust_drifts,
         "rust_drifts": rust_drifts_multi,
         "node_drifts": node_drifts,
         "bun_drifts": bun_drifts,
