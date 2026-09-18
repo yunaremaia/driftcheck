@@ -16,7 +16,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .config import get_excluded_detectors, load_config
+from .config import DRIFT_KEYS, get_excluded_detectors, load_config
 from .plugins import load_plugins, run_plugin_detectors
 
 
@@ -198,7 +198,7 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
     contents = []
     with ThreadPoolExecutor(max_workers=min(8, len(files))) as executor:
         futures = {
-            executor.submit(lambda p=p: _read_text_safe(p, max_size=1_000_000)): p
+            executor.submit(_read_text_safe, p, max_size=1_000_000): p
             for p in files
         }
         for future in as_completed(futures):

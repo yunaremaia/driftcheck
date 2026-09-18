@@ -46,6 +46,7 @@ def find_rust_drift_multi(toolchain_text: str, cargo_text: str, docs: dict[str, 
     tv = parse_toolchain_version(toolchain_text)
     cv = parse_cargo_rust_version(cargo_text)
     # resolve authoritative version: prefer toolchain, fall back to cargo
+    authoritative: str | None
     if tv and cv:
         authoritative = tv if _minor(tv) == _minor(cv) or tv == cv else (tv if len(tv) >= len(cv) else cv)
     else:

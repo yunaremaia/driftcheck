@@ -82,7 +82,7 @@ def find_python_version_file_drift(
     Drift occurs when .python-version pins a version strictly below the
     requires-python floor — meaning the pin file would break for users.
     """
-    drifts = []
+    drifts: list[dict] = []
 
     if not python_version_text:
         return drifts  # Detector is opt-in

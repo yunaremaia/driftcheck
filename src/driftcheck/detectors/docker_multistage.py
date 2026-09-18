@@ -5,6 +5,7 @@ versions, or when the final stage tag doesn't match README mentions.
 """
 from __future__ import annotations
 import re
+from typing import Any
 
 # Match FROM statements in Dockerfiles
 FROM_RE = re.compile(r'^FROM\s+(?P<image>[\w.\-/]+)(?::(?P<tag>[\w.\-]+))?(?:\s+AS\s+(?P<alias>\w+))?', re.MULTILINE | re.I)
@@ -37,7 +38,7 @@ def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str
     - Final stage tag doesn't match README mentions
     - Scratch/distroless final stage with pinned intermediate versions
     """
-    drifts = []
+    drifts: list[dict[str, Any]] = []
 
     for fname, content in dockerfiles.items():
         stages = parse_from_stages(content)
@@ -45,7 +46,7 @@ def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str
             continue
 
         # Check for same image with different base versions (ignoring variants like -slim, -alpine)
-        image_versions = {}
+        image_versions: dict[str, list[tuple[str, str, int]]] = {}
         for stage in stages:
             img = stage["image"]
             tag = stage["tag"]

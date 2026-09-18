@@ -34,7 +34,7 @@ def find_npmrc_drift(
     docs: dict[str, str],
 ) -> list[dict]:
     """Detect drift between .npmrc and package.json settings."""
-    drifts = []
+    drifts: list[dict] = []
 
     if not npmrc_content:
         return drifts

@@ -43,7 +43,7 @@ def find_package_manager_drift(
     docs: dict[str, str],
 ) -> list[dict]:
     """Detect drift between packageManager field and actual usage."""
-    drifts = []
+    drifts: list[dict] = []
 
     if not package_json_content:
         return drifts

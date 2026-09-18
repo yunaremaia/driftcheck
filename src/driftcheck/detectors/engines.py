@@ -47,7 +47,7 @@ def find_engines_drift(root: Path) -> list[dict]:
 
     Returns list of {file, kind, detail, pos}.
     """
-    drifts = []
+    drifts: list[dict] = []
     package_json = root / "package.json"
     nvmrc = root / ".nvmrc"
 

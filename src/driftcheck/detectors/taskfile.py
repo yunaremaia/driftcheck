@@ -34,7 +34,7 @@ def parse_taskfile(text: str) -> dict[str, str]:
     lines = text.splitlines()
     in_tasks_section = False
     current_task = None
-    current_body = []
+    current_body: list[str] = []
 
     for line in lines:
         stripped = line.strip()
@@ -81,7 +81,7 @@ def parse_makefile(text: str) -> dict[str, str]:
     targets = {}
     lines = text.splitlines()
     current_target = None
-    current_body = []
+    current_body: list[str] = []
 
     for line in lines:
         stripped = line.strip()
