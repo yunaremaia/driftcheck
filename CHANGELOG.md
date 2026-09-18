@@ -5,6 +5,13 @@ All notable changes to driftcheck will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Kotlin Multiplatform (KMP) drift detection**: detects version mismatch between `gradle/libs.versions.toml` KMP version catalog and README badges/mentions for Kotlin, Compose, Coroutines, KGP, AGP, KSP
+  - Parses `[versions]` and `[plugins]` sections of TOML catalog
+  - Compares against badge URLs (shields.io) and prose mentions
+  - Minor/patch tolerance for Kotlin, exact match for Compose BOM
+  - 24 new tests, 1170 total
+
+### Fixed
 - **Nix flake.lock drift detection**: detects version mismatch between `flake.lock` nixpkgs pins and README mentions
   - Parses `flake.lock` JSON structure and extracts nixpkgs/nixos version pins
   - Matches against README patterns like `nixpkgs 24.05`, `nixos-24.05`, `nixpkgs-unstable`

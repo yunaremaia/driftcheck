@@ -225,6 +225,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Pipfile**: `Pipfile` vs `Pipfile.lock` version mismatches
 - **Conda**: `environment.yml` unpinned packages
 - **Gradle Version Catalog**: `libs.versions.toml` vs README
+- **Kotlin Multiplatform (KMP)**: `gradle/libs.versions.toml` KMP catalog vs README badges (kotlin, coroutines, compose, AGP, KSP)
 - **Lockfile**: missing, stale, or orphaned lockfiles (package-lock.json, yarn.lock, Cargo.lock, go.sum, Gemfile.lock, composer.lock, poetry.lock, uv.lock) (informational)
 - **Nix**: `flake.lock` nixpkgs pins vs README mentions
 - **Engines**: `package.json` `engines` field consistency across package managers
@@ -382,6 +383,7 @@ See the [API Reference](docs/api.md) for embedding driftcheck in scripts and CI 
 | Helm | helm-values | `helm_values_drifts` | Helm values.yaml vs environment-specific values |
 | Java | java-version | `java_version_drifts` | .java-version vs README |
 | Kotlin | kotlin | `kotlin_drifts` | Kotlin build.gradle.kts plugin version |
+| Kotlin | kotlin-multiplatform | `kmp_drifts` | Kotlin Multiplatform (KMP) version catalog drift |
 | Kubernetes | k8s | `k8s_drifts` | Kubernetes manifest image |
 | Maven | maven | `maven_drifts` | Maven pom.xml java.version |
 | Node | actions-node20 | `actions_drifts` | GitHub Actions Node 20 deprecation |

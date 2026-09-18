@@ -87,6 +87,7 @@ from .detectors import (
     find_pipfile_drift,
     find_conda_drift,
     find_gradle_catalog_drift,
+    find_kotlin_multiplatform_drift,
     parse_jenkins_node_agent,
     parse_jenkins_nodejs_version,
     parse_jenkins_python_version,
@@ -399,6 +400,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
     # Gradle Version Catalog
     gradle_catalog_drifts = find_gradle_catalog_drift(root)
 
+    # Kotlin Multiplatform (KMP) drift: libs.versions.toml vs README badges
+    kmp_drifts = find_kotlin_multiplatform_drift(root)
+
     # Jenkins
     jenkins_files = {}
     seen_jenkins_paths = set()
@@ -543,6 +547,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "pipfile_drifts": pipfile_drifts,
         "conda_drifts": conda_drifts,
         "gradle_catalog_drifts": gradle_catalog_drifts,
+        "kmp_drifts": kmp_drifts,
         "jenkins_drifts": jenkins_drifts,
         "ruby_version_drifts": ruby_version_drifts,
         "python_version_drifts": python_version_drifts,

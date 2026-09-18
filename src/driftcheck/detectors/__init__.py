@@ -220,6 +220,11 @@ from .gradle_catalog import (
     find_gradle_catalog_drift,
     LIBS_VERSIONS_RE,
 )
+from .kotlin_multiplatform import (
+    find_kotlin_multiplatform_drift,
+    parse_kmp_versions,
+    BADGE_RES,
+)
 from .pipfile import (
     parse_pipfile_versions,
     find_pipfile_drift,
@@ -473,6 +478,10 @@ __all__ = [
     "parse_gradle_catalog",
     "find_gradle_catalog_drift",
     "LIBS_VERSIONS_RE",
+    # Kotlin Multiplatform
+    "find_kotlin_multiplatform_drift",
+    "parse_kmp_versions",
+    "BADGE_RES",
     # Pipfile
     "parse_pipfile_versions",
     "find_pipfile_drift",
