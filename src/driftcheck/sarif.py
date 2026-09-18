@@ -576,7 +576,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         try:
             from . import __version__ as version
         except ImportError:
-            version = "0.1.40"
+            version = "unknown"
     rules: list[dict] = []
     results: list[dict] = []
     rule_set: set[str] = set()

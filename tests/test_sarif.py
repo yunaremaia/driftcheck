@@ -155,3 +155,22 @@ def test_sarif_skipped_symlinks():
     assert "secret" in sarif_results[0]["message"]["text"]
     assert len(sarif_results[0]["suppressions"]) == 1
     assert sarif_results[0]["suppressions"][0]["kind"] == "inSource"
+
+
+def test_sarif_version_matches_package_version():
+    """SARIF tool version should match __version__ when not explicitly provided (issue #162)."""
+    from driftcheck import __version__
+
+    result = _empty_result()
+    doc = to_sarif(result)
+    tool_version = doc["runs"][0]["tool"]["driver"]["version"]
+    assert tool_version == __version__, f"Expected {__version__}, got {tool_version}"
+
+
+def test_sarif_version_unknown_fallback():
+    """When version is None and import fails, fallback should be 'unknown' (issue #162)."""
+    result = _empty_result()
+    doc = to_sarif(result, version=None)
+    tool_version = doc["runs"][0]["tool"]["driver"]["version"]
+    # Should be either __version__ or "unknown", never a stale hardcoded version
+    assert tool_version != "0.1.40", "Stale 0.1.40 fallback should not be used"
