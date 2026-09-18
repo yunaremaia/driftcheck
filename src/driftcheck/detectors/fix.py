@@ -30,14 +30,8 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
             return True
         return False
     
-    # Rust drifts (toolchain.toml source)
-    for d in result.get("drifts", []):
-        fpath = root / d["file"]
-        if fpath.exists():
-            if fix_in_file(fpath, d["doc_version"], d["toolchain_version"], [DOC_RE]):
-                fixed.append(d["file"])
-    
-    # Rust drifts (multi-source: toolchain.toml or Cargo.toml rust-version)
+    # Rust drifts (drifts key is now an alias for rust_drifts — both point to multi-source results)
+    # We only process rust_drifts here to avoid double-fixing
     for d in result.get("rust_drifts", []):
         fpath = root / d["file"]
         target = d.get("toolchain_version") or d.get("cargo_version")

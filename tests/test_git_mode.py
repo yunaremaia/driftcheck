@@ -158,7 +158,7 @@ class TestFilterDetectorsByFiles:
         changed = {"README.md"}
         result = filter_detectors_by_files(changed, DETECTOR_FILE_PATTERNS)
         # All doc-comparing detectors should be included
-        assert "drifts" in result
+        assert "rust_drifts" in result
         assert "node_drifts" in result
         assert "python_drifts" in result
         assert "go_drifts" in result

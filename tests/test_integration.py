@@ -316,7 +316,7 @@ class TestCLISARIF:
         assert rc == 1
         data = json.loads(out)
         assert len(data["runs"][0]["results"]) >= 1
-        assert any(r["ruleId"] == "rust-toolchain-version-drift" for r in data["runs"][0]["results"])
+        assert any(r["ruleId"] == "rust-cargo-version-drift" for r in data["runs"][0]["results"])
 
     def test_sarif_error_level_for_blocking(self, tmp_path):
         (tmp_path / "rust-toolchain.toml").write_text('channel = "1.96.1"')

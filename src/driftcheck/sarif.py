@@ -359,9 +359,7 @@ def _make_result(
 
 def _drift_message(drift_type: str, d: dict) -> str:
     """Generate human-readable message for a drift entry."""
-    if drift_type == "drifts":
-        return f"Rust {d.get('doc_version')} in docs should be {d.get('toolchain_version')}"
-    elif drift_type == "rust_drifts":
+    if drift_type == "rust_drifts":
         target = d.get("toolchain_version") or d.get("cargo_version")
         return f"Rust {d.get('doc_version')} in docs should be {target}"
     elif drift_type == "node_drifts":

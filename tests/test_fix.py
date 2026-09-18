@@ -17,7 +17,7 @@ class TestApplyFixesRust:
     def test_fixes_rust_toolchain_drift(self, tmp_path):
         _write(tmp_path / "README.md", "Install Rust 1.93.0 for building")
         result = {
-            "drifts": [
+            "rust_drifts": [
                 {
                     "file": "README.md",
                     "doc_version": "1.93.0",
@@ -48,13 +48,13 @@ class TestApplyFixesRust:
 
     def test_no_drift_no_changes(self, tmp_path):
         _write(tmp_path / "README.md", "Rust 1.96.1")
-        result = {"drifts": []}
+        result = {"rust_drifts": []}
         fixed = apply_fixes(tmp_path, result)
         assert fixed == []
 
     def test_missing_file_skipped(self, tmp_path):
         result = {
-            "drifts": [
+            "rust_drifts": [
                 {
                     "file": "nonexistent.md",
                     "doc_version": "1.93",
@@ -252,7 +252,7 @@ class TestApplyFixesEdgeCases:
         """If same file appears in multiple drift types, list it once."""
         _write(tmp_path / "README.md", "Install Rust 1.93.0 and Node.js 18")
         result = {
-            "drifts": [
+            "rust_drifts": [
                 {
                     "file": "README.md",
                     "doc_version": "1.93",

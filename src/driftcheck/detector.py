@@ -491,6 +491,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None)
         "package_node": parse_node_version_from_package(package_text),
         "pyproject_python": parse_python_version_from_pyproject(pyproject_text),
         "gomod_version": parse_go_version_from_gomod(gomod_text),
+        "drifts": rust_drifts_multi,
         "rust_drifts": rust_drifts_multi,
         "node_drifts": node_drifts,
         "bun_drifts": bun_drifts,

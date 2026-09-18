@@ -28,19 +28,25 @@ def find_terraform_drift(terraform_files: dict[str, str], docs: dict[str, str]) 
     for fname, content in docs.items():
         for m in TERRAFORM_VER_RE.finditer(content):
             ver = m.group("ver")
-            # Check if this version matches any provider version
+            # Check if this version matches ANY provider version
+            # A doc version is drift only if it doesn't match ANY provider
+            # on either full version or major.minor
+            matched = False
             for source, tf_ver in all_providers.items():
-                if ver != tf_ver and ver.split(".")[:2] == tf_ver.split(".")[:2]:
-                    # Same major.minor, different patch — skip
-                    continue
-                if ver != tf_ver:
-                    drifts.append({
-                        "file": fname,
-                        "doc_version": ver,
-                        "terraform_version": tf_ver,
-                        "provider": source,
-                        "pos": m.start(),
-                    })
+                if ver == tf_ver:
+                    matched = True
                     break
+                if ver.split(".")[:2] == tf_ver.split(".")[:2]:
+                    # Same major.minor, different patch — skip
+                    matched = True
+                    break
+            if not matched:
+                drifts.append({
+                    "file": fname,
+                    "doc_version": ver,
+                    "terraform_version": list(all_providers.values())[0],
+                    "provider": list(all_providers.keys())[0],
+                    "pos": m.start(),
+                })
             break  # one per file
     return drifts

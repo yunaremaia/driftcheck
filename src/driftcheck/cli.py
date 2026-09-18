@@ -100,7 +100,7 @@ def main(argv=None) -> int:
     ap.add_argument("--report", action="store_true", help="output a markdown report (for CI job summaries / PR comments)")
     ap.add_argument("--init", action="store_true", help="generate a .driftcheck.toml config file and exit)")
     ap.add_argument("--git-mode", action="store_true", help="only scan files changed since --git-base (default: HEAD~1)")
-    ap.add_argument("--git-base", metavar="COMMIT", default="HEAD~1", help="base commit for --git-mode (default: HEAD~1)")
+    ap.add_argument("--git-base", metavar="COMMIT", default="HEAD~1", help="base commit for --git-mode (default: HEAD~1); validated against strict ref format")
     args = ap.parse_args(argv)
 
     if args.list_detectors:

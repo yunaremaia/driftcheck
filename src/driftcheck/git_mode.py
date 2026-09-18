@@ -134,7 +134,6 @@ def _glob_match(path: str, pattern: str) -> bool:
 # Mapping of detector keys to the file patterns they care about.
 # Used to skip detectors whose relevant files haven't changed.
 DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
-    "drifts": ["rust-toolchain.toml", "README.md", "CONTRIBUTING.md", "docs/README*.md"],
     "rust_drifts": ["rust-toolchain.toml", "Cargo.toml", "README.md", "CONTRIBUTING.md"],
     "node_drifts": ["package.json", "README.md", "CONTRIBUTING.md"],
     "bun_drifts": ["package.json", "README.md", "CONTRIBUTING.md"],
