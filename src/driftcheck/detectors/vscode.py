@@ -25,12 +25,12 @@ def parse_vscode_extensions(text: str) -> list[str]:
     m = re.search(r'"recommendations"\s*:\s*\[(.*?)\]', text, re.DOTALL)
     if m:
         return [e.strip().strip('"').strip("'") for e in m.group(1).split(",") if e.strip()]
-    
+
     # Look for settings.json with recommendations
     m = re.search(r'"recommendations"\s*:\s*\[(.*?)\]', text, re.DOTALL)
     if m:
         return [e.strip().strip('"').strip("'") for e in m.group(1).split(",") if e.strip()]
-    
+
     return []
 
 
@@ -41,11 +41,11 @@ def find_vscode_extensions_drift(
     """Detect drift between VSCode recommendations and README mentions."""
     if not vscode_content:
         return []
-    
+
     extensions = parse_vscode_extensions(vscode_content)
     if not extensions:
         return []
-    
+
     drifts = []
     for doc_fname, doc_content in docs.items():
         for m in RECOMMENDATIONS_RE.finditer(doc_content):
@@ -60,5 +60,5 @@ def find_vscode_extensions_drift(
                             "extension": mid,
                             "recommended_extensions": extensions,
                         })
-    
+
     return drifts

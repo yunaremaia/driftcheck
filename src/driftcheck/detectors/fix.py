@@ -13,7 +13,7 @@ from .count import COUNT_RE
 def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
     fixed = []
-    
+
     def fix_in_file(path: Path, old_ver: str, new_ver: str, patterns: list[re.Pattern]) -> bool:
         """Replace version in file. Returns True if modified."""
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -29,7 +29,7 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
             path.write_text(text, encoding="utf-8")
             return True
         return False
-    
+
     # Rust drifts (drifts key is now an alias for rust_drifts — both point to multi-source results)
     # We only process rust_drifts here to avoid double-fixing
     for d in result.get("rust_drifts", []):
@@ -38,28 +38,28 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
         if fpath.exists() and target:
             if fix_in_file(fpath, d["doc_version"], target, [DOC_RE]):
                 fixed.append(d["file"])
-    
+
     # Node drifts
     for d in result.get("node_drifts", []):
         fpath = root / d["file"]
         if fpath.exists():
             if fix_in_file(fpath, d["doc_version"], d["package_version"], [NODE_RE]):
                 fixed.append(d["file"])
-    
+
     # Python drifts
     for d in result.get("python_drifts", []):
         fpath = root / d["file"]
         if fpath.exists():
             if fix_in_file(fpath, d["doc_version"], d["pyproject_version"], [PY_RE]):
                 fixed.append(d["file"])
-    
+
     # Go drifts
     for d in result.get("go_drifts", []):
         fpath = root / d["file"]
         if fpath.exists():
             if fix_in_file(fpath, d["doc_version"], d["gomod_version"], [GO_RE]):
                 fixed.append(d["file"])
-    
+
     # Count drifts (skills directory count)
     for d in result.get("count_drifts", []):
         fpath = root / d["file"]

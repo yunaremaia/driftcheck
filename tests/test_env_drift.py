@@ -157,7 +157,7 @@ class TestFindEnvDriftCombined:
         # .env.example vs .env drift
         (tmp_path / ".env.example").write_text("DATABASE_URL=\nAPI_KEY=\n")
         (tmp_path / ".env").write_text("DATABASE_URL=postgres\n")
-        
+
         # Compose override drift
         (tmp_path / "docker-compose.yml").write_text(
             "services:\n  web:\n    image: nginx:1.25\n"
@@ -165,7 +165,7 @@ class TestFindEnvDriftCombined:
         (tmp_path / "docker-compose.prod.yml").write_text(
             "services:\n  web:\n    image: nginx:1.26\n"
         )
-        
+
         drifts = find_env_drift_combined(tmp_path)
         kinds = {d["kind"] for d in drifts}
         assert "env_missing_keys" in kinds
@@ -176,11 +176,11 @@ class TestEnvDriftIntegration:
     def test_env_drift_in_scan_repo(self, tmp_path):
         """env_drifts key appears in scan_repo output."""
         from driftcheck.detector import scan_repo
-        
+
         (tmp_path / ".env.example").write_text("DATABASE_URL=\nAPI_KEY=\n")
         (tmp_path / ".env").write_text("DATABASE_URL=postgres\n")
         (tmp_path / ".gitattributes").write_text("* text=auto eol=lf\n")
-        
+
         result = scan_repo(tmp_path)
         assert "env_drifts" in result
         assert len(result["env_drifts"]) > 0

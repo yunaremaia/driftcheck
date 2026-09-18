@@ -16,10 +16,10 @@ MAKEFILE_TASK_RE = re.compile(r'^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:', re.MULTILINE)
 
 def parse_taskfile(text: str) -> dict[str, str]:
     """Parse Taskfile.yml into {task_name: body} dict.
-    
+
     Taskfile format:
         version: '3'
-        
+
         tasks:
           build:
             cmds:
@@ -27,7 +27,7 @@ def parse_taskfile(text: str) -> dict[str, str]:
           test:
             cmds:
               - go test ./...
-    
+
     We look for task names at indent level 2 (under 'tasks:').
     """
     tasks = {}
@@ -45,7 +45,7 @@ def parse_taskfile(text: str) -> dict[str, str]:
         if stripped == 'tasks:':
             in_tasks_section = True
             continue
-        
+
         # If we hit another top-level key (no indent), exit tasks section
         if in_tasks_section and not line.startswith(' ') and not line.startswith('\t'):
             in_tasks_section = False

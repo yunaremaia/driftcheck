@@ -44,7 +44,7 @@ def test_find_package_manager_drift_mismatch():
         pkg_json = '{"packageManager": "pnpm@8.0.0"}'
         (root / "package-lock.json").write_text("")
         docs = {"README.md": "Use npm for this project"}
-        
+
         drifts = find_package_manager_drift(pkg_json, root, docs)
         assert len(drifts) == 1
         assert drifts[0]["package_manager_field"] == "pnpm"
@@ -57,7 +57,7 @@ def test_find_package_manager_drift_match():
         pkg_json = '{"packageManager": "pnpm@8.0.0"}'
         (root / "pnpm-lock.yaml").write_text("")
         docs = {"README.md": "Use pnpm"}
-        
+
         drifts = find_package_manager_drift(pkg_json, root, docs)
         assert len(drifts) == 0
 
@@ -68,7 +68,7 @@ def test_find_package_manager_drift_no_field():
         pkg_json = '{"name": "test"}'
         (root / "package-lock.json").write_text("")
         docs = {"README.md": "Some text"}
-        
+
         drifts = find_package_manager_drift(pkg_json, root, docs)
         assert len(drifts) == 0
 
@@ -79,7 +79,7 @@ def test_package_manager_drift_included_in_scan():
         (root / "package.json").write_text('{"packageManager": "yarn@3.0.0"}')
         (root / "bun.lock").write_text("")
         (root / "README.md").write_text("Some docs")
-        
+
         from driftcheck.detector import scan_repo
         result = scan_repo(root)
         assert "package_manager_drifts" in result

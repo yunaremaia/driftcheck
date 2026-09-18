@@ -147,7 +147,7 @@ def test_sarif_skipped_symlinks():
         "Symlink 'secret' -> '/etc/hostname' skipped (outside repo root)",
     ]
     doc = to_sarif(result, version="0.1.45")
-    
+
     sarif_results = doc["runs"][0]["results"]
     assert len(sarif_results) == 1
     assert sarif_results[0]["ruleId"] == "symlink-skipped"

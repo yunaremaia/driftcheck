@@ -26,12 +26,12 @@ def find_conda_drift(root_path):
     """Find drift in Conda environment.yml."""
     root = Path(root_path)
     env_file = root / "environment.yml"
-    
+
     if not env_file.exists():
         return []
-    
+
     env_versions = parse_conda_environment(env_file)
-    
+
     drifts = []
     for pkg, ver in env_versions.items():
         if not ver:

@@ -40,13 +40,13 @@ def find_pipfile_drift(root_path):
     root = Path(root_path)
     pipfile = root / "Pipfile"
     pipfile_lock = root / "Pipfile.lock"
-    
+
     if not pipfile.exists() or not pipfile_lock.exists():
         return []
-    
+
     pipfile_versions = parse_pipfile_versions(pipfile)
     lock_versions = parse_pipfile_lock_versions(pipfile_lock)
-    
+
     drifts = []
     for pkg, pipfile_ver in pipfile_versions.items():
         if pkg in lock_versions:

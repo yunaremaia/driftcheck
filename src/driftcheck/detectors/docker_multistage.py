@@ -15,7 +15,7 @@ IMAGE_RE = re.compile(r'(?:image|docker|container)\s+(?P<image>[\w.\-/]+)(?::(?P
 
 def parse_from_stages(text: str) -> list[dict]:
     """Parse all FROM stages from a Dockerfile.
-    
+
     Returns list of {image, tag, alias, line}.
     """
     stages = []
@@ -31,19 +31,19 @@ def parse_from_stages(text: str) -> list[dict]:
 
 def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str, str]) -> list[dict]:
     """Detect drift in multi-stage Dockerfiles.
-    
+
     Checks:
     - Multiple stages with same image but different base versions (e.g., node:18 vs node:20)
     - Final stage tag doesn't match README mentions
     - Scratch/distroless final stage with pinned intermediate versions
     """
     drifts = []
-    
+
     for fname, content in dockerfiles.items():
         stages = parse_from_stages(content)
         if not stages:
             continue
-        
+
         # Check for same image with different base versions (ignoring variants like -slim, -alpine)
         image_versions = {}
         for stage in stages:
@@ -55,7 +55,7 @@ def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str
                 # Extract base version (e.g., "20" from "20-slim", "1.21" from "1.21-alpine")
                 base_version = tag.split("-")[0]
                 image_versions[img].append((tag, base_version, stage["line"]))
-        
+
         for img, versions in image_versions.items():
             if len(versions) > 1:
                 # Check if base versions differ (not just variants like slim vs alpine)
@@ -68,7 +68,7 @@ def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str
                         "image": img,
                         "tags": tags,
                     })
-        
+
         # Check final stage against README
         final_stage = stages[-1]
         if final_stage["tag"]:
@@ -84,5 +84,5 @@ def find_dockerfile_multistage_drift(dockerfiles: dict[str, str], docs: dict[str
                             "pos": m.start(),
                         })
                         break
-    
+
     return drifts

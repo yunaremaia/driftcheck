@@ -44,20 +44,20 @@ def find_package_manager_drift(
 ) -> list[dict]:
     """Detect drift between packageManager field and actual usage."""
     drifts = []
-    
+
     if not package_json_content:
         return drifts
-    
+
     pm_field = parse_package_manager_field(package_json_content)
     if not pm_field:
         return drifts
-    
+
     # Extract manager from packageManager field (e.g., "pnpm@8.0.0" -> "pnpm")
     pm_manager = pm_field.split("@")[0] if "@" in pm_field else pm_field
-    
+
     # Detect actual manager from lockfile
     actual_manager = detect_lockfile_manager(root)
-    
+
     if actual_manager and actual_manager != pm_manager:
         drifts.append({
             "file": "package.json",
@@ -65,7 +65,7 @@ def find_package_manager_drift(
             "package_manager_field": pm_manager,
             "actual_manager": actual_manager,
         })
-    
+
     # Check README mentions
     for doc_fname, doc_content in docs.items():
         for m in PACKAGE_MANAGER_RE.finditer(doc_content):
@@ -83,5 +83,5 @@ def find_package_manager_drift(
                             "package_manager_field": pm_manager,
                         })
                         break
-    
+
     return drifts

@@ -27,7 +27,7 @@ def get_latest_git_tag(root) -> str | None:
         )
         if result.returncode != 0:
             return None
-        
+
         # Find first semver tag
         for tag in result.stdout.splitlines():
             tag = tag.strip()
@@ -55,21 +55,21 @@ def find_git_tag_drift(root, docs: dict[str, str]) -> list[dict]:
     latest_tag = get_latest_git_tag(root)
     if not latest_tag:
         return []
-    
+
     latest_version = latest_tag.lstrip('v')
     latest_parsed = parse_semver(latest_version)
     if not latest_parsed:
         return []
-    
+
     drifts = []
     for doc_fname, doc_content in docs.items():
         for m in VERSION_TAG_RE.finditer(doc_content):
             doc_ver = m.group("version")
             doc_parsed = parse_semver(doc_ver)
-            
+
             if not doc_parsed:
                 continue
-            
+
             # Check if versions differ
             if doc_parsed != latest_parsed:
                 drifts.append({
@@ -79,5 +79,5 @@ def find_git_tag_drift(root, docs: dict[str, str]) -> list[dict]:
                     "detail": f"README mentions version {doc_ver} but latest git tag is {latest_tag}",
                     "pos": m.start(),
                 })
-    
+
     return drifts

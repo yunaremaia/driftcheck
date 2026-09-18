@@ -57,7 +57,7 @@ COPY --from=builder /app/dist /app
 """
         (root / "Dockerfile").write_text(dockerfile)
         docs = {"README.md": "Some docs"}
-        
+
         drifts = find_dockerfile_multistage_drift({"Dockerfile": dockerfile}, docs)
         assert len(drifts) == 1
         assert "node" in drifts[0]["detail"]
@@ -76,7 +76,7 @@ COPY --from=builder /app/dist /app
 """
         (root / "Dockerfile").write_text(dockerfile)
         docs = {"README.md": "Some docs"}
-        
+
         # node:20 and node:20-slim have same base version — no conflict
         drifts = find_dockerfile_multistage_drift({"Dockerfile": dockerfile}, docs)
         assert len(drifts) == 0
@@ -92,7 +92,7 @@ def test_find_dockerfile_multistage_drift_readme_mismatch():
 CMD ["node", "app.js"]
 """
     docs = {"README.md": "Uses image node:18"}
-    
+
     drifts = find_dockerfile_multistage_drift({"Dockerfile": dockerfile}, docs)
     assert len(drifts) == 1
     assert drifts[0]["doc_image"] == "node:18"
@@ -117,7 +117,7 @@ COPY --from=builder /app /app
 """
         (root / "Dockerfile").write_text(dockerfile)
         (root / "README.md").write_text("Some docs")
-        
+
         from driftcheck.detector import scan_repo
         result = scan_repo(root)
         assert "docker_multistage_drifts" in result

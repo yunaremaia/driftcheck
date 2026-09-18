@@ -15,7 +15,7 @@ def find_lineending_drift(root: Path) -> list[dict]:
     (core.autocrlf=true) while the index stores LF -- silently breaking
     byte-exact checks. Returns a drift if .gitattributes is absent or does
     not normalize line endings.
-    
+
     Only fires when the repo has source files (to avoid noise on empty dirs).
     """
     # Check if repo has any source files that would need line ending normalization
@@ -44,7 +44,7 @@ def find_lineending_drift(root: Path) -> list[dict]:
                         break
             if has_source:
                 break
-    
+
     if not has_source:
         return []  # Empty repo or no source files — skip lineending check
 

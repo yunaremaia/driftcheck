@@ -35,12 +35,12 @@ def find_npmrc_drift(
 ) -> list[dict]:
     """Detect drift between .npmrc and package.json settings."""
     drifts = []
-    
+
     if not npmrc_content:
         return drifts
-    
+
     npmrc = parse_npmrc(npmrc_content)
-    
+
     # Check engine-strict consistency
     if "engine-strict" in npmrc:
         npmrc_val = npmrc["engine-strict"].lower() == "true"
@@ -55,7 +55,7 @@ def find_npmrc_drift(
                     "detail": "engine-strict=true but package.json has no engines field",
                     "npmrc_setting": "engine-strict=true",
                 })
-    
+
     # Check publish registry consistency
     if "registry" in npmrc:
         registry = npmrc["registry"]
@@ -68,7 +68,7 @@ def find_npmrc_drift(
                     "npmrc_registry": registry,
                     "package_json_registry": publish_config,
                 })
-    
+
     # Check tag-version-prefix consistency
     if "tag-version-prefix" in npmrc:
         prefix = npmrc["tag-version-prefix"]
@@ -78,7 +78,7 @@ def find_npmrc_drift(
                 "detail": f"tag-version-prefix={prefix} (non-standard, expected 'v')",
                 "npmrc_setting": f"tag-version-prefix={prefix}",
             })
-    
+
     return drifts
 
 

@@ -45,16 +45,16 @@ def find_gradle_catalog_drift(root_path):
     """Find drift in libs.versions.toml vs README."""
     root = Path(root_path)
     catalog_files = list(root.glob("gradle/libs.versions.toml")) + list(root.glob("libs.versions.toml"))
-    
+
     if not catalog_files:
         return []
-    
+
     catalog_versions = parse_gradle_catalog(catalog_files[0])
-    
+
     # Read README for comparison
     readme_files = list(root.glob("README*.md")) + list(root.glob("docs/README*.md"))
     drifts = []
-    
+
     for readme_path in readme_files:
         try:
             readme_text = readme_path.read_text()
@@ -73,5 +73,5 @@ def find_gradle_catalog_drift(root_path):
                         })
         except (FileNotFoundError, PermissionError):
             pass
-    
+
     return drifts

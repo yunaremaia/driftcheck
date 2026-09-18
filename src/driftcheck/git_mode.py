@@ -17,7 +17,7 @@ _GIT_REF_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/~-]*$")
 
 def _validate_git_ref(ref: str) -> str:
     """Validate a git ref/commit string for safety.
-    
+
     Raises ValueError if the ref contains unsafe characters.
     """
     if not _GIT_REF_RE.match(ref):
@@ -30,7 +30,7 @@ def _validate_git_ref(ref: str) -> str:
 
 def get_changed_files(root: Path, base_commit: str = "HEAD~1") -> set[str]:
     """Get set of file paths changed since base_commit.
-    
+
     Returns relative paths from repo root. Falls back to all files
     if git is not available or base_commit doesn't exist.
     """
@@ -75,18 +75,18 @@ def filter_detectors_by_files(
     detector_file_patterns: dict[str, list[str]],
 ) -> set[str]:
     """Filter detectors to only those whose relevant files changed.
-    
+
     Args:
         changed_files: set of relative file paths that changed
         detector_file_patterns: mapping of detector key to glob patterns
             for files that detector cares about
-    
+
     Returns:
         set of detector keys that should run
     """
     if not changed_files:
         return set(detector_file_patterns.keys())
-    
+
     relevant = set()
     for detector_key, patterns in detector_file_patterns.items():
         for pattern in patterns:
@@ -97,7 +97,7 @@ def filter_detectors_by_files(
                     break
             if detector_key in relevant:
                 break
-    
+
     # Always include doc-related detectors if any doc file changed
     doc_changed = any(
         f.endswith((".md", ".rst", ".txt")) or "README" in f or "CONTRIBUTING" in f
@@ -108,7 +108,7 @@ def filter_detectors_by_files(
         for key in detector_file_patterns:
             if key != "env_drifts":  # env drifts don't compare against docs
                 relevant.add(key)
-    
+
     return relevant
 
 

@@ -112,7 +112,7 @@ def _levenshtein(s1: str, s2: str) -> int:
 
 def _find_suspicious_names(name: str, known: set[str]) -> list[str]:
     """Return known packages within edit distance 2 of `name`.
-    
+
     Uses proportional thresholds to avoid false positives on short names:
     - dist=1: only for names with length >= 4
     - dist=2: only for names with length >= 6 (avoids flagging short-name collisions)

@@ -49,7 +49,7 @@ def parse_devcontainer_features(text: str) -> dict[str, str]:
 
 def _extract_image_version(image: str) -> str | None:
     """Extract version tag from a docker image string.
-    
+
     Handles:
     - mcr.microsoft.com/devcontainers/rust:1.70 -> 1.70
     - rust:1.70 -> 1.70

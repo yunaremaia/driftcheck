@@ -28,7 +28,7 @@ def test_find_vscode_extensions_drift_no_drift():
         root = Path(td)
         ext_json = '{"recommendations": ["ms-python.python"]}'
         docs = {"README.md": "We recommend the ms-python.python extension"}
-        
+
         drifts = find_vscode_extensions_drift(ext_json, docs)
         assert len(drifts) == 0
 
@@ -38,7 +38,7 @@ def test_find_vscode_extensions_drift_missing():
         root = Path(td)
         ext_json = '{"recommendations": ["ms-python.python"]}'
         docs = {"README.md": "We recommend the esbenp.prettier-vscode extension"}
-        
+
         drifts = find_vscode_extensions_drift(ext_json, docs)
         assert len(drifts) == 1
         assert "esbenp.prettier-vscode" in drifts[0]["detail"]
@@ -56,7 +56,7 @@ def test_vscode_ext_drift_included_in_scan():
         vscode_dir.mkdir()
         (vscode_dir / "extensions.json").write_text('{"recommendations": ["ms-python.python"]}')
         (root / "README.md").write_text("We recommend esbenp.prettier-vscode")
-        
+
         from driftcheck.detector import scan_repo
         result = scan_repo(root)
         assert "vscode_ext_drifts" in result
