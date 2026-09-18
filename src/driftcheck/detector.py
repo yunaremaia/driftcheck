@@ -61,11 +61,22 @@ def _safe_glob(root: Path, pattern: str, walked_files: set[Path], follow_symlink
     """Wrap Path.glob to respect symlink policy.
 
     When follow_symlinks is False, only yield files that appear in walked_files
-    (i.e., files found by os.walk which skips external symlinks).
+    (i.e., files found by os.walk which skips external symlinks) and verify that
+    any symlinks resolve within the repository root.
     """
+    root_resolved = root.resolve()
     for p in root.glob(pattern):
-        if follow_symlinks or p in walked_files:
-            yield p
+        if not follow_symlinks:
+            try:
+                target = p.resolve()
+                within_root = target == root_resolved or target.is_relative_to(root_resolved)
+            except (OSError, RuntimeError, ValueError):
+                continue
+            if not within_root:
+                continue
+            if p not in walked_files:
+                continue
+        yield p
 
 
 def _read_text_safe(path: Path, max_size: int = 1_000_000) -> str | None:
@@ -211,7 +222,12 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
     return "\n".join(contents)
 
 
-def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None, max_file_size: int | None = None) -> dict:
+def scan_repo(
+    root: Path = Path("."),
+    enabled_detectors: set[str] | None = None,
+    max_file_size: int | None = None,
+    follow_symlinks: bool | None = None,
+) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
     Configuration is loaded from .driftcheck.toml if present.
@@ -221,10 +237,12 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         root: repo root path
         enabled_detectors: if set, only run these detector keys (skip others)
         max_file_size: override max file size in bytes (default from config: 1MB)
+        follow_symlinks: override symlink traversal policy (default: from config or True)
     """
     config = load_config(root)
     excluded = get_excluded_detectors(config)
-    follow_symlinks = config.get("follow_symlinks", True)
+    if follow_symlinks is None:
+        follow_symlinks = config.get("follow_symlinks", True)
     default_max_size = 1_000_000  # 1MB fallback
     max_file_size = max_file_size or config.get("max_file_size", default_max_size)
 

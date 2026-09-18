@@ -286,6 +286,7 @@ def main(argv=None) -> int:
     ap.add_argument("--git-mode", action="store_true", help="only scan files changed since --git-base (default: HEAD~1)")
     ap.add_argument("--git-base", metavar="COMMIT", default="HEAD~1", help="base commit for --git-mode (default: HEAD~1); validated against strict ref format")
     ap.add_argument("--max-file-size", type=int, default=None, metavar="BYTES", help="max file size in bytes (default: 1MB from config); larger files are skipped")
+    ap.add_argument("--no-follow-symlinks", action="store_true", help="do not follow symlinks pointing outside the repository root")
     args = ap.parse_args(argv)
 
     if args.list_detectors:
@@ -307,7 +308,13 @@ def main(argv=None) -> int:
         if not args.quiet:
             print(f"driftcheck: git-mode — {len(changed)} file(s) changed, {len(enabled_detectors)} detector(s) relevant")
 
-    result = scan_repo(Path(args.path), enabled_detectors=enabled_detectors, max_file_size=args.max_file_size)
+    follow_symlinks = False if args.no_follow_symlinks else None
+    result = scan_repo(
+        Path(args.path),
+        enabled_detectors=enabled_detectors,
+        max_file_size=args.max_file_size,
+        follow_symlinks=follow_symlinks,
+    )
 
     if args.report:
         _print_report(result)
