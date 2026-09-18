@@ -1,6 +1,7 @@
 """driftcheck CLI."""
 from __future__ import annotations
 import argparse, csv, json, io
+import difflib
 from pathlib import Path
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
@@ -82,6 +83,25 @@ DETECTOR_INFO = {
 }
 
 
+def _validate_detector_names(names: set[str], source: str) -> list[str]:
+    """Validate detector names against known detector keys.
+    
+    Returns list of unknown names (empty if all valid).
+    Prints fuzzy suggestions to stderr for unknown names.
+    """
+    known = set(DETECTOR_INFO.keys())
+    unknown = []
+    for name in names:
+        if name not in known:
+            unknown.append(name)
+            suggestions = difflib.get_close_matches(name, known, n=3, cutoff=0.6)
+            if suggestions:
+                print(f"driftcheck: unknown detector '{name}' (from {source}) — did you mean: {', '.join(suggestions)}?", file=__import__('sys').stderr)
+            else:
+                print(f"driftcheck: unknown detector '{name}' (from {source}) — run --list-detectors for valid names", file=__import__('sys').stderr)
+    return unknown
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="driftcheck",
@@ -131,12 +151,23 @@ def main(argv=None) -> int:
         blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
         return 1 if any(blocking.values()) else 0
 
-    # Filter detectors if requested
+    # Filter detectors if requested (with validation)
     if args.only:
         wanted = {d.strip() for d in args.only.split(",")}
+        unknown = _validate_detector_names(wanted, "--only")
+        if unknown:
+            unknown_set = set(unknown)
+            valid_wanted = wanted - unknown_set
+            if not valid_wanted:
+                print(f"driftcheck: error: no valid detector names in --only, aborting", file=__import__('sys').stderr)
+                return 2
         result = {k: v for k, v in result.items() if k in wanted or not k.endswith("_drifts")}
     if args.exclude:
         excluded = {d.strip() for d in args.exclude.split(",")}
+        unknown = _validate_detector_names(excluded, "--exclude")
+        if unknown:
+            unknown_set = set(unknown)
+            excluded = excluded - unknown_set
         result = {k: v for k, v in result.items() if k not in excluded}
 
     if args.as_sarif:
