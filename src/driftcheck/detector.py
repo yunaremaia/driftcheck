@@ -41,7 +41,9 @@ def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], li
             if fpath.is_symlink():
                 try:
                     target = fpath.resolve()
-                    if follow_symlinks or str(target).startswith(str(root_resolved)):
+        # Path prefixes alone mistake sibling paths for children of root.
+        inside_root = target == root_resolved or root_resolved in target.parents
+        if follow_symlinks or inside_root:
                         files.add(fpath)
                     else:
                         skipped.append(
