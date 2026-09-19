@@ -50,7 +50,7 @@ def _parse_toml_simple(text: str) -> dict[str, Any]:
 def _expand_member_patterns(root: Path, members: list[str]) -> dict[str, str]:
     """Expand member patterns like 'crates/*' to actual Cargo.toml paths.
 
-    Returns {relative_path: cargo_toml_text}.
+    Returns {relative_path: cargo_toml_text} with forward-slash paths.
     """
     result: dict[str, str] = {}
     for pattern in members:
@@ -59,7 +59,7 @@ def _expand_member_patterns(root: Path, members: list[str]) -> dict[str, str]:
             prefix_path = root / prefix
             if prefix_path.is_dir():
                 for cargo_path in prefix_path.glob("*/Cargo.toml"):
-                    rel = str(cargo_path.relative_to(root))
+                    rel = cargo_path.relative_to(root).as_posix()
                     result[rel] = cargo_path.read_text(encoding="utf-8")
         else:
             # Exact path
@@ -171,7 +171,7 @@ def find_rust_workspace_drift(root: Path) -> list[dict]:
 
     # 6. Cargo.toml vs README badge drift
     for readme_path in root.glob("**/README.md"):
-        rel_readme = str(readme_path.relative_to(root))
+        rel_readme = readme_path.relative_to(root).as_posix()
         readme_text = _read_text_safe(readme_path)
         if not readme_text:
             continue
