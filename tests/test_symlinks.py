@@ -143,8 +143,8 @@ def test_walk_files_symlink_loop_handled():
 def test_walk_files_prefix_collision_bypass():
     """Sibling directories sharing the repo-name prefix are NOT followed.
 
-    Regression test: _walk_files previously used str.startswith() for 
-    containment check, which accepts paths like /root/repo-secrets when 
+    Regression test: _walk_files previously used str.startswith() for
+    containment check, which accepts paths like /root/repo-secrets when
     root is /root/repo.
     """
     with tempfile.TemporaryDirectory() as tmpdir:
