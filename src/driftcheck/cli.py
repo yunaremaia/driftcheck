@@ -278,6 +278,7 @@ def main(argv=None) -> int:
     ap.add_argument("--version", action="version", version=_version())
     ap.add_argument("--quiet", "-q", action="store_true", help="only output drifts, suppress OK messages")
     ap.add_argument("--no-informational", action="store_true", help="skip informational drifts in output")
+    ap.add_argument("--fail-on-informational", action="store_true", help="treat informational drifts as blocking (exit code 1)")
     ap.add_argument("--list-detectors", action="store_true", help="list available detectors and exit")
     ap.add_argument("--only", metavar="DETECTOR", help="run only specified detectors (comma-separated)")
     ap.add_argument("--exclude", metavar="DETECTOR", help="exclude specified detectors (comma-separated)")
@@ -297,6 +298,12 @@ def main(argv=None) -> int:
     if args.init:
         return _init_config(Path(args.path), force=args.force, dry_run=args.dry_run)
 
+    # Load config to check for fail_on_informational setting (issue #144)
+    from .config import load_config
+    config = load_config(Path(args.path))
+    if config.get("fail_on_informational") and not args.fail_on_informational:
+        args.fail_on_informational = True
+
     # Git-mode: determine which detectors to run based on changed files
     enabled_detectors = None
     if args.git_mode:
@@ -313,7 +320,10 @@ def main(argv=None) -> int:
 
     if args.report:
         _print_report(result)
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+        if args.fail_on_informational:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS}
+        else:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
         return 1 if any(blocking.values()) else 0
 
     # Filter detectors if requested (with validation)
@@ -340,7 +350,10 @@ def main(argv=None) -> int:
         root = Path(args.path) if not args.absolute_paths else None
         sarif_doc = to_sarif(result, version=__version__, root=root)
         print(json.dumps(sarif_doc, indent=2))
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+        if args.fail_on_informational:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS}
+        else:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
         return 1 if any(blocking.values()) else 0
 
     if args.no_informational:
@@ -348,7 +361,10 @@ def main(argv=None) -> int:
 
     if args.as_csv:
         _print_csv(result)
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+        if args.fail_on_informational:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS}
+        else:
+            blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
         return 1 if any(blocking.values()) else 0
 
     if args.fix:
@@ -361,7 +377,10 @@ def main(argv=None) -> int:
             return 0
 
     all_drifts = {k: result.get(k, []) for k in DRIFT_KEYS}
-    blocking_drifts = {k: v for k, v in all_drifts.items() if k not in INFORMATIONAL_DRIFTS}
+    if args.fail_on_informational:
+        blocking_drifts = all_drifts.copy()
+    else:
+        blocking_drifts = {k: v for k, v in all_drifts.items() if k not in INFORMATIONAL_DRIFTS}
 
     has_blocking = any(blocking_drifts.values())
     has_any_drift = any(all_drifts.values())
