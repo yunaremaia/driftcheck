@@ -142,7 +142,7 @@ def test_walk_files_symlink_loop_handled():
 
 def test_walk_files_prefix_collision_bypass():
     """Sibling directories sharing the repo-name prefix are NOT followed.
-    
+
     Regression test: _walk_files previously used str.startswith() for 
     containment check, which accepts paths like /root/repo-secrets when 
     root is /root/repo.
@@ -150,16 +150,16 @@ def test_walk_files_prefix_collision_bypass():
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir) / "repo"
         root.mkdir()
-        
+
         # Create sibling directory with shared prefix
         sibling = Path(tmpdir) / "repo-secrets"
         sibling.mkdir()
         (sibling / "secret.txt").write_text("SUPER SECRET DATA")
-        
+
         # Create symlink inside root pointing to sibling (prefix collision)
         symlink = root / "leaked"
         symlink.symlink_to(sibling / "secret.txt")
-        
+
         # Both follow_symlinks modes should reject this
         for follow in [True, False]:
             walked, skipped = _walk_files(root, follow_symlinks=follow)
@@ -172,17 +172,17 @@ def test_safe_glob_prefix_collision_bypass():
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir) / "repo"
         root.mkdir()
-        
+
         # Sibling with shared prefix
         sibling = Path(tmpdir) / "repo-leaked"
         sibling.mkdir()
         secret_file = sibling / "credentials.txt"
         secret_file.write_text("password=admin")
-        
+
         # Symlink inside root pointing to sibling
         symlink = root / "link"
         symlink.symlink_to(secret_file)
-        
+
         walked, _ = _walk_files(root, follow_symlinks=False)
         globbed = list(_safe_glob(root, "*", walked, follow_symlinks=False))
         assert symlink not in globbed, "_safe_glob followed prefix-collision symlink"
