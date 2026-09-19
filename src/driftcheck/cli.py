@@ -737,10 +737,6 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     for d in all_drifts.get("terraform_version_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.terraform-version)")
 
-    # NPMRC drifts
-    for d in all_drifts.get("npmrc_drifts", []):
-        print(f"driftcheck: {d['file']}: npm registry {d['doc_registry']} → should be {d['npmrc_registry']} (.npmrc)")
-
     # Yarn RC drifts
     for d in all_drifts.get("yarnrc_drifts", []):
         print(f"driftcheck: {d['file']}: Yarn {d['doc_version']} → should be {d['yarnrc_version']} (.yml)")
