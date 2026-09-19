@@ -27,7 +27,7 @@ def find_ci_os_drift(root: Path) -> list[dict]:
             text = wf.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        rel = str(wf.relative_to(root))
+        rel = wf.relative_to(root).as_posix()
         for m in CI_OS_RE.finditer(text):
             runner = m.group("runner").lower()
             if runner in CI_OS_DEPRECATED:

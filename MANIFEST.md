@@ -1,16 +1,17 @@
 # Driftcheck Manifest — v0.1.46
 
 ## Core Stats
-- **63 detector modules** (files in `src/driftcheck/detectors/` excluding `__init__.py`)
-- **67 registered detectors** (DRIFT_KEYS in `src/driftcheck/config.py`)
-- **64 find_* functions** exported from top-level `__init__.py` (plus `to_sarif`); 2 additional internal helpers (`find_env_drift_combined`, `find_rust_drift_multi`)
-- **1204 tests** with >95% code coverage
+- **64 detector modules** (files in `src/driftcheck/detectors/` excluding `__init__.py`)
+- **68 registered detectors** (DRIFT_KEYS in `src/driftcheck/config.py`)
+- **65 find_* functions** exported from top-level `__init__.py` (plus `to_sarif`); 2 additional internal helpers (`find_env_drift_combined`, `find_rust_drift_multi`)
+- **1210 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 
 ## Recent Commits
-- `17c5eeb` Merge PR #179: fix(detector): log file read failures in _read_files_parallel (closes #178)
-- `fe85a32` fix(detector): log file read failures in _read_files_parallel (closes #178)
-- `e95f830` fix: resolve all ruff linting errors (183 → 0) to fix PR #160 CI (#165)
+- `b20ee41` feat: add Rust workspace member version drift detector (#184)
+- `7299cc8` docs: add missing dockerfile_instructions.py and kotlin_multiplatform.py to MANIFEST.md table
+- `54ef568` fix(security): prevent symlink traversal and add thread-safe plugin loading
+- `748813a` fix(cli): remove duplicate npmrc_drifts loop in _print_blocking_drifts
 - `a845826` docs: correct registered detector count from 67 to 83
 - `1750b51` docs: correct MANIFEST.md counts (v0.1.46, 64 find_* funcs, 1200 tests)
 - `e56dacb` fix(sarif): replace stale 0.1.40 fallback with 'unknown' (fixes #162) (#166)
