@@ -48,7 +48,10 @@ def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], li
                 try:
                     target = fpath.resolve()
                     # Never follow symlinks outside repo root
-                    if not str(target).startswith(str(root_resolved)):
+                    # Use path boundary check (not startswith) to prevent prefix traversal
+                    root_resolved_str = str(root_resolved) + os.sep
+                    target_str = str(target)
+                    if not (target_str == str(root_resolved) or target_str.startswith(root_resolved_str)):
                         skipped.append(
                             f"Symlink '{fpath.relative_to(root)}' skipped (outside repo root)"
                         )
@@ -84,7 +87,9 @@ def _safe_glob(root: Path, pattern: str, walked_files: set[Path], follow_symlink
         if p.is_symlink():
             try:
                 target = p.resolve()
-                if str(target).startswith(str(root_resolved)):
+                root_resolved_str = str(root_resolved) + os.sep
+                target_str = str(target)
+                if target_str == str(root_resolved) or target_str.startswith(root_resolved_str):
                     yield p
                 continue
             except (OSError, RuntimeError):
@@ -228,12 +233,14 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
             executor.submit(_read_text_safe, p, max_size=1_000_000): p
             for p in files
         }
-        for future in as_completed(futures):
+        for future in as_completed(futures, timeout=30):
             path = futures[future]
             try:
-                result = future.result()
+                result = future.result(timeout=5)
                 if result is not None:
                     contents.append(result)
+            except TimeoutError:
+                failed.append(f"{path}: read timed out (>5s)")
             except Exception as e:
                 failed.append(f"{path}: {e}")
     if failed:
