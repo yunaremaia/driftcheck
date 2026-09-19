@@ -274,6 +274,7 @@ def main(argv=None) -> int:
     ap.add_argument("--sarif", action="store_true", dest="as_sarif", help="SARIF 2.1.0 output (for GitHub Code Scanning)")
     ap.add_argument("--absolute-paths", action="store_true", default=False, help="use absolute paths in SARIF output (default: relative for CI privacy)")
     ap.add_argument("--fix", action="store_true", help="auto-fix detected drifts in documentation files")
+    ap.add_argument("--no-backup", action="store_true", help="skip backup creation during --fix (for CI environments)")
     ap.add_argument("--version", action="version", version=_version())
     ap.add_argument("--quiet", "-q", action="store_true", help="only output drifts, suppress OK messages")
     ap.add_argument("--no-informational", action="store_true", help="skip informational drifts in output")
@@ -351,7 +352,7 @@ def main(argv=None) -> int:
         return 1 if any(blocking.values()) else 0
 
     if args.fix:
-        fixed = apply_fixes(Path(args.path), result)
+        fixed = apply_fixes(Path(args.path), result, backup=not args.no_backup)
         if fixed:
             print(f"driftcheck: fixed {len(fixed)} file(s): {', '.join(fixed)}")
             return 0
