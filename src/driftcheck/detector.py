@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import warnings
 
-from .config import DRIFT_KEYS, get_excluded_detectors, load_config, get_ignore_patterns, _matches_ignore_patterns, get_read_timeouts
+from .config import DRIFT_KEYS, get_excluded_detectors, get_custom_detectors, load_config, get_ignore_patterns, _matches_ignore_patterns, get_read_timeouts
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors.rust_workspace import find_rust_workspace_drift
 
@@ -729,8 +729,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "renovate_drifts": find_renovate_drift(root),
     }
 
-    # Run plugin detectors
-    plugins = load_plugins(root)
+    # Run plugin detectors (including custom_detectors from config, issue #209)
+    custom_detector_paths = get_custom_detectors(config)
+    plugins = load_plugins(root, extra_paths=custom_detector_paths)
     plugin_results = run_plugin_detectors(root, docs, plugins)
     result.update(plugin_results)
 

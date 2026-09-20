@@ -207,8 +207,8 @@ def get_excluded_detectors(config: dict[str, Any]) -> set[str]:
     return excluded
 
 
-def get_custom_detectors(config: dict[str, Any]) -> list[dict[str, Any]]:
-    """Get list of custom detector definitions from config."""
+def get_custom_detectors(config: dict[str, Any]) -> list[str]:
+    """Get list of custom detector file paths from config."""
     return config.get("custom_detectors", [])
 
 

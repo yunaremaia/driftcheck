@@ -4,6 +4,14 @@ All notable changes to driftcheck will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.47] - 2026-09-20
+
+### Fixed
+- **Wired `custom_detectors` config option into `scan_repo()`** (fixes #209, #144): `custom_detectors` paths from `.driftcheck.toml` are now loaded and merged into the detector registry alongside `.driftcheck_plugins/` directory plugins. Previously this config option was parsed but never used.
+  - Added `extra_paths` parameter to `load_plugins()` in `plugins.py`
+  - Updated `get_custom_detectors()` return type from `list[dict]` to `list[str]` (file paths)
+  - 3 new tests covering relative paths, absolute paths, and empty default
+
 ## [0.1.46] - 2026-09-18
 
 ### Added
@@ -13,8 +21,6 @@ All notable changes to driftcheck will be documented in this file.
   - `--force` to overwrite existing config
   - `--dry-run` to preview without writing
   - Lists detected project files and enabled detectors in config comments
-
-## [Unreleased]
 
 ### Added
 - **Kotlin Multiplatform (KMP) drift detection**: detects version mismatch between `gradle/libs.versions.toml` KMP version catalog and README badges/mentions for Kotlin, Compose, Coroutines, KGP, AGP, KSP
@@ -48,7 +54,7 @@ All notable changes to driftcheck will be documented in this file.
 ## [0.1.43] - 2026-09-12
 
 ### Added
-- **Dockerfile base image drift detection**: flags floating tags (`:latest`, `:stable`, `:nightly`, no tag) and sibling Dockerfile drift (e.g., `Dockerfile.dev` pins `node:18` while `Dockerfile.prod` pins `node:20`)
+- **Dockerfile base image drift detection**: flags floating tags (`:latest`, `:stable`, `:nightly`, no tag) and sibling Dockerfile drift (e.g., `DockerFile.dev` pins `node:18` while `Dockerfile.prod` pins `node:20`)
   - 14 new tests, 984 total
 
 ### Changed
