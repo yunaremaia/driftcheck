@@ -174,3 +174,49 @@ def test_sarif_version_unknown_fallback():
     tool_version = doc["runs"][0]["tool"]["driver"]["version"]
     # Should be either __version__ or "unknown", never a stale hardcoded version
     assert tool_version != "0.1.40", "Stale 0.1.40 fallback should not be used"
+
+
+def test_sarif_uri_escapes_spaces():
+    """File paths with spaces must be URI-encoded in artifactLocation.uri (issue #230)."""
+    result = _empty_result()
+    result["rust_drifts"] = [{"file": "src/my file.py", "doc_version": "1.93.0", "toolchain_version": "1.96.1", "pos": 10}]
+    doc = to_sarif(result)
+    uri = doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "src/my%20file.py", f"Expected 'src/my%20file.py', got '{uri}'"
+
+
+def test_sarif_uri_escapes_non_ascii():
+    """File paths with non-ASCII characters must be URI-encoded in artifactLocation.uri (issue #230)."""
+    result = _empty_result()
+    result["rust_drifts"] = [{"file": "src/café.py", "doc_version": "1.93.0", "toolchain_version": "1.96.1", "pos": 10}]
+    doc = to_sarif(result)
+    uri = doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "src/caf%C3%A9.py", f"Expected 'src/caf%C3%A9.py', got '{uri}'"
+
+
+def test_sarif_uri_preserves_path_separators():
+    """Path separators (/) must NOT be encoded in artifactLocation.uri (issue #230)."""
+    result = _empty_result()
+    result["rust_drifts"] = [{"file": "deep/nested/path/file.py", "doc_version": "1.93.0", "toolchain_version": "1.96.1", "pos": 10}]
+    doc = to_sarif(result)
+    uri = doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "deep/nested/path/file.py", f"Expected 'deep/nested/path/file.py', got '{uri}'"
+
+
+def test_sarif_uri_escapes_hash_and_question():
+    """File paths with '#' and '?' must be URI-encoded in artifactLocation.uri (issue #230)."""
+    result = _empty_result()
+    result["rust_drifts"] = [{"file": "src/file#1.py", "doc_version": "1.93.0", "toolchain_version": "1.96.1", "pos": 10}]
+    doc = to_sarif(result)
+    uri = doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "src/file%231.py", f"Expected 'src/file%231.py', got '{uri}'"
+
+
+def test_sarif_uri_with_root_escapes_path():
+    """When root is provided, the path component must still be URI-encoded (issue #230)."""
+    from pathlib import Path
+    result = _empty_result()
+    result["rust_drifts"] = [{"file": "src/my file.py", "doc_version": "1.93.0", "toolchain_version": "1.96.1", "pos": 10}]
+    doc = to_sarif(result, version="0.1.45", root=Path("/repo"))
+    uri = doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "{repoRoot}/src/my%20file.py", f"Expected '{{repoRoot}}/src/my%20file.py', got '{uri}'"
