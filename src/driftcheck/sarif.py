@@ -6,8 +6,18 @@ GitLab Vulnerability Reports, and any other consumer that speaks SARIF.
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import quote
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
+
+
+def _uri_escape_path(path: str) -> str:
+    """URI-encode a file path, preserving path separators.
+
+    Spaces, '#', '?', and non-ASCII characters are percent-encoded
+    so that SARIF artifactLocation URIs are valid per RFC 3986.
+    """
+    return quote(path, safe="/")
 
 # Drift type metadata: (rule_id, rule_name, rule_description)
 DRIFT_RULES = {
@@ -550,9 +560,13 @@ def _make_relative_path(file: str, root: Path | None) -> str:
     Drift entries store file paths relative to the scanned directory.
     When root is provided, prefix with {repoRoot}/ for SARIF consumers
     to resolve via originalUriBaseIds.
+
+    Path components are URI-encoded (preserving path separators) so that
+    SARIF artifactLocation URIs are valid per RFC 3986 even for paths with
+    spaces, '#', '?' or non-ASCII characters.
     """
     if root is None:
-        return file
+        return _uri_escape_path(file)
     # Path is already relative (drift entries store relative paths).
     # Only strip root prefix if the path happens to be absolute.
     p = Path(file)
@@ -563,7 +577,9 @@ def _make_relative_path(file: str, root: Path | None) -> str:
             rel = p.name
     else:
         rel = file
-    return f"{{repoRoot}}/{rel}"
+    # URI-encode only the path part, not the {repoRoot} variable reference
+    # (SARIF consumers substitute {repoRoot} via originalUriBaseIds).
+    return "{repoRoot}/" + _uri_escape_path(rel)
 
 
 def _build_original_uri_base_ids(root: Path | None) -> dict | None:
