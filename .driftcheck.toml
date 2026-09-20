@@ -1,3 +1,9 @@
 [driftcheck]
 # exclude_detectors = ["lockfile", "nvmrc"]
 # fail_on_informational = false
+
+# Parallel read timeouts (issue #238)
+# Per-file timeout for future.result() in seconds (default: 5)
+# read_timeout = 5
+# Pool-wide timeout for as_completed() in seconds (default: 30)
+# read_pool_timeout = 30

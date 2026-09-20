@@ -48,6 +48,9 @@ DEFAULT_CONFIG = {
     "custom_detectors": [],
     "follow_symlinks": True,  # If False, skip symlinks outside repo root during scan
     "max_file_size": 1_000_000,  # 1MB default — files larger than this are skipped (OOM protection)
+    # Parallel read timeouts (issue #238)
+    "read_timeout": 5,      # per-file future.result() timeout in seconds
+    "read_pool_timeout": 30,  # as_completed() pool-wide timeout in seconds
 }
 
 
@@ -114,6 +117,7 @@ def validate_config(raw: dict[str, Any], strict: bool = False) -> list[str]:
         # Type validation for known keys
         bool_keys = {"fail_on_informational", "follow_symlinks"}
         int_keys = {"max_file_size"}
+        num_keys = {"read_timeout", "read_pool_timeout"}  # accept int or float
         list_keys = {"exclude_detectors", "ignore_patterns", "custom_detectors"}
 
         for key in bool_keys & set(section):
@@ -126,6 +130,18 @@ def validate_config(raw: dict[str, Any], strict: bool = False) -> list[str]:
         for key in int_keys & set(section):
             if not isinstance(section[key], int):
                 msg = f"Invalid type for {key!r}: expected int, got {type(section[key]).__name__}"
+                if strict:
+                    raise ConfigValidationError(msg)
+                warnings.append(msg)
+
+        for key in num_keys & set(section):
+            if not isinstance(section[key], (int, float)):
+                msg = f"Invalid type for {key!r}: expected int or float, got {type(section[key]).__name__}"
+                if strict:
+                    raise ConfigValidationError(msg)
+                warnings.append(msg)
+            elif section[key] <= 0:
+                msg = f"Invalid value for {key!r}: must be > 0, got {section[key]!r}"
                 if strict:
                     raise ConfigValidationError(msg)
                 warnings.append(msg)
@@ -203,6 +219,29 @@ def get_ignore_patterns(config: dict[str, Any]) -> list[str]:
     Files matching any pattern are excluded from walked_files before detectors run.
     """
     return config.get("ignore_patterns", [])
+
+
+def get_read_timeouts(config: dict[str, Any]) -> tuple[float, float]:
+    """Return ``(read_timeout, read_pool_timeout)`` from config.
+
+    Both values fall back to their defaults from :data:`DEFAULT_CONFIG` if
+    absent or invalid.  This is the canonical way for callers to retrieve
+    timeout values — prefer this over direct ``config.get(...)`` calls.
+
+    Args:
+        config: Merged config dict as returned by :func:`load_config`.
+
+    Returns:
+        A 2-tuple ``(per_file_timeout_seconds, pool_wide_timeout_seconds)``.
+    """
+    read_timeout = config.get("read_timeout", DEFAULT_CONFIG["read_timeout"])
+    read_pool_timeout = config.get("read_pool_timeout", DEFAULT_CONFIG["read_pool_timeout"])
+    # Guard against bad values slipping through (e.g. None written in TOML)
+    if not isinstance(read_timeout, (int, float)) or read_timeout <= 0:
+        read_timeout = DEFAULT_CONFIG["read_timeout"]
+    if not isinstance(read_pool_timeout, (int, float)) or read_pool_timeout <= 0:
+        read_pool_timeout = DEFAULT_CONFIG["read_pool_timeout"]
+    return float(read_timeout), float(read_pool_timeout)
 
 
 def _matches_ignore_patterns(rel_path: str, patterns: list[str]) -> bool:

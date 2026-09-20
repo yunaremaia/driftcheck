@@ -167,3 +167,94 @@ ignore_paterns = ["*.log"]
         load_config(tmp_path)
         captured = capsys.readouterr()
         assert "ignore_paterns" in captured.err
+
+
+class TestReadTimeoutValidation:
+    """Validate read_timeout / read_pool_timeout config keys (issue #238)."""
+
+    def test_read_timeout_is_a_known_key(self):
+        """read_timeout must not be flagged as an unknown key."""
+        warns = validate_config({"driftcheck": {"read_timeout": 10}})
+        unknown = [w for w in warns if "Unknown config key" in w and "read_timeout" in w]
+        assert unknown == [], f"read_timeout should be a known key, got: {warns}"
+
+    def test_read_pool_timeout_is_a_known_key(self):
+        """read_pool_timeout must not be flagged as an unknown key."""
+        warns = validate_config({"driftcheck": {"read_pool_timeout": 60}})
+        unknown = [w for w in warns if "Unknown config key" in w and "read_pool_timeout" in w]
+        assert unknown == [], f"read_pool_timeout should be a known key, got: {warns}"
+
+    def test_integer_read_timeout_is_valid(self):
+        """Integer read_timeout produces no validation warning."""
+        warns = validate_config({"driftcheck": {"read_timeout": 10}})
+        timeout_warns = [w for w in warns if "read_timeout" in w]
+        assert timeout_warns == []
+
+    def test_float_read_timeout_is_valid(self):
+        """Float read_timeout is accepted (e.g. 2.5 seconds)."""
+        warns = validate_config({"driftcheck": {"read_timeout": 2.5}})
+        timeout_warns = [w for w in warns if "read_timeout" in w]
+        assert timeout_warns == []
+
+    def test_integer_read_pool_timeout_is_valid(self):
+        """Integer read_pool_timeout produces no validation warning."""
+        warns = validate_config({"driftcheck": {"read_pool_timeout": 60}})
+        timeout_warns = [w for w in warns if "read_pool_timeout" in w]
+        assert timeout_warns == []
+
+    def test_string_read_timeout_is_invalid(self):
+        """String read_timeout produces a type validation warning."""
+        warns = validate_config({"driftcheck": {"read_timeout": "ten"}})
+        type_warns = [w for w in warns if "read_timeout" in w and "int or float" in w]
+        assert type_warns, f"Expected type warning, got: {warns}"
+
+    def test_string_read_pool_timeout_is_invalid(self):
+        """String read_pool_timeout produces a type validation warning."""
+        warns = validate_config({"driftcheck": {"read_pool_timeout": "sixty"}})
+        type_warns = [w for w in warns if "read_pool_timeout" in w and "int or float" in w]
+        assert type_warns, f"Expected type warning, got: {warns}"
+
+    def test_zero_read_timeout_is_invalid(self):
+        """Zero read_timeout produces a value validation warning."""
+        warns = validate_config({"driftcheck": {"read_timeout": 0}})
+        val_warns = [w for w in warns if "read_timeout" in w and "must be > 0" in w]
+        assert val_warns, f"Expected value warning, got: {warns}"
+
+    def test_negative_read_pool_timeout_is_invalid(self):
+        """Negative read_pool_timeout produces a value validation warning."""
+        warns = validate_config({"driftcheck": {"read_pool_timeout": -5}})
+        val_warns = [w for w in warns if "read_pool_timeout" in w and "must be > 0" in w]
+        assert val_warns, f"Expected value warning, got: {warns}"
+
+    def test_zero_read_timeout_strict_raises(self):
+        """In strict mode, zero read_timeout raises ConfigValidationError."""
+        with pytest.raises(ConfigValidationError, match="must be > 0"):
+            validate_config({"driftcheck": {"read_timeout": 0}}, strict=True)
+
+    def test_string_pool_timeout_strict_raises(self):
+        """In strict mode, string read_pool_timeout raises ConfigValidationError."""
+        with pytest.raises(ConfigValidationError, match="int or float"):
+            validate_config({"driftcheck": {"read_pool_timeout": "bad"}}, strict=True)
+
+    def test_both_timeouts_in_default_config(self):
+        """DEFAULT_CONFIG must contain both timeout keys with positive defaults."""
+        assert "read_timeout" in DEFAULT_CONFIG
+        assert "read_pool_timeout" in DEFAULT_CONFIG
+        assert DEFAULT_CONFIG["read_timeout"] > 0
+        assert DEFAULT_CONFIG["read_pool_timeout"] > 0
+
+    def test_toml_read_timeout_loaded_correctly(self, tmp_path):
+        """read_timeout is loaded from .driftcheck.toml into the config dict."""
+        (tmp_path / ".driftcheck.toml").write_text(
+            "[driftcheck]\nread_timeout = 20\nread_pool_timeout = 90\n"
+        )
+        cfg = load_config(tmp_path)
+        assert cfg["read_timeout"] == 20
+        assert cfg["read_pool_timeout"] == 90
+
+    def test_toml_missing_timeout_uses_default(self, tmp_path):
+        """When .driftcheck.toml has no timeout keys, defaults apply."""
+        (tmp_path / ".driftcheck.toml").write_text("[driftcheck]\n")
+        cfg = load_config(tmp_path)
+        assert cfg["read_timeout"] == DEFAULT_CONFIG["read_timeout"]
+        assert cfg["read_pool_timeout"] == DEFAULT_CONFIG["read_pool_timeout"]

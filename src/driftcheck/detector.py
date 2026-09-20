@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import warnings
 
-from .config import DRIFT_KEYS, get_excluded_detectors, load_config, get_ignore_patterns, _matches_ignore_patterns
+from .config import DRIFT_KEYS, get_excluded_detectors, load_config, get_ignore_patterns, _matches_ignore_patterns, get_read_timeouts
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors.rust_workspace import find_rust_workspace_drift
 
@@ -211,11 +211,26 @@ from .detectors import (
 )
 
 
-def _read_files_parallel(root: Path, patterns: list[str]) -> str:
+def _read_files_parallel(
+    root: Path,
+    patterns: list[str],
+    read_timeout: float = 5.0,
+    read_pool_timeout: float = 30.0,
+) -> str:
     """Read multiple files in parallel using ThreadPoolExecutor.
 
     Returns concatenated file contents separated by newlines.
     Files that fail to read are logged to stderr via warnings.
+
+    Args:
+        root: Repository root directory.
+        patterns: Glob patterns (relative to *root*) to collect files.
+        read_timeout: Per-file ``future.result()`` timeout in seconds.
+            Defaults to 5 s; override via ``read_timeout`` in
+            ``.driftcheck.toml``.
+        read_pool_timeout: Pool-wide ``as_completed()`` timeout in seconds.
+            Defaults to 30 s; override via ``read_pool_timeout`` in
+            ``.driftcheck.toml``.
     """
     files = []
     for pattern in patterns:
@@ -233,14 +248,14 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
             executor.submit(_read_text_safe, p, max_size=1_000_000): p
             for p in files
         }
-        for future in as_completed(futures, timeout=30):
+        for future in as_completed(futures, timeout=read_pool_timeout):
             path = futures[future]
             try:
-                result = future.result(timeout=5)
+                result = future.result(timeout=read_timeout)
                 if result is not None:
                     contents.append(result)
             except TimeoutError:
-                failed.append(f"{path}: read timed out (>5s)")
+                failed.append(f"{path}: read timed out (>{read_timeout}s)")
             except Exception as e:
                 failed.append(f"{path}: {e}")
     if failed:
@@ -267,6 +282,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     follow_symlinks = config.get("follow_symlinks", True)
     default_max_size = 1_000_000  # 1MB fallback
     max_file_size = max_file_size or config.get("max_file_size", default_max_size)
+    read_timeout, read_pool_timeout = get_read_timeouts(config)
 
     # Walk files with symlink policy (issue #128)
     walked_files, skipped_symlinks = _walk_files(root, follow_symlinks=follow_symlinks)
