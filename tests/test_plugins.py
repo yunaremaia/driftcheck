@@ -147,6 +147,7 @@ class TestCustomDetectorsConfig:
 
     def test_custom_detectors_absolute_path(self, tmp_path):
         """Absolute paths in custom_detectors work."""
+        import json
         # Create detector in a separate directory
         ext_dir = tmp_path / "external"
         ext_dir.mkdir()
@@ -158,8 +159,10 @@ class TestCustomDetectorsConfig:
             "    return [{'file': 'test', 'detail': 'external'}]\n"
         )
         (tmp_path / "README.md").write_text("test")
+        # Use json.dumps to properly escape the path for TOML (Windows backslash issue)
+        path_str = json.dumps(str(detector_file))
         (tmp_path / ".driftcheck.toml").write_text(
-            f'[driftcheck]\ncustom_detectors = ["{detector_file}"]\n'
+            f'[driftcheck]\ncustom_detectors = [{path_str}]\n'
         )
         from driftcheck.detector import scan_repo
         result = scan_repo(tmp_path)
