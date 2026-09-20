@@ -98,19 +98,18 @@ class TestPluginEndToEnd:
         # Create a plugin file directly with proper escaping
         plugins_dir = tmp_path / ".driftcheck_plugins"
         plugins_dir.mkdir(exist_ok=True)
+        # Use a simple string-based detector to avoid ruff escape-sequence warnings
         plugin_code = (
-            "import re\n\n"
             "def register():\n"
             "    return {'custom': find_custom_drift}\n\n"
-            "CUSTOM_RE = re.compile(r'custom\s+(?P<ver>\d+\.\d+)')\n\n"
             "def find_custom_drift(root, docs):\n"
             "    drifts = []\n"
             "    for fname, content in docs.items():\n"
-            "        for m in CUSTOM_RE.finditer(content):\n"
+            "        if '1.0' in content:\n"
             "            drifts.append({\n"
             "                'file': fname,\n"
-            "                'doc_version': m.group('ver'),\n"
-            "                'detail': f'custom {m.group(\"ver\")} mentioned'\n"
+            "                'doc_version': '1.0',\n"
+            "                'detail': 'custom 1.0 mentioned'\n"
             "            })\n"
             "    return drifts\n"
         )
