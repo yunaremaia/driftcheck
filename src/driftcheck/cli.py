@@ -635,163 +635,238 @@ def _list_detectors() -> None:
 
 
 def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
-    """Print all blocking drift types."""
+    """Print all blocking drift types.
+
+    Uses a data-driven approach with a generic fallback to eliminate the
+    silent-drop bug class where drift types are parsed but never printed.
+    """
+    # Track which keys have explicit handlers below
+    _explicitly_handled: set[str] = set()
+
+    # === Detail-only drifts (just {file}: {detail}) ===
+    _detail_only = [
+        "env_drifts", "env_example_drifts", "compose_override_drifts",
+        "helm_values_drifts", "engines_drifts", "vscode_ext_drifts",
+        "editorconfig_drifts", "git_tag_drifts", "pnpm_workspace_drifts",
+        "package_manager_drifts", "npmrc_drifts", "lineending_drifts",
+    ]
+    for key in _detail_only:
+        _explicitly_handled.add(key)
+        for d in all_drifts.get(key, []):
+            msg = d.get("detail", d.get("message", str(d)))
+            print(f"driftcheck: {d.get('file', 'unknown')}: {msg}")
+
+    # === Version file drifts ({file}: {tool} {doc} -> {actual} ({suffix})) ===
+    _version_files = {
+        "ruby_version_drifts": ".ruby-version",
+        "python_version_drifts": ".python-version",
+        "node_version_drifts": ".node-version",
+        "java_version_drifts": ".java-version",
+        "terraform_version_drifts": ".terraform-version",
+    }
+    for key, suffix in _version_files.items():
+        _explicitly_handled.add(key)
+        for d in all_drifts.get(key, []):
+            print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} ({suffix})")
+
+    # === Pre-commit drifts ({file}: {repo} {doc} -> {rev}) ===
+    _explicitly_handled.add("pre_commit_drifts")
+    for d in all_drifts.get("pre_commit_drifts", []):
+        repo = d.get("repo", "unknown")
+        print(f"driftcheck: {d['file']}: {repo} {d['doc_version']} → should be {d['rev']} (.pre-commit-config.yaml)")
+
+    # === DevContainer drifts ({file}: {feature} {doc} -> {devcontainer}) ===
+    _explicitly_handled.add("devcontainer_drifts")
+    for d in all_drifts.get("devcontainer_drifts", []):
+        feature = d.get("feature", "unknown")
+        print(f"driftcheck: {d['file']}: {feature} {d['doc_version']} → should be {d['devcontainer_version']} (devcontainer.json)")
+
+    # === Bazel drifts ({file}: {tool} {doc} -> {config} ({source})) ===
+    _explicitly_handled.add("bazel_drifts")
+    for d in all_drifts.get("bazel_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['config_version']} ({d['source']})")
+
+    # === Nix drifts ({file}: {tool} {doc} -> {config} (flake.lock)) ===
+    _explicitly_handled.add("nix_drifts")
+    for d in all_drifts.get("nix_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['config_version']} (flake.lock)")
+
+    # === Mise drifts ({file}: {tool} {doc} -> {mise}) ===
+    _explicitly_handled.add("mise_drifts")
+    for d in all_drifts.get("mise_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['mise_version']} (mise.toml)")
+
+    # === Rust workspace drifts ===
+    _explicitly_handled.add("rust_workspace_drifts")
+    for d in all_drifts.get("rust_workspace_drifts", []):
+        kind = d.get("kind", "")
+        if "badge" in kind:
+            print(f"driftcheck: {d['file']}: {d['detail']}")
+        else:
+            target = d.get("expected_version", "?")
+            print(f"driftcheck: {d['file']}: workspace {d['version']} → should be {target}")
+
+
+    _explicitly_handled.add("renovate_drifts")
+    for d in all_drifts.get("renovate_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['message']}")
+
+    # === KMP drifts (Kotlin Multiplatform) ===
+    _explicitly_handled.add("kmp_drifts")
+    for d in all_drifts.get("kmp_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['library']} {d['readme_version']} → should be {d['catalog_version']} (KMP catalog)")
+
+    # === Python version file floor drift ===
+    _explicitly_handled.add("python_version_file_drifts")
+    for d in all_drifts.get("python_version_file_drifts", []):
+        print(f"driftcheck: .python-version {d['pin_version']} is below {d['floor_source']} requires-python floor {d['floor_version']}")
+
+    # === Rust drifts (special: toolchain_version or cargo_version) ===
+    _explicitly_handled.add("rust_drifts")
     for d in all_drifts.get("rust_drifts", []):
         target = d.get("toolchain_version") or d.get("cargo_version")
         print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {target}")
-    for d in all_drifts.get("node_drifts", []):
-        print(f"driftcheck: {d['file']}: Node {d['doc_version']} → should be {d['package_version']}")
-    for d in all_drifts.get("bun_drifts", []):
-        print(f"driftcheck: {d['file']}: Bun {d['doc_version']} → should be {d['package_version']} (package.json)")
-    for d in all_drifts.get("python_drifts", []):
-        print(f"driftcheck: {d['file']}: Python {d['doc_version']} → should be {d['pyproject_version']}")
-    for d in all_drifts.get("go_drifts", []):
-        print(f"driftcheck: {d['file']}: Go {d['doc_version']} → should be {d['gomod_version']}")
+
+    # === Standard version-like drifts ({doc} -> should be {actual} ({source})) ===
+    # Each entry: key -> (actual_field, source, tool_name_or_None)
+    _version_fields = {
+        # key: (actual_field, source, tool_name)
+        "node_drifts": ("package_version", "package.json", "Node"),
+        "bun_drifts": ("package_version", "package.json", "Bun"),
+        "python_drifts": ("pyproject_version", "pyproject.toml", "Python"),
+        "go_drifts": ("gomod_version", "go.mod", "Go"),
+        "java_drifts": ("gradle_version", "build.gradle", "Java"),
+        "maven_drifts": ("maven_version", "pom.xml", "Java"),
+        "terraform_drifts": ("terraform_version", "versions.tf", "Terraform"),
+        "circleci_drifts": ("circleci_image", "CircleCI", "CircleCI"),
+        "gitlab_drifts": ("gitlab_image", "GitLab CI", "GitLab CI"),
+        "k8s_drifts": ("k8s_image", "Kubernetes", "Kubernetes"),
+        "helm_drifts": ("helm_image", "Helm chart", "Helm"),
+        "dc_drifts": ("compose_image", "Docker Compose", "Docker Compose"),
+        "dotnet_drifts": ("csproj_version", ".csproj", ".NET"),
+        "ruby_drifts": ("gemfile_version", "Gemfile", "Ruby"),
+        "php_drifts": ("composer_version", "composer.json", "PHP"),
+        "tool_versions_drifts": ("tool_versions_version", ".tool-versions", None),  # uses 'tool' field
+        "taskfile_drifts": ("taskfile_version", "Taskfile.yml", None),  # uses 'tool' field
+        "swift_drifts": ("package_version", "Package.swift", "Swift"),
+        "deno_drifts": ("deno_json_version", "deno.json", "Deno"),
+        "dart_drifts": ("pubspec_version", "pubspec.yaml", "Dart"),
+        "makefile_drifts": ("makefile_version", "Makefile", None),  # uses 'tool' field
+        "elixir_drifts": ("mix_version", "mix.exs", "Elixir"),
+        "cmake_drifts": ("cmake_version", "CMakeLists.txt", "CMake"),
+        "requirements_drifts": ("requirements_version", "requirements.txt", None),  # uses 'package' field
+        "kotlin_drifts": ("gradle_version", "build.gradle.kts", "Kotlin"),
+        "poetry_drifts": ("pyproject_version", "pyproject.toml", None),  # uses 'package' field
+        "gradle_catalog_drifts": ("catalog_version", "libs.versions.toml", None),  # uses 'library' field
+        "jenkins_drifts": ("jenkins_version", "Jenkinsfile", None),  # uses 'tool' field
+    }
+
+    # Standard version fields
+    for key, (actual_field, source, tool_name) in _version_fields.items():
+        _explicitly_handled.add(key)
+        for d in all_drifts.get(key, []):
+            # Determine the display name: from tool_name, or from drift dict
+            if tool_name:
+                display = tool_name
+            else:
+                display = d.get("tool", d.get("package", d.get("library", "")))
+            print(f"driftcheck: {d['file']}: {display} {d['doc_version']} → should be {d[actual_field]} ({source})")
+
+    # === Special format drifts ===
+    # Count drifts
+    _explicitly_handled.add("count_drifts")
     for d in all_drifts.get("count_drifts", []):
         print(f"driftcheck: {d['file']}: {d['doc_count']} skills → should be {d['actual_count']} (skills/ count)")
+
+    # Actions drifts (node20 deprecation)
+    _explicitly_handled.add("actions_drifts")
     for d in all_drifts.get("actions_drifts", []):
         print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']} (node20→node24)")
-    for d in all_drifts.get("lineending_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+
+    # GitHub Actions version drifts
+    _explicitly_handled.add("gh_actions_version_drifts")
+    for d in all_drifts.get("gh_actions_version_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']}")
+
+    # CI OS drifts
+    _explicitly_handled.add("ci_os_drifts")
+    for d in all_drifts.get("ci_os_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['runner']} → should be {d['suggested']} (deprecated CI runner)")
+
+    # Docker drifts
+    _explicitly_handled.add("docker_drifts")
     for d in all_drifts.get("docker_drifts", []):
         print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['dockerfile_image']} (Dockerfile)")
+
+    # Docker multistage drifts
+    _explicitly_handled.add("docker_multistage_drifts")
     for d in all_drifts.get("docker_multistage_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
+
+    # Docker bases drifts
+    _explicitly_handled.add("docker_bases_drifts")
     for d in all_drifts.get("docker_bases_drifts", []):
         if 'tags' in d:
             print(f"driftcheck: {d['image']} pinned differently across {', '.join(d['tags'])}")
         else:
             print(f"driftcheck: {d['file']}:{d['line']}: {d['image']}:{d.get('tag', '(none)')} uses floating tag")
-    for d in all_drifts.get("java_drifts", []):
-        print(f"driftcheck: {d['file']}: Java {d['doc_version']} → should be {d['gradle_version']} (build.gradle)")
-    for d in all_drifts.get("maven_drifts", []):
-        print(f"driftcheck: {d['file']}: Java {d['doc_version']} → should be {d['maven_version']} (pom.xml)")
+
+    # Terraform drifts (special: includes provider)
+    _explicitly_handled.add("terraform_drifts")
     for d in all_drifts.get("terraform_drifts", []):
         print(f"driftcheck: {d['file']}: Terraform {d['provider']} {d['doc_version']} → should be {d['terraform_version']}")
-    for d in all_drifts.get("circleci_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['circleci_image']} (CircleCI)")
-    for d in all_drifts.get("gitlab_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['gitlab_image']} (GitLab CI)")
-    for d in all_drifts.get("k8s_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['k8s_image']} (Kubernetes)")
-    for d in all_drifts.get("gh_actions_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['action']}@{d['current']} → should be {d['suggested']}")
-    for d in all_drifts.get("helm_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['doc_version']} → should be {d['helm_image']} (Helm chart)")
-    for d in all_drifts.get("dc_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['doc_version']} → should be {d['compose_image']} (Docker Compose)")
-    for d in all_drifts.get("ci_os_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['runner']} → should be {d['suggested']} (deprecated CI runner)")
-    for d in all_drifts.get("dotnet_drifts", []):
-        print(f"driftcheck: {d['file']}: .NET {d['doc_version']} → should be {d['csproj_version']} (.csproj)")
-    for d in all_drifts.get("ruby_drifts", []):
-        print(f"driftcheck: {d['file']}: Ruby {d['doc_version']} → should be {d['gemfile_version']} (Gemfile)")
-    for d in all_drifts.get("php_drifts", []):
-        print(f"driftcheck: {d['file']}: PHP {d['doc_version']} → should be {d['composer_version']} (composer.json)")
-    for d in all_drifts.get("tool_versions_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['tool_versions_version']} (.tool-versions)")
-    for d in all_drifts.get("taskfile_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['taskfile_version']} (Taskfile.yml)")
-    for d in all_drifts.get("swift_drifts", []):
-        print(f"driftcheck: {d['file']}: Swift {d['doc_version']} → should be {d['package_version']} (Package.swift)")
-    for d in all_drifts.get("deno_drifts", []):
-        print(f"driftcheck: {d['file']}: Deno {d['doc_version']} → should be {d['deno_json_version']} (deno.json)")
-    for d in all_drifts.get("dart_drifts", []):
-        print(f"driftcheck: {d['file']}: Dart {d['doc_version']} → should be {d['pubspec_version']} (pubspec.yaml)")
-
-    # Makefile drifts
-    for d in all_drifts.get("makefile_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['makefile_version']} (Makefile)")
-
-    # Elixir drifts
-    for d in all_drifts.get("elixir_drifts", []):
-        print(f"driftcheck: {d['file']}: Elixir {d['doc_version']} → should be {d['mix_version']} (mix.exs)")
-
-    # CMake drifts
-    for d in all_drifts.get("cmake_drifts", []):
-        print(f"driftcheck: {d['file']}: CMake {d['doc_version']} → should be {d['cmake_version']} (CMakeLists.txt)")
-
-    # Requirements drifts
-    for d in all_drifts.get("requirements_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
-
-    # Kotlin drifts
-    for d in all_drifts.get("kotlin_drifts", []):
-        print(f"driftcheck: {d['file']}: Kotlin {d['doc_version']} → should be {d['gradle_version']} (build.gradle.kts)")
-
-    # Pipfile drift
-    for d in all_drifts.get("pipfile_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']}: Pipfile={d['pipfile_version']} vs Pipfile.lock={d['lock_version']}")
-
-    # Conda drift
-    for d in all_drifts.get("conda_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']}: {d.get('environment_version', 'unpinned')} version pin")
-
-    # Poetry drift
-    for d in all_drifts.get("poetry_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['pyproject_version']} (pyproject.toml)")
-
-    # Gradle Version Catalog drift
-    for d in all_drifts.get("gradle_catalog_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['library']}: catalog={d['catalog_version']} vs README={d['readme_version']}")
-
-    # NPMRC drifts
-    for d in all_drifts.get("npmrc_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
-
-    # Jenkins drifts
-    for d in all_drifts.get("jenkins_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['jenkins_version']} (Jenkinsfile)")
-
-    # Version file drifts
-    for d in all_drifts.get("ruby_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.ruby-version)")
-    for d in all_drifts.get("python_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.python-version)")
-    for d in all_drifts.get("python_version_file_drifts", []):
-        print(f"driftcheck: .python-version {d['pin_version']} is below {d['floor_source']} requires-python floor {d['floor_version']}")
-    for d in all_drifts.get("node_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.node-version)")
-    for d in all_drifts.get("java_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.java-version)")
-    for d in all_drifts.get("terraform_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.terraform-version)")
 
     # Yarn RC drifts
+    _explicitly_handled.add("yarnrc_drifts")
     for d in all_drifts.get("yarnrc_drifts", []):
         print(f"driftcheck: {d['file']}: Yarn {d['doc_version']} → should be {d['yarnrc_version']} (.yml)")
 
-    # PNPM workspace drifts
-    for d in all_drifts.get("pnpm_workspace_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+    # Pipfile drifts
+    _explicitly_handled.add("pipfile_drifts")
+    for d in all_drifts.get("pipfile_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']}: Pipfile={d['pipfile_version']} vs Pipfile.lock={d['lock_version']}")
 
-    # Package manager drifts
-    for d in all_drifts.get("package_manager_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+    # Conda drifts
+    _explicitly_handled.add("conda_drifts")
+    for d in all_drifts.get("conda_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']}: {d.get('environment_version', 'unpinned')} version pin")
 
-    # VSCode extensions drifts
-    for d in all_drifts.get("vscode_ext_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+    # Poetry drifts
+    _explicitly_handled.add("poetry_drifts")
+    for d in all_drifts.get("poetry_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['pyproject_version']} (pyproject.toml)")
 
-    # EditorConfig drifts
-    for d in all_drifts.get("editorconfig_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+    # Gradle catalog drifts
+    _explicitly_handled.add("gradle_catalog_drifts")
+    for d in all_drifts.get("gradle_catalog_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['library']}: catalog={d['catalog_version']} vs README={d['readme_version']}")
 
-    # Git tag drifts
-    for d in all_drifts.get("git_tag_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
-
-    # Environment drifts
-    for d in all_drifts.get("env_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
-
-    # Plugin drifts (generic handler)
+    # Plugin drifts (generic handler for dynamically registered plugins)
     for key, drifts in all_drifts.items():
         if key.startswith("plugin_") and key.endswith("_drifts"):
+            _explicitly_handled.add(key)
             for d in drifts:
                 detail = d.get("detail", d.get("doc_version", str(d)))
                 fname = d.get("file", "unknown")
                 print(f"driftcheck: {fname}: {detail}")
+
+    # === Generic fallback: print any remaining drift types not explicitly handled ===
+    # This ensures future detector additions are never silently dropped
+    for key, drifts in all_drifts.items():
+        if key in _explicitly_handled:
+            continue
+        if key in INFORMATIONAL_DRIFTS:
+            continue
+        if key.startswith("plugin_"):
+            continue  # Already handled above
+        _explicitly_handled.add(key)
+        for d in drifts:
+            if not isinstance(d, dict):
+                continue
+            file = d.get("file", "unknown")
+            # Try multiple message fields in priority order
+            msg = d.get("detail", d.get("message", d.get("doc_version", str(d))))
+            print(f"driftcheck: {file}: {msg}")
 
 
 def _print_informational(all_drifts: dict) -> None:
