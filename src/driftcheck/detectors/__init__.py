@@ -15,6 +15,11 @@ from .node import (
     NODE_RE,
     ENGINES_RE,
 )
+from .package_version import (
+    parse_package_identity,
+    find_package_version_drift,
+    fix_package_version_reference,
+)
 from .python import (
     parse_python_version_from_pyproject,
     find_python_drift,
@@ -341,6 +346,10 @@ __all__ = [
     "find_node_drift",
     "NODE_RE",
     "ENGINES_RE",
+    # package.json version
+    "parse_package_identity",
+    "find_package_version_drift",
+    "fix_package_version_reference",
     # Python
     "parse_python_version_from_pyproject",
     "find_python_drift",
