@@ -158,6 +158,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "rust_drifts": ["rust-toolchain.toml", "Cargo.toml", "README.md", "CONTRIBUTING.md"],
     "node_drifts": ["package.json", "README.md", "CONTRIBUTING.md"],
     "bun_drifts": ["package.json", "README.md", "CONTRIBUTING.md"],
+    "package_version_drifts": ["package.json", "README.md", "CONTRIBUTING.md"],
     "python_drifts": ["pyproject.toml", "README.md", "CONTRIBUTING.md"],
     "python_setup_drifts": ["setup.py", "setup.cfg", "README.md", "CONTRIBUTING.md"],
     "go_drifts": ["go.mod", "README.md", "CONTRIBUTING.md"],

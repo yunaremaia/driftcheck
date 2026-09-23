@@ -101,6 +101,7 @@ from .detectors import (
     parse_cargo_rust_version,
     parse_node_version_from_package,
     find_node_drift,
+    find_package_version_drift,
     parse_python_version_from_pyproject,
     find_python_drift,
     find_python_setup_drift,
@@ -421,6 +422,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
     bun_drifts = find_bun_drift(package_text, docs)
+    package_version_drifts = find_package_version_drift(package_text, docs)
     python_drifts = find_python_drift(pyproject_text, docs)
     python_setup_drifts = find_python_setup_drift(setup_py_text, setup_cfg_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
@@ -631,6 +633,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "rust_drifts": rust_drifts_multi,
         "node_drifts": node_drifts,
         "bun_drifts": bun_drifts,
+        "package_version_drifts": package_version_drifts,
         "python_drifts": python_drifts,
         "python_setup_drifts": python_setup_drifts,
         "go_drifts": go_drifts,

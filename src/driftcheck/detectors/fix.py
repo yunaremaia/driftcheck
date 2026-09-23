@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .rust import DOC_RE, TOOLCHAIN_RE
 from .node import NODE_RE
+from .package_version import fix_package_version_reference
 from .python import PY_RE
 from .go import GO_RE
 from .count import COUNT_RE
@@ -44,6 +45,18 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
         fpath = root / d["file"]
         if fpath.exists():
             if fix_in_file(fpath, d["doc_version"], d["package_version"], [NODE_RE]):
+                fixed.append(d["file"])
+
+    # package.json version drifts
+    for d in result.get("package_version_drifts", []):
+        fpath = root / d["file"]
+        if not fpath.exists():
+            continue
+        text = fpath.read_text(encoding="utf-8", errors="replace")
+        updated = fix_package_version_reference(text, d)
+        if updated != text:
+            fpath.write_text(updated, encoding="utf-8")
+            if d["file"] not in fixed:
                 fixed.append(d["file"])
     
     # Python drifts

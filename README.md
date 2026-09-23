@@ -213,6 +213,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
 - **Node**: `package.json` `engines.node` vs README
 - **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
+- **Package version**: `package.json` `version` vs explicit npm badge URLs, install commands, and changelog headers in README/docs
 - **Python**: `pyproject.toml` `requires-python` vs README
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
