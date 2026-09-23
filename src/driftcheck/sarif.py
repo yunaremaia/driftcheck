@@ -288,11 +288,6 @@ DRIFT_RULES = {
         "EditorConfig Drift",
         ".editorconfig settings conflict with README or IDE settings",
     ),
-    "git_tag_drifts": (
-        "git-tag-drift",
-        "Git Tag Drift",
-        "README version mentions do not match the latest git tag",
-    ),
     "taskfile_drifts": (
         "taskfile-drift",
         "Taskfile Drift",

@@ -155,3 +155,12 @@ def test_sarif_skipped_symlinks():
     assert "secret" in sarif_results[0]["message"]["text"]
     assert len(sarif_results[0]["suppressions"]) == 1
     assert sarif_results[0]["suppressions"][0]["kind"] == "inSource"
+
+
+def test_sarif_drift_rules_no_duplicate_keys():
+    """DRIFT_RULES must not contain duplicate keys — second definition silently overwrites."""
+    from driftcheck.sarif import DRIFT_RULES
+
+    keys = list(DRIFT_RULES.keys())
+    duplicates = [k for k in keys if keys.count(k) > 1]
+    assert not duplicates, f"Duplicate keys in DRIFT_RULES: {duplicates}"
