@@ -53,7 +53,7 @@ def find_dependabot_drift(root: Path) -> list[dict]:
     # Parse existing dependabot config
     try:
         text = dependabot_path.read_text(encoding="utf-8", errors="replace")
-    except Exception:
+    except (OSError, ValueError):
         return []
 
     configured = set()

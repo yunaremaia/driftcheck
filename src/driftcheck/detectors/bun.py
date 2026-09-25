@@ -23,7 +23,7 @@ def parse_bun_version_from_package(text: str) -> str | None:
         if len(parts) >= 2:
             return f"{parts[0]}.{parts[1]}"
         return bun_ver
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         return None
 
 

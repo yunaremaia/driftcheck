@@ -25,7 +25,7 @@ def find_ci_os_drift(root: Path) -> list[dict]:
     for wf in list(wf_dir.glob("*.yml")) + list(wf_dir.glob("*.yaml")):
         try:
             text = wf.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except (OSError, ValueError):
             continue
         rel = str(wf.relative_to(root))
         for m in CI_OS_RE.finditer(text):

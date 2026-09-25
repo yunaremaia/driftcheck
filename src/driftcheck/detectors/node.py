@@ -18,7 +18,7 @@ def parse_node_version_from_package(text: str) -> str | None:
             return None
         m = re.search(r"[0-9]+", eng)
         return m.group(0) if m else None
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         return None
 
 
