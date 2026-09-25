@@ -44,10 +44,14 @@ CAPABILITY_RE = re.compile(
 def is_agent_card_file(path: Path) -> bool:
     """Check if a file is likely an A2A agent card."""
     name = path.name
-    full = str(path)
+    # Check filename patterns first
     for pattern in AGENT_CARD_PATTERNS:
-        if pattern.search(name) or pattern.search(full):
+        if pattern.search(name):
             return True
+    # Check for .a2a/ directory (handle both / and \ on Windows)
+    parts = path.parts
+    if '.a2a' in parts:
+        return True
     return False
 
 
@@ -113,6 +117,11 @@ def extract_card_endpoints(card: dict) -> list[str]:
         elif isinstance(ep, dict):
             if 'url' in ep:
                 endpoints.append(ep['url'])
+            # Also check for nested URL fields (e.g., {"url": "...", "protocol": "..."})
+            for v in ep.values():
+                if isinstance(v, str) and v.startswith('http'):
+                    if v not in endpoints:  # avoid duplicates
+                        endpoints.append(v)
     # Some cards have 'urls' or 'addresses'
     for key in ('urls', 'addresses', 'services'):
         if key in card:
