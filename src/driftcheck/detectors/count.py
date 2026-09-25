@@ -20,7 +20,7 @@ def find_count_drift(root: Path, docs: dict[str, str]) -> list[dict]:
         return []
     try:
         actual = sum(1 for p in skills_dir.iterdir() if p.is_dir())
-    except Exception:
+    except OSError:
         return []
     if actual == 0:
         return []

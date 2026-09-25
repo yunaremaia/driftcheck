@@ -106,7 +106,7 @@ def filter_detectors_by_files(
         set of detector keys that should run
     """
     if not changed_files:
-        return set(detector_file_patterns.keys())
+        return set()
     
     relevant = set()
     for detector_key, patterns in detector_file_patterns.items():

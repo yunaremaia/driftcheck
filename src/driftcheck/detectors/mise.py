@@ -34,7 +34,7 @@ def parse_mise_tools(text: str) -> dict[str, str]:
         return {}
     try:
         data = tomllib.loads(text)
-    except Exception:
+    except ValueError:
         return {}
 
     tools_raw = data.get("tools", {})

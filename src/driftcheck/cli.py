@@ -171,7 +171,7 @@ def _detect_detectors(root: Path) -> list[str]:
                 if "apiVersion:" in content and "kind:" in content:
                     detected.add("k8s_drifts")
                     break
-            except Exception:
+            except (OSError, ValueError):
                 pass
     
     # Check for helm charts
