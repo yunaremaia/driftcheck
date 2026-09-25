@@ -54,7 +54,7 @@ class TestParseAgentCard:
             card_path.unlink(missing_ok=True)
 
     def test_nonexistent(self):
-        assert parse_agent_card(Path("/tmp/nonexistent.json")) is None
+        assert parse_agent_card(Path("nonexistent.json")) is None
 
 
 class TestExtractSpecVersion:
