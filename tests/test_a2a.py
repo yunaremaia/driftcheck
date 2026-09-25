@@ -35,9 +35,9 @@ class TestIsAgentCardFile:
 
 
 class TestParseAgentCard:
-    def test_valid_card(self):
+    def test_valid_card(self, tmp_path):
         card_data = {"name": "test-agent", "spec_version": "1.0"}
-        card_path = Path("/tmp/test-agent.json")
+        card_path = tmp_path / "test-agent.json"
         card_path.write_text('{"name": "test-agent", "spec_version": "1.0"}')
         try:
             result = parse_agent_card(card_path)
@@ -45,8 +45,8 @@ class TestParseAgentCard:
         finally:
             card_path.unlink(missing_ok=True)
 
-    def test_invalid_json(self):
-        card_path = Path("/tmp/bad.json")
+    def test_invalid_json(self, tmp_path):
+        card_path = tmp_path / "bad.json"
         card_path.write_text("{bad json}")
         try:
             assert parse_agent_card(card_path) is None
