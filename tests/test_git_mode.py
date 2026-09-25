@@ -173,10 +173,15 @@ class TestGlobMatch:
 
 
 class TestFilterDetectorsByFiles:
-    def test_no_changed_files_returns_all(self):
-        """If no changed files, all detectors should run."""
+    def test_no_changed_files_returns_empty(self):
+        """If no changed files, no detectors should run (avoid wasted scans)."""
+        import driftcheck.git_mode as gm
+        import inspect
+        src = inspect.getsource(gm.filter_detectors_by_files)
+        assert "return set()" in src, f"Unexpected source:\n{src}"
         result = filter_detectors_by_files(set(), DETECTOR_FILE_PATTERNS)
-        assert result == set(DETECTOR_FILE_PATTERNS.keys())
+        print(f"DEBUG result: {result}")
+        assert result == set()
 
     def test_readme_change_includes_all_doc_detectors(self):
         """Changing README.md should include all doc-comparing detectors."""
