@@ -4,7 +4,7 @@ Detects drift between A2A agent cards and documentation:
 - Agent card spec_version vs documented A2A version
 - Capabilities advertised in card vs documented capabilities
 - Endpoint URLs in card vs documented endpoints
-- Protocol conformance claims vs actual JSON-RPC methods
+- Protocol conformance claims vs actual JSON-RPC methods available
 
 Reference: https://a2a-protocol.org
 """
@@ -21,11 +21,14 @@ A2A_VERSION_RE = re.compile(
     re.I
 )
 
-# Agent card file patterns
+# Agent card file patterns - match filename and path separators
+# Pattern 1: path containing /.a2a/ or \.a2a\ (cross-platform)
+# Pattern 2: filename is agent.json or agent-card.json
+# Pattern 3: filename is agent-card.yaml or agent-card.yml
 AGENT_CARD_PATTERNS = [
-    re.compile(r'\.a2a/'),
-    re.compile(r'agent(-card)?\.json$'),
-    re.compile(r'agent-card\.ya?ml$'),
+    re.compile(r'(?:\.a2a[\\/]|/\.a2a/|\.a2a$)'),  # .a2a/ dir or .a2a at end
+    re.compile(r'^agent(-card)?\.json$'),  # agent.json, agent-card.json
+    re.compile(r'^agent-card\.ya?ml$'),  # agent-card.yaml, agent-card.yml
 ]
 
 # JSON-RPC method patterns in agent cards
@@ -42,11 +45,17 @@ CAPABILITY_RE = re.compile(
 
 
 def is_agent_card_file(path: Path) -> bool:
-    """Check if a file is likely an A2A agent card."""
+    """Check if a file is likely an A2A agent card.
+
+    Matches: .a2a/card.json, agent.json, agent-card.json, agent-card.yaml
+    Works cross-platform: handles both POSIX (/) and Windows (\) path separators.
+    """
     name = path.name
-    # Check filename patterns first
+    full = str(path)
+
+    # Check each pattern against both the filename and the full path
     for pattern in AGENT_CARD_PATTERNS:
-        if pattern.search(name):
+        if pattern.search(name) or pattern.search(full):
             return True
     # Check for .a2a/ directory (handle both / and \ on Windows)
     parts = path.parts
@@ -88,28 +97,25 @@ def extract_card_capabilities(card: dict) -> list[str]:
                     caps.append(str(name))
             elif isinstance(cap, str):
                 caps.append(cap)
-    # Alternative: skills field
-    if 'skills' in card:
-        for skill in card['skills']:
-            if isinstance(skill, dict):
-                name = skill.get('name', skill.get('id', ''))
-                if name:
-                    caps.append(str(name))
-            elif isinstance(skill, str):
-                caps.append(skill)
-    # tools field
-    if 'tools' in card:
-        for tool in card['tools']:
-            if isinstance(tool, dict):
-                name = tool.get('name', tool.get('description', ''))
-                if name:
-                    caps.append(str(name)[:50])
+    # Some cards use 'skills' or 'tools' as capability lists
+    for key in ('skills', 'tools'):
+        if key in card:
+            val = card[key]
+            if isinstance(val, list):
+                for item in val:
+                    if isinstance(item, str):
+                        caps.append(item)
+                    elif isinstance(item, dict):
+                        name = item.get('name', item.get('id', ''))
+                        if name:
+                            caps.append(str(name))
     return caps
 
 
 def extract_card_endpoints(card: dict) -> list[str]:
     """Extract endpoint URLs from an agent card."""
     endpoints = []
+    # Standard A2A: endpoint field (single URL or dict)
     if 'endpoint' in card:
         ep = card['endpoint']
         if isinstance(ep, str):
@@ -117,11 +123,18 @@ def extract_card_endpoints(card: dict) -> list[str]:
         elif isinstance(ep, dict):
             if 'url' in ep:
                 endpoints.append(ep['url'])
-            # Also check for nested URL fields (e.g., {"url": "...", "protocol": "..."})
+            # Also check for nested URL fields
             for v in ep.values():
                 if isinstance(v, str) and v.startswith('http'):
-                    if v not in endpoints:  # avoid duplicates
+                    if v not in endpoints:
                         endpoints.append(v)
+    # Also check 'endpoints' array field (some implementations)
+    if 'endpoints' in card:
+        for ep in card['endpoints']:
+            if isinstance(ep, dict):
+                endpoints.append(ep.get('url', ep.get('address', '')))
+            elif isinstance(ep, str):
+                endpoints.append(ep)
     # Some cards have 'urls' or 'addresses'
     for key in ('urls', 'addresses', 'services'):
         if key in card:
@@ -247,19 +260,17 @@ def find_a2a_drift(root: Path, docs: dict[str, str]) -> list[dict]:
         for ep in card_ep_list:
             found = False
             for df, deps in doc_endpoints.items():
-                if ep in deps:
-                    found = True
+                for doc_ep in deps:
+                    if ep.rstrip('/') == doc_ep.rstrip('/'):
+                        found = True
+                        break
+                if found:
                     break
             if not found and doc_endpoints:
                 drifts.append({
                     "file": card_rel,
-                    "detail": f"A2A endpoint '{ep}' in card but not documented",
+                    "detail": f"A2A endpoint '{ep}' in card not found in documentation",
                     "type": "informational",
                 })
 
     return drifts
-
-
-def register() -> dict[str, Callable]:
-    """Plugin registration for driftcheck."""
-    return {"a2a_drift": find_a2a_drift}
