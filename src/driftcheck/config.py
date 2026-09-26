@@ -30,6 +30,7 @@ DRIFT_KEYS = [
     "vscode_ext_drifts", "editorconfig_drifts", "git_tag_drifts", "devcontainer_drifts",
     "taskfile_drifts", "mise_drifts",
     "pre_commit_drifts",
+    "changelog_drifts",
     "typosquat_drifts",
     "poetry_drifts",
     "renovate_drifts",

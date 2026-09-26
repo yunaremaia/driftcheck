@@ -14,7 +14,7 @@ from .git_mode import (
 )
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
-INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts"}
+INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts", "changelog_drifts"}
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
@@ -62,6 +62,7 @@ DETECTOR_INFO = {
     "elixir_drifts": ("elixir", "Elixir mix.exs version vs README"),
     "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
     "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
+    "freshness_drifts": ("python-freshness", "Python pinned dependency versions vs PyPI latest"),
     "bazel_drifts": ("bazel", "Bazel pins vs README"),
     "nix_drifts": ("nix", "Nix flake.lock nixpkgs pins vs README"),
     "poetry_drifts": ("poetry", "Poetry pyproject.toml [tool.poetry] dependencies vs README"),
@@ -88,6 +89,7 @@ DETECTOR_INFO = {
     "git_tag_drifts": ("git-tag", "Latest git tag vs README version mentions"),
     "devcontainer_drifts": ("devcontainer", "Devcontainer.json features/base image vs README"),
     "pre_commit_drifts": ("pre-commit", "Pre-commit hook versions vs .pre-commit-config.yaml"),
+    "changelog_drifts": ("changelog", "CHANGELOG.md presence/content vs CONTRIBUTING.md policy"),
 }
 
 # Mapping of project files to their relevant detectors for `driftcheck init`
@@ -896,9 +898,9 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     for d in all_drifts.get("cmake_drifts", []):
         print(f"driftcheck: {d['file']}: CMake {d['doc_version']} → should be {d['cmake_version']} (CMakeLists.txt)")
 
-    # Requirements drifts
-    for d in all_drifts.get("requirements_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
+    # Freshness drifts (Python pinned deps vs PyPI latest)
+    for d in all_drifts.get("freshness_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']} {d['pinned_version']} → newer: {d['latest_version']} (PyPI)")
 
     # Kotlin drifts
     for d in all_drifts.get("kotlin_drifts", []):

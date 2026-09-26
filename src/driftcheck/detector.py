@@ -160,6 +160,7 @@ from .detectors import (
     find_helm_values_drift,
     find_env_drift_combined,
     find_requirements_drift,
+    find_python_dep_freshness,
     parse_poetry_pyproject,
     find_poetry_drift,
     parse_kotlin_version,
@@ -206,6 +207,7 @@ from .detectors import (
     find_renovate_drift,
     find_bazel_drift,
     find_nix_drift,
+    find_changelog_drift,
 )
 
 
@@ -506,6 +508,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     req_path = root / "requirements.txt"
     req_text = _read_text_safe(req_path, max_size=max_file_size) or ""
     requirements_drifts = find_requirements_drift(req_text, pyproject_text, docs)
+    freshness_drifts = find_python_dep_freshness(req_text, pyproject_text, offline=False)
     bazel_drifts = find_bazel_drift(root)
     nix_drifts = find_nix_drift(root)
 
@@ -677,6 +680,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "elixir_drifts": elixir_drifts,
         "cmake_drifts": cmake_drifts,
         "requirements_drifts": requirements_drifts,
+        "freshness_drifts": freshness_drifts,
         "bazel_drifts": bazel_drifts,
         "nix_drifts": nix_drifts,
         "poetry_drifts": poetry_drifts,
@@ -702,6 +706,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "devcontainer_drifts": devcontainer_drifts,
         "taskfile_drifts": taskfile_drifts,
         "pre_commit_drifts": pre_commit_drifts,
+        "changelog_drifts": find_changelog_drift(root, docs),
         "renovate_drifts": find_renovate_drift(root),
     }
 

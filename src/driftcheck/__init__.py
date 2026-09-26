@@ -121,6 +121,7 @@ __all__ = [
     "find_pre_commit_drift",
     "find_python_drift",
     "find_python_version_file_drift",
+    "find_python_dep_freshness",
     "find_renovate_drift",
     "find_requirements_drift",
     "find_ruby_drift",
