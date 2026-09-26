@@ -27,6 +27,7 @@ from .detectors.engines import find_engines_drift
 from .detectors.env_drift import find_env_drift
 from .detectors.external import find_external_resource_drift
 from .detectors.actions import find_gh_actions_version_drift
+from .detectors.actions_version_drift import find_actions_version_drift
 from .detectors.git_tag import find_git_tag_drift
 from .detectors.gitlab import find_gitlab_drift
 from .detectors.go import find_go_drift
@@ -94,6 +95,7 @@ __all__ = [
     "find_env_drift",
     "find_external_resource_drift",
     "find_gh_actions_version_drift",
+    "find_actions_version_drift",
     "find_git_tag_drift",
     "find_gitlab_drift",
     "find_go_drift",

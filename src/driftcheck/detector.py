@@ -17,6 +17,7 @@ from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .config import load_config, get_excluded_detectors
 from .plugins import load_plugins, run_plugin_detectors
+from .detectors.actions_version_drift import find_actions_version_drift
 
 
 def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], list[str]]:
@@ -762,6 +763,7 @@ __all__ = [
     # GitHub Actions
     "find_actions_node_drift",
     "find_gh_actions_version_drift",
+    "find_actions_version_drift",
     # Kubernetes
     "find_k8s_drift",
     # Helm
