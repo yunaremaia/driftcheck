@@ -3,41 +3,33 @@
 ## Supported Versions
 
 | Version | Supported          |
-|---------|-------------------|
-| Latest  | ✅ Security updates |
-| Older   | ❌ No fixes        |
-
-Only the latest release receives security updates. Keep your driftcheck installation up to date.
+|---------|--------------------|
+| latest  | ✅                 |
 
 ## Reporting a Vulnerability
 
-**Public reporting:** Open a GitHub issue with the `security` label. Do NOT include sensitive details (exploits, credentials) in public issues.
+**Please do not report security vulnerabilities through public GitHub issues.**
 
-**Private reporting:** Use GitHub's private vulnerability reporting:
-1. Go to <https://github.com/yunaremaia/driftcheck/security/advisories>
-2. Click "Report a security vulnerability"
-3. Provide a detailed description, affected version, and reproduction steps
+If you discover a security issue in driftcheck, please report it privately:
 
-You can also email **yunare@gmail.com** with "driftcheck security" in the subject line for sensitive reports.
+1. **Email:** yunare@gmail.com
+2. **Subject:** `[driftcheck] Security Vulnerability`
+3. **Include:**
+   - Description of the vulnerability
+   - Steps to reproduce (if applicable)
+   - Potential impact
+   - Any suggested fixes (optional)
 
-## Disclosure Policy
+I will acknowledge receipt within 48 hours and work with you to address the issue. Once fixed, I will publish a security advisory and add a CHANGELOG entry.
 
-- We aim to address reported vulnerabilities within **30 days**
-- A security advisory will be published after a fix is released
-- Credit will be given to the reporter (unless requested otherwise)
+## Security Updates
+
+I aim to address critical security issues within 7 days of disclosure. High-severity issues affecting actively exploited vectors will be prioritized.
 
 ## Scope
 
-**In scope:**
-- Vulnerabilities in the driftcheck detector engine
-- Issues allowing arbitrary code execution via detectors or plugins
-- Path traversal or file read bugs in scan operations
+This policy applies to driftcheck (`yunaremaia/driftcheck`), including all CI workflow templates, utility scripts, and documentation served from this repository.
 
-**Out of scope:**
-- Misconfiguration by the user (wrong doc_paths, missing tokens)
-- Third-party tools referenced by driftcheck (e.g., upstream package registries)
-- Vulnerability scanners that driftcheck integrates with (OSV, etc.)
+## Safe Harbor
 
-## Acknowledgments
-
-Thanks to all reporters who help keep driftcheck secure.
+If you report a vulnerability in accordance with this policy, you will not be subject to legal action or retaliation for good-faith security research.
