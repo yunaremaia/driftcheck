@@ -182,6 +182,7 @@ from .detectors import (
     find_version_file_drift,
     parse_python_version_file,
     find_python_version_file_drift,
+    find_python_version_drift,
     apply_fixes,
     parse_npmrc,
     find_npmrc_drift,
@@ -570,7 +571,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     )
 
     ruby_version_drifts = find_version_file_drift(version_files, docs, "Ruby")
-    python_version_drifts = find_version_file_drift(version_files, docs, "Python")
+    python_version_drifts = find_python_version_drift(root, pyproject_text, setup_cfg_text, setup_py_text, docs)
     node_version_drifts = find_version_file_drift(version_files, docs, "Node.js")
     java_version_drifts = find_version_file_drift(version_files, docs, "Java")
     terraform_version_drifts = find_version_file_drift(version_files, docs, "Terraform")

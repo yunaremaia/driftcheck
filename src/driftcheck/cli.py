@@ -834,6 +834,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
             print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['setup_version']} ({d['source']})")
     for d in all_drifts.get("go_drifts", []):
         print(f"driftcheck: {d['file']}: Go {d['doc_version']} → should be {d['gomod_version']}")
+    for d in all_drifts.get("requirements_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
     for d in all_drifts.get("count_drifts", []):
         print(f"driftcheck: {d['file']}: {d['doc_count']} skills → should be {d['actual_count']} (skills/ count)")
     for d in all_drifts.get("actions_drifts", []):

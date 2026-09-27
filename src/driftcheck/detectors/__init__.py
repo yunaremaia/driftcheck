@@ -282,6 +282,9 @@ from .python_version import (
     parse_requires_python,
     find_python_version_file_drift,
 )
+from .python_version_drift import (
+    find_python_version_drift,
+)
 from .npmrc import (
     parse_npmrc,
     find_npmrc_drift,
@@ -597,6 +600,8 @@ __all__ = [
     "parse_java_version",
     "parse_terraform_version",
     "find_version_file_drift",
+    # Python version drift (new)
+    "find_python_version_drift",
     # VSCode
     "parse_vscode_extensions",
     "find_vscode_extensions_drift",
