@@ -38,10 +38,14 @@ def test_custom_doc_paths_glob():
         docs_dir.mkdir()
         (docs_dir / "setup.md").write_text("Requires Python 3.10")
         (root / ".python-version").write_text("3.11.5")
-        (root / "README.md").write_text("No version mentioned")
+        (root / "README.md").write_text("Requires Python 3.12+")
         
         (root / ".driftcheck.toml").write_text(
             '[driftcheck]\ndoc_paths = ["documentation/*.md"]\n'
         )
         result = scan_repo(root)
         assert len(result.get("python_version_drifts", [])) == 1
+        # The doc says 3.10 but .python-version is 3.11.5 — doc is stale
+        drift = result["python_version_drifts"][0]
+        assert drift["type"] == "doc"
+        assert drift["file"] == "documentation/setup.md"
