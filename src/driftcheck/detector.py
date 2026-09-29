@@ -210,8 +210,15 @@ from .detectors import (
     find_nix_drift,
     find_scala_drift,
     find_changelog_drift,
-,
-    find_julia_drift,)
+    find_julia_drift,
+    find_pyproject_tool_drift,
+    find_python_req_drift,
+    find_r_drift,
+    find_terraform_lock_drift,
+    find_justfile_drift,
+    find_go_replace_drift,
+    find_frontmatter_drift,
+    find_helm_dependency_drift,)
 
 
 def _read_files_parallel(root: Path, patterns: list[str]) -> str:
@@ -636,6 +643,41 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
+    # R language files
+    description_path = root / "DESCRIPTION"
+    description_text = _read_text_safe(description_path, max_size=max_file_size) or ""
+    renv_path = root / "renv.lock"
+    renv_text = _read_text_safe(renv_path, max_size=max_file_size) or ""
+
+    # Terraform lock file
+    tf_lock_path = root / ".terraform.lock.hcl"
+    lock_text = _read_text_safe(tf_lock_path, max_size=max_file_size) or ""
+
+    # Justfile
+    justfile_files = {}
+    for jf_pattern in ["justfile", "Justfile", ".justfile"]:
+        jf_path = root / jf_pattern
+        if jf_path.exists():
+            content = _read_text_safe(jf_path, max_size=max_file_size)
+            if content is not None:
+                justfile_files[str(jf_path.relative_to(root))] = content
+
+    # Helm chart files
+    chart_path = root / "Chart.yaml"
+    chart_text = _read_text_safe(chart_path, max_size=max_file_size) or ""
+    helm_lock_path = root / "Chart.lock"
+    helm_lock_text = _read_text_safe(helm_lock_path, max_size=max_file_size) or ""
+
+    # Go sum
+    gosum_path = root / "go.sum"
+    gosum_text = _read_text_safe(gosum_path, max_size=max_file_size) or ""
+
+    # Julia
+    julia_path = root / "Project.toml"
+    julia_text = _read_text_safe(julia_path, max_size=max_file_size) or ""
+    julia_manifest_path = root / "Manifest.toml"
+    julia_manifest_text = _read_text_safe(julia_manifest_path, max_size=max_file_size) or ""
+
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -718,6 +760,15 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "pre_commit_drifts": pre_commit_drifts,
         "changelog_drifts": find_changelog_drift(root, docs),
         "renovate_drifts": find_renovate_drift(root),
+        "pyproject_tool_drifts": find_pyproject_tool_drift(pyproject_text),
+        "python_req_drifts": find_python_req_drift(req_text, pyproject_text, root),
+        "r_drifts": find_r_drift(description_text, renv_text, docs),
+        "terraform_lock_drifts": find_terraform_lock_drift(terraform_files, lock_text),
+        "justfile_drifts": find_justfile_drift(justfile_files, docs),
+        "go_replace_drifts": find_go_replace_drift(gomod_text, gosum_text),
+        "julia_drifts": find_julia_drift(julia_text, julia_manifest_text, docs),
+        "frontmatter_drifts": find_frontmatter_drift(docs, cargo_text, toolchain_text, package_text, pyproject_text),
+        "helm_dependency_drifts": find_helm_dependency_drift(chart_text, helm_lock_text),
     }
 
     # Run plugin detectors

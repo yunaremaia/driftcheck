@@ -631,11 +631,26 @@ from .bazel import find_bazel_drift
 from .nix import find_nix_drift
 from .scala import find_scala_drift, parse_sbt
 from .julia import find_julia_drift
+from .pyproject_tools import find_pyproject_tool_drift
+from .python_req import find_python_req_drift
+from .r_lang import find_r_drift
+from .terraform_lock import find_terraform_lock_drift
+from .justfile import find_justfile_drift
+from .go_replace import find_go_replace_drift
+from .frontmatter import find_frontmatter_drift
+from .helm_deps import find_helm_dependency_drift
 
 __all__ += [
     "find_scala_drift",
     "parse_sbt",
-,
     "find_julia_drift",
+    "find_pyproject_tool_drift",
+    "find_python_req_drift",
+    "find_r_drift",
+    "find_terraform_lock_drift",
+    "find_justfile_drift",
+    "find_go_replace_drift",
+    "find_frontmatter_drift",
+    "find_helm_dependency_drift",
     "parse_manifest_versions",
     "parse_project_compat",]
