@@ -252,6 +252,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
+- **Helm dependencies**: `Chart.yaml` dependency constraints vs `Chart.lock` (no upstream chart index lookup)
 - **Terraform**: `versions.tf` `required_providers` block `version` vs README
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 
@@ -352,8 +353,8 @@ pre-commit install
 
 ### Stats
 
-- **65 detector modules** covering 50+ toolchains and file formats
-- **70 registered detectors** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
+- **66 detector modules** covering 50+ toolchains and file formats
+- **71 registered detectors** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
 - **1291 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
@@ -429,5 +430,6 @@ See the [API Reference](docs/api.md) for embedding driftcheck in scripts and CI 
 | Rust | rust-toolchain | `drifts` | Rust toolchain.toml channel |
 || Security | typosquat | `typosquat_drifts` | Typosquat detection in dependencies (informational) |
 || AI Agents | a2a | `a2a_drifts` | A2A agent card spec_version vs docs, capabilities, endpoints (informational) |
-| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
+|| Documentation | changelog | `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational) |
+|| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
 | Terraform | terraform-version | `terraform_version_drifts` | .terraform-version vs README |
