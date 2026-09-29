@@ -90,6 +90,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 || `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational). |
 || `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
+| `frontmatter_drifts` | Markdown YAML frontmatter versions vs Cargo, pyproject, package.json, and go.mod. |
 
 ## Other
 
