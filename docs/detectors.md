@@ -35,6 +35,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `pipfile_drifts` | `Pipfile` vs `Pipfile.lock` version mismatches. |
 | `poetry_drifts` | `pyproject.toml` `[tool.poetry]` dependency versions vs README. |
 | `python_version_drifts` | `.python-version` vs `pyproject.toml` `requires-python` floor. |
+| `pyproject_tool_drifts` | `[tool.ruff]` / `[tool.black]` / `[tool.mypy]` / `[tool.pyright]` Python targets vs `requires-python`. |
 | `requirements_drifts` | `requirements.txt` unpinned packages vs known latest. |
 | `yarnrc_drifts` | `.yarnrc.yml` Yarn version vs README mentions. |
 
@@ -72,7 +73,6 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `makefile_drifts` | Makefile tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`). |
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
-| `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
 
 ## Configuration
