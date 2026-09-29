@@ -215,7 +215,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "devcontainer_drifts": [".devcontainer/devcontainer.json", ".devcontainer/*.devcontainer.json", "devcontainer.json", "README.md"],
     "mise_drifts": ["mise.toml", "README.md"],
     "poetry_drifts": ["pyproject.toml", "README.md", "CONTRIBUTING.md"],
-    "terraform_lock_drifts": ["*.tf", "versions.tf", ".terraform.lock.hcl"],
+    "julia_drifts": ["Project.toml", "Manifest.toml", "README.md"],
     "bazel_drifts": [".bazelversion", "MODULE.bazel", "WORKSPACE.bazel", "README.md"],
     "nix_drifts": ["flake.lock", "flake.nix", "README.md"],
 }
