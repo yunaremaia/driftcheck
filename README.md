@@ -217,7 +217,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Python**: `pyproject.toml` `requires-python` vs README
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
-- **Julia**: `Project.toml` `[compat]` and `Manifest.toml` resolved versions vs README `Package.jl` mentions
+- **Go modules**: `go.mod` `require` / `replace` / `exclude` vs `go.sum` (local replace paths are ignored)
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
 - **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
@@ -253,7 +253,6 @@ driftcheck --git-mode --git-base v1.0.0
 - **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
-- **Helm dependencies**: `Chart.yaml` dependency constraints vs `Chart.lock` (no upstream chart index lookup)
 - **Terraform**: `versions.tf` `required_providers` block `version` vs README
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 
@@ -268,7 +267,6 @@ driftcheck --git-mode --git-base v1.0.0
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
-- **Frontmatter**: YAML `version`, `rust_version`, `node_version`, `python_version`, and `go_version` in Markdown vs the toolchain
 - **EditorConfig**: `.editorconfig` `indent_size`/`indent_style` vs project convention
 - **Devcontainer**: `.devcontainer/devcontainer.json` image/tags vs README
 - **Renovate**: `renovate.json` configuration drift vs README
