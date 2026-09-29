@@ -217,6 +217,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Python**: `pyproject.toml` `requires-python` vs README
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
+- **R**: `DESCRIPTION` Imports/Depends/Suggests and `renv.lock` pins vs README package mentions
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
 - **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
@@ -261,7 +262,6 @@ driftcheck --git-mode --git-base v1.0.0
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
-- **Scala/SBT**: `build.sbt` `scalaVersion` and `libraryDependencies` vs README
 
 **Configuration:**
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
