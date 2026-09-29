@@ -12,6 +12,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `dotnet_drifts` | `*.csproj` `<TargetFramework>` vs README. Handles multi-targeting. |
 | `elixir_drifts` | `mix.exs` `elixir:` version vs README. |
 | `go_drifts` | `go.mod` `go` directive vs README. |
+| `julia_drifts` | `Project.toml` `[compat]` and `Manifest.toml` vs README package versions. |
 | `java_drifts` | `pom.xml` Maven compiler source/target version vs README. |
 | `kotlin_drifts` | `build.gradle.kts` plugin version vs README. |
 | `node_drifts` | `package.json` `engines.node` vs README. |
@@ -72,7 +73,6 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `makefile_drifts` | Makefile tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`). |
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
-| `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
 
 ## Configuration
