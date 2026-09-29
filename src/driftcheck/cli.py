@@ -62,7 +62,7 @@ DETECTOR_INFO = {
     "elixir_drifts": ("elixir", "Elixir mix.exs version vs README"),
     "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
     "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
-    "scala_drifts": ("scala", "build.sbt scalaVersion and libraryDependencies vs README"),
+    "pyproject_tool_drifts": ("pyproject-tools", "pyproject.toml [tool.*] Python target vs requires-python"),
     "bazel_drifts": ("bazel", "Bazel pins vs README"),
     "nix_drifts": ("nix", "Nix flake.lock nixpkgs pins vs README"),
     "poetry_drifts": ("poetry", "Poetry pyproject.toml [tool.poetry] dependencies vs README"),
@@ -96,7 +96,7 @@ FILE_DETECTOR_MAP = {
     "Cargo.toml": ["rust_drifts"],
     "package.json": ["node_drifts", "bun_drifts", "nvmrc_drifts", "package_lock_drifts", "package_version_drifts"],
     "go.mod": ["go_drifts"],
-    "pyproject.toml": ["python_drifts"],
+    "pyproject.toml": ["python_drifts", "pyproject_tool_drifts"],
     "setup.py": ["python_setup_drifts"],
     "setup.cfg": ["python_setup_drifts"],
     "requirements.txt": ["requirements_drifts"],
@@ -106,7 +106,6 @@ FILE_DETECTOR_MAP = {
     "docker-compose.yaml": ["dc_drifts"],
     "compose.yaml": ["dc_drifts"],
     "build.gradle": ["java_drifts"],
-    "build.sbt": ["scala_drifts"],
     "build.gradle.kts": ["kotlin_drifts"],
     "pom.xml": ["maven_drifts"],
     "versions.tf": ["terraform_drifts"],
@@ -901,7 +900,7 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Requirements drifts
     for d in all_drifts.get("requirements_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
-    for d in all_drifts.get("scala_drifts", []):
+    for d in all_drifts.get("pyproject_tool_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Kotlin drifts
