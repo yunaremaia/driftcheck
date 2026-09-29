@@ -33,7 +33,7 @@ DRIFT_KEYS = [
     "changelog_drifts",
     "typosquat_drifts",
     "poetry_drifts",
-    "scala_drifts",
+    "python_req_drifts",
     "renovate_drifts",
     "bazel_drifts",
     "nix_drifts",
