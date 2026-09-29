@@ -72,7 +72,6 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `makefile_drifts` | Makefile tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`). |
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
-| `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
 
 ## Configuration
@@ -89,6 +88,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 || `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational). |
 || `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
+| `frontmatter_drifts` | Markdown YAML frontmatter versions vs Cargo, pyproject, package.json, and go.mod. |
 
 ## Other
 

@@ -261,12 +261,12 @@ driftcheck --git-mode --git-base v1.0.0
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
-- **Scala/SBT**: `build.sbt` `scalaVersion` and `libraryDependencies` vs README
 
 **Configuration:**
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
+- **Frontmatter**: YAML `version`, `rust_version`, `node_version`, `python_version`, and `go_version` in Markdown vs the toolchain
 - **EditorConfig**: `.editorconfig` `indent_size`/`indent_style` vs project convention
 - **Devcontainer**: `.devcontainer/devcontainer.json` image/tags vs README
 - **Renovate**: `renovate.json` configuration drift vs README
