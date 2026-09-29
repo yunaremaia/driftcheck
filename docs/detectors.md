@@ -12,6 +12,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `dotnet_drifts` | `*.csproj` `<TargetFramework>` vs README. Handles multi-targeting. |
 | `elixir_drifts` | `mix.exs` `elixir:` version vs README. |
 | `go_drifts` | `go.mod` `go` directive vs README. |
+| `julia_drifts` | `Project.toml` `[compat]` and `Manifest.toml` vs README package versions. |
 | `java_drifts` | `pom.xml` Maven compiler source/target version vs README. |
 | `kotlin_drifts` | `build.gradle.kts` plugin version vs README. |
 | `node_drifts` | `package.json` `engines.node` vs README. |
@@ -63,6 +64,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `env_drift_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
 | `external_drifts` | Third-party CDN dependencies that break offline rendering (informational). |
 | `k8s_drifts` | Kubernetes manifest image tags vs README. |
+| `helm_dependency_drifts` | `Chart.yaml` dependency constraints vs `Chart.lock` versions. |
 
 ## Build Tools
 
@@ -74,6 +76,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
+| `terraform_lock_drifts` | `.terraform.lock.hcl` version outside the `required_providers` constraint. |
 
 ## Configuration
 
@@ -89,6 +92,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 || `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational). |
 || `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
+| `frontmatter_drifts` | Markdown YAML frontmatter versions vs Cargo, pyproject, package.json, and go.mod. |
 
 ## Other
 

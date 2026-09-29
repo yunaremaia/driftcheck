@@ -47,7 +47,7 @@ IMPACT_DESCRIPTIONS: dict[str, str] = {
     "elixir_drifts": "Documentation shows a different Elixir version than mix.exs.",
     "cmake_drifts": "Documentation shows a different CMake version than CMakeLists.txt.",
     "requirements_drifts": "Documentation lists a different package version than requirements.txt.",
-    "python_req_drifts": "requirements.txt and pyproject.toml declare incompatible or incomplete dependency sets.",
+    "julia_drifts": "README Julia package versions disagree with Project.toml or Manifest.toml.",
     "kotlin_drifts": "Documentation shows a different Kotlin plugin version than build.gradle.kts.",
     "pipfile_drifts": "Pipfile and Pipfile.lock have version mismatches — installs are not reproducible.",
     "conda_drifts": "Conda environment.yml has unpinned package versions — environments are not reproducible.",

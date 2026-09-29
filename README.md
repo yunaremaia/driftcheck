@@ -218,6 +218,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Python requirements**: `requirements.txt` vs `pyproject.toml` `[project].dependencies` (incompatible pins and missing packages)
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
+- **R**: `DESCRIPTION` Imports/Depends/Suggests and `renv.lock` pins vs README package mentions
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
 - **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
@@ -254,12 +255,14 @@ driftcheck --git-mode --git-base v1.0.0
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
 - **Terraform**: `versions.tf` `required_providers` block `version` vs README
+- **Terraform lock**: `.terraform.lock.hcl` provider version vs the declared constraint (no registry lookup)
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 
 **Build tools:**
 - **Bazel**: `.bazelversion`, `MODULE.bazel` `bazel_dep`, and `WORKSPACE.bazel` `http_archive` pins vs README
 - **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.)
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
+- **just**: `justfile` `@version` annotations and `tool@version` assignments vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
 
