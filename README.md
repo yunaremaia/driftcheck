@@ -267,6 +267,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET
 - **Mise**: `mise.toml` `[tools]` section vs README — supports string and dict specs (e.g., `node = "22"` or `python = {version = "3.12"}`)
 - **Version files**: `.ruby-version`, `.python-version`, `.node-version`, `.java-version`, `.terraform-version` vs README
+- **Frontmatter**: YAML `version`, `rust_version`, `node_version`, `python_version`, and `go_version` in Markdown vs the toolchain
 - **EditorConfig**: `.editorconfig` `indent_size`/`indent_style` vs project convention
 - **Devcontainer**: `.devcontainer/devcontainer.json` image/tags vs README
 - **Renovate**: `renovate.json` configuration drift vs README
@@ -352,8 +353,8 @@ pre-commit install
 
 ### Stats
 
-- **65 detector modules** covering 50+ toolchains and file formats
-- **70 registered detectors** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
+- **66 detector modules** covering 50+ toolchains and file formats
+- **71 registered detectors** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
 - **1291 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
@@ -429,5 +430,6 @@ See the [API Reference](docs/api.md) for embedding driftcheck in scripts and CI 
 | Rust | rust-toolchain | `drifts` | Rust toolchain.toml channel |
 || Security | typosquat | `typosquat_drifts` | Typosquat detection in dependencies (informational) |
 || AI Agents | a2a | `a2a_drifts` | A2A agent card spec_version vs docs, capabilities, endpoints (informational) |
-| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
+|| Documentation | changelog | `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational) |
+|| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
 | Terraform | terraform-version | `terraform_version_drifts` | .terraform-version vs README |
