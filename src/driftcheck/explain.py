@@ -47,7 +47,7 @@ IMPACT_DESCRIPTIONS: dict[str, str] = {
     "elixir_drifts": "Documentation shows a different Elixir version than mix.exs.",
     "cmake_drifts": "Documentation shows a different CMake version than CMakeLists.txt.",
     "requirements_drifts": "Documentation lists a different package version than requirements.txt.",
-    "scala_drifts": "README Scala or library versions disagree with build.sbt.",
+    "helm_dependency_drifts": "A Helm dependency locked in Chart.lock falls outside the Chart.yaml constraint.",
     "kotlin_drifts": "Documentation shows a different Kotlin plugin version than build.gradle.kts.",
     "pipfile_drifts": "Pipfile and Pipfile.lock have version mismatches — installs are not reproducible.",
     "conda_drifts": "Conda environment.yml has unpinned package versions — environments are not reproducible.",
