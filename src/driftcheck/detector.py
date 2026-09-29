@@ -210,7 +210,8 @@ from .detectors import (
     find_nix_drift,
     find_scala_drift,
     find_changelog_drift,
-)
+,
+    find_justfile_drift,)
 
 
 def _read_files_parallel(root: Path, patterns: list[str]) -> str:
