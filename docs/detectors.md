@@ -62,6 +62,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `env_drift_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
 | `external_drifts` | Third-party CDN dependencies that break offline rendering (informational). |
 | `k8s_drifts` | Kubernetes manifest image tags vs README. |
+| `helm_dependency_drifts` | `Chart.yaml` dependency constraints vs `Chart.lock` versions. |
 
 ## Build Tools
 
@@ -72,7 +73,6 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `makefile_drifts` | Makefile tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`). |
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
-| `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
 
 ## Configuration
