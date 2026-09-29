@@ -12,6 +12,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `dotnet_drifts` | `*.csproj` `<TargetFramework>` vs README. Handles multi-targeting. |
 | `elixir_drifts` | `mix.exs` `elixir:` version vs README. |
 | `go_drifts` | `go.mod` `go` directive vs README. |
+| `r_drifts` | `DESCRIPTION` and `renv.lock` package versions vs README. |
 | `java_drifts` | `pom.xml` Maven compiler source/target version vs README. |
 | `kotlin_drifts` | `build.gradle.kts` plugin version vs README. |
 | `node_drifts` | `package.json` `engines.node` vs README. |
