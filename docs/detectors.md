@@ -75,6 +75,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `maven_drifts` | `pom.xml` `java.version`, `maven.compiler.source/target` vs README. |
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
+| `terraform_lock_drifts` | `.terraform.lock.hcl` version outside the `required_providers` constraint. |
 
 ## Configuration
 
