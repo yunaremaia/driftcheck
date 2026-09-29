@@ -214,6 +214,11 @@ from .requirements import (
     find_requirements_drift,
     REQUIREMENTS_PKG_RE,
 )
+from .python_freshness import (
+    find_python_dep_freshness,
+    parse_pinned_requirements,
+    parse_pinned_pyproject,
+)
 from .kotlin import (
     parse_kotlin_version,
     find_kotlin_drift,
@@ -341,6 +346,10 @@ __all__ = [
     "CARGO_RE",
     "DOC_RE",
     "DOC_RE_LOOSE",
+    # Python freshness
+    "find_python_dep_freshness",
+    "parse_pinned_requirements",
+    "parse_pinned_pyproject",
     # Node
     "parse_node_version_from_package",
     "find_node_drift",
@@ -612,7 +621,11 @@ __all__ = [
     # Pre-commit
     "parse_pre_commit_revs",
     "find_pre_commit_drift",
+    # Changelog
+    "find_changelog_drift",
 ]
+
+from .changelog import find_changelog_drift
 
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
