@@ -62,6 +62,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `env_drift_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
 | `external_drifts` | Third-party CDN dependencies that break offline rendering (informational). |
 | `k8s_drifts` | Kubernetes manifest image tags vs README. |
+| `helm_dependency_drifts` | `Chart.yaml` dependency constraints vs `Chart.lock` versions. |
 
 ## Build Tools
 
