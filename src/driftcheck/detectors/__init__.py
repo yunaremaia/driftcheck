@@ -630,11 +630,12 @@ from .changelog import find_changelog_drift
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
 from .scala import find_scala_drift, parse_sbt
-from .frontmatter import find_frontmatter_drift
+from .julia import find_julia_drift
 
 __all__ += [
     "find_scala_drift",
     "parse_sbt",
 ,
-    "find_frontmatter_drift",
-    "parse_frontmatter",]
+    "find_julia_drift",
+    "parse_manifest_versions",
+    "parse_project_compat",]

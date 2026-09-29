@@ -217,6 +217,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Python**: `pyproject.toml` `requires-python` vs README
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
+- **Julia**: `Project.toml` `[compat]` and `Manifest.toml` resolved versions vs README `Package.jl` mentions
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
 - **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
@@ -252,6 +253,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Docker Compose**: `docker-compose.yml`/`compose.yaml` image tags vs README
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
+- **Helm dependencies**: `Chart.yaml` dependency constraints vs `Chart.lock` (no upstream chart index lookup)
 - **Terraform**: `versions.tf` `required_providers` block `version` vs README
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 

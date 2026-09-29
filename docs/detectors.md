@@ -12,6 +12,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `dotnet_drifts` | `*.csproj` `<TargetFramework>` vs README. Handles multi-targeting. |
 | `elixir_drifts` | `mix.exs` `elixir:` version vs README. |
 | `go_drifts` | `go.mod` `go` directive vs README. |
+| `julia_drifts` | `Project.toml` `[compat]` and `Manifest.toml` vs README package versions. |
 | `java_drifts` | `pom.xml` Maven compiler source/target version vs README. |
 | `kotlin_drifts` | `build.gradle.kts` plugin version vs README. |
 | `node_drifts` | `package.json` `engines.node` vs README. |
@@ -62,6 +63,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `env_drift_drifts` | `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`. |
 | `external_drifts` | Third-party CDN dependencies that break offline rendering (informational). |
 | `k8s_drifts` | Kubernetes manifest image tags vs README. |
+| `helm_dependency_drifts` | `Chart.yaml` dependency constraints vs `Chart.lock` versions. |
 
 ## Build Tools
 
