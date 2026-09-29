@@ -629,9 +629,9 @@ from .changelog import find_changelog_drift
 
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
-from .scala import find_scala_drift, parse_sbt
+from .justfile import find_justfile_drift, parse_justfile_versions
 
 __all__ += [
-    "find_scala_drift",
-    "parse_sbt",
+    "find_justfile_drift",
+    "parse_justfile_versions",
 ]
