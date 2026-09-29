@@ -74,6 +74,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
 | `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
+| `terraform_lock_drifts` | `.terraform.lock.hcl` version outside the `required_providers` constraint. |
 
 ## Configuration
 
