@@ -36,6 +36,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `pipfile_drifts` | `Pipfile` vs `Pipfile.lock` version mismatches. |
 | `poetry_drifts` | `pyproject.toml` `[tool.poetry]` dependency versions vs README. |
 | `python_version_drifts` | `.python-version` vs `pyproject.toml` `requires-python` floor. |
+| `pyproject_tool_drifts` | `[tool.ruff]` / `[tool.black]` / `[tool.mypy]` / `[tool.pyright]` Python targets vs `requires-python`. |
 | `requirements_drifts` | `requirements.txt` unpinned packages vs known latest. |
 | `python_req_drifts` | `requirements.txt` vs `pyproject.toml` `[project].dependencies`. |
 | `yarnrc_drifts` | `.yarnrc.yml` Yarn version vs README mentions. |
