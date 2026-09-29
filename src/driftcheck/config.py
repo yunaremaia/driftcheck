@@ -33,7 +33,7 @@ DRIFT_KEYS = [
     "changelog_drifts",
     "typosquat_drifts",
     "poetry_drifts",
-    "helm_dependency_drifts",
+    "julia_drifts",
     "renovate_drifts",
     "bazel_drifts",
     "nix_drifts",
