@@ -629,9 +629,10 @@ from .changelog import find_changelog_drift
 
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
-from .scala import find_scala_drift, parse_sbt
+from .r_lang import find_r_drift, parse_description_deps, parse_renv_lock
 
 __all__ += [
-    "find_scala_drift",
-    "parse_sbt",
+    "find_r_drift",
+    "parse_description_deps",
+    "parse_renv_lock",
 ]
