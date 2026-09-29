@@ -629,9 +629,10 @@ from .changelog import find_changelog_drift
 
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
-from .scala import find_scala_drift, parse_sbt
+from .go_replace import find_go_replace_drift, parse_go_requires, parse_go_sum
 
 __all__ += [
-    "find_scala_drift",
-    "parse_sbt",
+    "find_go_replace_drift",
+    "parse_go_requires",
+    "parse_go_sum",
 ]
