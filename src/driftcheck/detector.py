@@ -211,7 +211,7 @@ from .detectors import (
     find_scala_drift,
     find_changelog_drift,
 ,
-    find_pyproject_tool_drift,)
+    find_julia_drift,)
 
 
 def _read_files_parallel(root: Path, patterns: list[str]) -> str:

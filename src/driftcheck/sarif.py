@@ -213,10 +213,10 @@ DRIFT_RULES = {
         "Requirements Version Drift",
         "requirements.txt package version doesn't match pyproject.toml or README",
     ),
-    "pyproject_tool_drifts": (
-        "pyproject-tool-drift",
-        "Pyproject Tool Target Drift",
-        "pyproject.toml [tool.*] Python target disagrees with requires-python or another tool",
+    "julia_drifts": (
+        "julia-package-drift",
+        "Julia Package Drift",
+        "README Julia package version disagrees with Project.toml or Manifest.toml",
     ),
     "kotlin_drifts": (
         "kotlin-version-drift",
@@ -558,7 +558,7 @@ def _drift_message(drift_type: str, d: dict) -> str:
         doc_ver = d.get("doc_version", "unknown")
         pp_ver = d.get("pyproject_version", "unknown")
         return f"{pkg} {doc_ver} in docs should be {pp_ver} (pyproject.toml)"
-    elif drift_type == "pyproject_tool_drifts":
+    elif drift_type == "julia_drifts":
         return d.get("detail", "Drift detected")
     elif drift_type == "pre_commit_drifts":
         repo = d.get("repo", "repo")
@@ -631,7 +631,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts", "git_tag_drifts",
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
         "mise_drifts", "bazel_drifts", "nix_drifts",
-        "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "pyproject_tool_drifts",
+        "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "julia_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
     ]
 
