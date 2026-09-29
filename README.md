@@ -261,6 +261,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Bazel**: `.bazelversion`, `MODULE.bazel` `bazel_dep`, and `WORKSPACE.bazel` `http_archive` pins vs README
 - **Makefile**: tool version variables (`GCC_VERSION`, `CMAKE_VERSION`, `GO_VERSION`, etc.)
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
+- **just**: `justfile` `@version` annotations and `tool@version` assignments vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
 
