@@ -630,8 +630,12 @@ from .changelog import find_changelog_drift
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
 from .scala import find_scala_drift, parse_sbt
+from .terraform_lock import find_terraform_lock_drift
 
 __all__ += [
     "find_scala_drift",
     "parse_sbt",
-]
+,
+    "find_terraform_lock_drift",
+    "parse_lock_versions",
+    "parse_required_providers",]
