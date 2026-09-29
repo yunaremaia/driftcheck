@@ -207,7 +207,7 @@ from .detectors import (
     find_renovate_drift,
     find_bazel_drift,
     find_nix_drift,
-    find_scala_drift,
+    find_justfile_drift,
 )
 
 
@@ -591,6 +591,13 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Package manager drift (packageManager field vs lockfile)
     package_manager_drifts = find_package_manager_drift(package_text or None, root, docs)
+    justfile_files = {}
+    for just_name in ("justfile", "Justfile", ".justfile"):
+        just_path = root / just_name
+        just_content = _read_text_safe(just_path, max_size=max_file_size)
+        if just_content is not None:
+            justfile_files[just_name] = just_content
+    justfile_drifts = find_justfile_drift(justfile_files, docs)
 
     # VSCode extensions drift
     vscode_ext_path = root / ".vscode" / "extensions.json"
@@ -626,12 +633,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
-    sbt_parts = []
-    for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
-        sbt_body = _read_text_safe(sbt_path, max_size=max_file_size)
-        if sbt_body:
-            sbt_parts.append(sbt_body)
-    scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -655,7 +656,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "docker_bases_drifts": docker_bases_drifts,
         "dockerfile_instruction_drifts": dockerfile_instruction_drifts,
         "java_drifts": java_drifts,
-        "scala_drifts": scala_drifts,
         "maven_drifts": maven_drifts,
         "terraform_drifts": terraform_drifts,
         "circleci_drifts": circleci_drifts,
@@ -705,6 +705,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "yarnrc_drifts": yarnrc_drifts,
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
         "package_manager_drifts": package_manager_drifts,
+        "justfile_drifts": justfile_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
         "git_tag_drifts": git_tag_drifts,
