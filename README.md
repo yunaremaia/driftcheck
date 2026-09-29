@@ -217,6 +217,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Python**: `pyproject.toml` `requires-python` vs README
 - **Python (legacy setup)**: `setup.py` / `setup.cfg` `python_requires` and explicit `install_requires` pins vs README/CONTRIBUTING
 - **Go**: `go.mod` `go` directive vs README
+- **R**: `DESCRIPTION` Imports/Depends/Suggests and `renv.lock` pins vs README package mentions
 - **PHP**: `composer.json` `require.php` vs README — major.minor comparison
 - **Ruby**: `Gemfile` `ruby "x.y.z"` directive vs README — major.minor comparison
 - **.NET/C#**: `*.csproj` `<TargetFramework>` vs README — handles multi-targeting
