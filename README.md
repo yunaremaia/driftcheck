@@ -253,6 +253,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Kubernetes**: image tags in manifests vs README
 - **Helm**: `Chart.yaml`/`values.yaml` image tags vs README
 - **Terraform**: `versions.tf` `required_providers` block `version` vs README
+- **Terraform lock**: `.terraform.lock.hcl` provider version vs the declared constraint (no registry lookup)
 - **Environment drift**: `.env.example` vs `.env`, `docker-compose.yml` vs `docker-compose.prod.yml`, `values.yaml` vs `values.prod.yaml`
 
 **Build tools:**
