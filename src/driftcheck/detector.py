@@ -430,6 +430,12 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     python_drifts = find_python_drift(pyproject_text, docs)
     python_setup_drifts = find_python_setup_drift(setup_py_text, setup_cfg_text, docs)
     go_drifts = find_go_drift(gomod_text, docs)
+    # Scala/SBT
+    sbt_parts = []
+    for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
+        if sbt_path.exists():
+            sbt_parts.append(_read_text_safe(sbt_path, max_size=max_file_size) or "")
+    scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     count_drifts = find_count_drift(root, docs)
     actions_drifts = find_actions_node_drift(root)
     lineending_drifts = find_lineending_drift(root)
@@ -629,12 +635,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
-    sbt_parts = []
-    for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
-        sbt_body = _read_text_safe(sbt_path, max_size=max_file_size)
-        if sbt_body:
-            sbt_parts.append(sbt_body)
-    scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
