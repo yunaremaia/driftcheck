@@ -36,6 +36,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `poetry_drifts` | `pyproject.toml` `[tool.poetry]` dependency versions vs README. |
 | `python_version_drifts` | `.python-version` vs `pyproject.toml` `requires-python` floor. |
 | `requirements_drifts` | `requirements.txt` unpinned packages vs known latest. |
+| `python_req_drifts` | `requirements.txt` vs `pyproject.toml` `[project].dependencies`. |
 | `yarnrc_drifts` | `.yarnrc.yml` Yarn version vs README mentions. |
 
 ## CI/CD
@@ -85,8 +86,9 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `git_tag_drifts` | Latest git tag vs README version mentions. |
 | `mise_drifts` | `mise.toml` `[tools]` section vs README. |
 | `nvmrc_drifts` | `.nvmrc` vs `package.json` engines.node (informational). |
-| `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
-| `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
+|| `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
+|| `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational). |
+|| `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
 
 ## Other
