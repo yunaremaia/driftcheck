@@ -74,6 +74,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `taskfile_drifts` | `Taskfile.yml` tool version variables vs README. |
 | `scala_drifts` | `build.sbt` `scalaVersion` and `libraryDependencies` vs README. |
 | `terraform_drifts` | `versions.tf` `required_providers` `version` vs README. |
+| `terraform_lock_drifts` | `.terraform.lock.hcl` version outside the `required_providers` constraint. |
 
 ## Configuration
 
@@ -85,8 +86,9 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `git_tag_drifts` | Latest git tag vs README version mentions. |
 | `mise_drifts` | `mise.toml` `[tools]` section vs README. |
 | `nvmrc_drifts` | `.nvmrc` vs `package.json` engines.node (informational). |
-| `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
-| `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
+|| `pre_commit_drifts` | Pre-commit hook versions vs `.pre-commit-config.yaml`. |
+|| `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational). |
+|| `tool_versions_drifts` | `.tool-versions` (asdf/mise) — Node, Python, Go, Rust, Ruby, Java, PHP, .NET. |
 | `version_files_drifts` | `.ruby-version`, `.python-version`, `.node-version`, etc. vs README. |
 
 ## Other

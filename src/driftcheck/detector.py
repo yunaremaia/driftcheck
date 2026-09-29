@@ -207,7 +207,7 @@ from .detectors import (
     find_renovate_drift,
     find_bazel_drift,
     find_nix_drift,
-    find_scala_drift,
+    find_terraform_lock_drift,
 )
 
 
@@ -439,6 +439,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     java_drifts = find_java_drift("\n".join(gradle_files.values()), docs)
     maven_drifts = find_maven_drift("\n".join(maven_files.values()), docs)
     terraform_drifts = find_terraform_drift(terraform_files, docs)
+    terraform_lock_path = root / ".terraform.lock.hcl"
+    terraform_lock_text = _read_text_safe(terraform_lock_path, max_size=max_file_size) or ""
+    terraform_lock_drifts = find_terraform_lock_drift(terraform_files, terraform_lock_text)
     circleci_drifts = find_circleci_drift(circleci_files, docs)
     gitlab_drifts = find_gitlab_drift(gitlab_files, docs)
     k8s_drifts = find_k8s_drift(k8s_files, docs)
@@ -626,12 +629,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
-    sbt_parts = []
-    for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
-        sbt_body = _read_text_safe(sbt_path, max_size=max_file_size)
-        if sbt_body:
-            sbt_parts.append(sbt_body)
-    scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -655,9 +652,9 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "docker_bases_drifts": docker_bases_drifts,
         "dockerfile_instruction_drifts": dockerfile_instruction_drifts,
         "java_drifts": java_drifts,
-        "scala_drifts": scala_drifts,
         "maven_drifts": maven_drifts,
         "terraform_drifts": terraform_drifts,
+        "terraform_lock_drifts": terraform_lock_drifts,
         "circleci_drifts": circleci_drifts,
         "gitlab_drifts": gitlab_drifts,
         "helm_drifts": helm_drifts,

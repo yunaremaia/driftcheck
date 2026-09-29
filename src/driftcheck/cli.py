@@ -62,7 +62,7 @@ DETECTOR_INFO = {
     "elixir_drifts": ("elixir", "Elixir mix.exs version vs README"),
     "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
     "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
-    "scala_drifts": ("scala", "build.sbt scalaVersion and libraryDependencies vs README"),
+    "terraform_lock_drifts": ("terraform-lock", ".terraform.lock.hcl vs required_providers constraints"),
     "bazel_drifts": ("bazel", "Bazel pins vs README"),
     "nix_drifts": ("nix", "Nix flake.lock nixpkgs pins vs README"),
     "poetry_drifts": ("poetry", "Poetry pyproject.toml [tool.poetry] dependencies vs README"),
@@ -106,10 +106,9 @@ FILE_DETECTOR_MAP = {
     "docker-compose.yaml": ["dc_drifts"],
     "compose.yaml": ["dc_drifts"],
     "build.gradle": ["java_drifts"],
-    "build.sbt": ["scala_drifts"],
     "build.gradle.kts": ["kotlin_drifts"],
     "pom.xml": ["maven_drifts"],
-    "versions.tf": ["terraform_drifts"],
+    "versions.tf": ["terraform_drifts", "terraform_lock_drifts"],
     ".circleci/config.yml": ["circleci_drifts"],
     ".gitlab-ci.yml": ["gitlab_drifts"],
     "*.csproj": ["dotnet_drifts"],
@@ -901,7 +900,7 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Requirements drifts
     for d in all_drifts.get("requirements_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
-    for d in all_drifts.get("scala_drifts", []):
+    for d in all_drifts.get("terraform_lock_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Kotlin drifts
