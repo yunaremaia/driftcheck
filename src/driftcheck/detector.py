@@ -161,7 +161,6 @@ from .detectors import (
     find_helm_values_drift,
     find_env_drift_combined,
     find_requirements_drift,
-    find_python_dep_freshness,
     parse_poetry_pyproject,
     find_poetry_drift,
     parse_kotlin_version,
@@ -208,8 +207,7 @@ from .detectors import (
     find_renovate_drift,
     find_bazel_drift,
     find_nix_drift,
-    find_scala_drift,
-    find_changelog_drift,
+    find_pyproject_tool_drift,
 )
 
 
@@ -510,7 +508,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     req_path = root / "requirements.txt"
     req_text = _read_text_safe(req_path, max_size=max_file_size) or ""
     requirements_drifts = find_requirements_drift(req_text, pyproject_text, docs)
-    freshness_drifts = find_python_dep_freshness(req_text, pyproject_text, offline=False)
+    pyproject_tool_drifts = find_pyproject_tool_drift(pyproject_text)
     bazel_drifts = find_bazel_drift(root)
     nix_drifts = find_nix_drift(root)
 
@@ -629,12 +627,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
-    sbt_parts = []
-    for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
-        sbt_body = _read_text_safe(sbt_path, max_size=max_file_size)
-        if sbt_body:
-            sbt_parts.append(sbt_body)
-    scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
         "cargo_rust_version": parse_cargo_rust_version(cargo_text),
@@ -658,7 +650,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "docker_bases_drifts": docker_bases_drifts,
         "dockerfile_instruction_drifts": dockerfile_instruction_drifts,
         "java_drifts": java_drifts,
-        "scala_drifts": scala_drifts,
         "maven_drifts": maven_drifts,
         "terraform_drifts": terraform_drifts,
         "circleci_drifts": circleci_drifts,
@@ -689,7 +680,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "elixir_drifts": elixir_drifts,
         "cmake_drifts": cmake_drifts,
         "requirements_drifts": requirements_drifts,
-        "freshness_drifts": freshness_drifts,
+        "pyproject_tool_drifts": pyproject_tool_drifts,
         "bazel_drifts": bazel_drifts,
         "nix_drifts": nix_drifts,
         "poetry_drifts": poetry_drifts,
@@ -715,7 +706,6 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "devcontainer_drifts": devcontainer_drifts,
         "taskfile_drifts": taskfile_drifts,
         "pre_commit_drifts": pre_commit_drifts,
-        "changelog_drifts": find_changelog_drift(root, docs),
         "renovate_drifts": find_renovate_drift(root),
     }
 
