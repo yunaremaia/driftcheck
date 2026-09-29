@@ -616,3 +616,9 @@ __all__ = [
 
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
+from .scala import find_scala_drift, parse_sbt
+
+__all__ += [
+    "find_scala_drift",
+    "parse_sbt",
+]

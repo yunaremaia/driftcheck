@@ -57,6 +57,7 @@ from .detectors.python import find_python_drift
 from .detectors.python_version import find_python_version_file_drift
 from .detectors.renovate import find_renovate_drift
 from .detectors.requirements import find_requirements_drift
+from .detectors.scala import find_scala_drift
 from .detectors.ruby import find_ruby_drift
 from .detectors.rust import find_rust_drift
 from .detectors.swift import find_swift_drift
@@ -125,6 +126,7 @@ __all__ = [
     "find_python_version_file_drift",
     "find_renovate_drift",
     "find_requirements_drift",
+    "find_scala_drift",
     "find_ruby_drift",
     "find_rust_drift",
     "find_swift_drift",

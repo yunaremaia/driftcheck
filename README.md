@@ -261,6 +261,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **CMake**: `CMakeLists.txt` `cmake_minimum_required` version vs README
 - **Maven**: `pom.xml` `java.version`, `maven.compiler.source`, `maven.compiler.target`, `release` vs README
 - **Java/Gradle**: `build.gradle` `sourceCompatibility`, `jvmTarget`, `JavaVersion.VERSION_*` vs README
+- **Scala/SBT**: `build.sbt` `scalaVersion` and `libraryDependencies` vs README
 
 **Configuration:**
 - **Tool versions**: `.tool-versions` (asdf/mise) — detects drift for Node, Python, Go, Rust, Ruby, Java, PHP, .NET

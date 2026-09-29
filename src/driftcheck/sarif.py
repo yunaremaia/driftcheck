@@ -213,6 +213,11 @@ DRIFT_RULES = {
         "Requirements Version Drift",
         "requirements.txt package version doesn't match pyproject.toml or README",
     ),
+    "scala_drifts": (
+        "scala-version-drift",
+        "Scala Version Drift",
+        "README Scala or library version disagrees with build.sbt",
+    ),
     "kotlin_drifts": (
         "kotlin-version-drift",
         "Kotlin Version Drift",
@@ -553,6 +558,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         doc_ver = d.get("doc_version", "unknown")
         pp_ver = d.get("pyproject_version", "unknown")
         return f"{pkg} {doc_ver} in docs should be {pp_ver} (pyproject.toml)"
+    elif drift_type == "scala_drifts":
+        return d.get("detail", "Drift detected")
     elif drift_type == "pre_commit_drifts":
         repo = d.get("repo", "repo")
         doc_ver = d.get("doc_version", "unknown")
@@ -624,7 +631,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "vscode_ext_drifts", "editorconfig_drifts", "taskfile_drifts", "git_tag_drifts",
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
         "mise_drifts", "bazel_drifts", "nix_drifts",
-        "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts",
+        "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "scala_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
     ]
 
