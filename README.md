@@ -1,8 +1,8 @@
 # driftcheck
 [![CI](https://github.com/yunaremaia/driftcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yunaremaia/driftcheck/actions)
 [![Release](https://img.shields.io/github/v/release/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/yunaremaia/driftcheck) ![Stars](https://img.shields.io/github/stars/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
-
 
 **Detect version drift between docs and toolchain files.**
 
