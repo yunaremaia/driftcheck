@@ -13,7 +13,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import textwrap
 
 import pytest
@@ -25,11 +24,11 @@ WORKFLOW = os.path.join(
     "driftcheck.yml",
 )
 
-# These tests execute the workflow's bash steps locally. Windows runners have
-# no POSIX bash by default (git-bash is not on PATH in CI), so skip there
-# instead of failing — the workflow itself only ever runs on ubuntu-latest.
+# These tests execute the workflow's bash steps locally. GitHub's Windows
+# runners do ship bash (git-bash), so the steps are expected to run there too;
+# only a machine with no bash at all is skipped.
 requires_bash = pytest.mark.skipif(
-    sys.platform.startswith("win") or not shutil.which("bash"),
+    not shutil.which("bash"),
     reason="needs a POSIX bash; the workflow runs on ubuntu-latest",
 )
 
@@ -38,6 +37,14 @@ requires_bash = pytest.mark.skipif(
 BASH4_ONLY = re.compile(
     r"\bmapfile\b|\breadarray\b|\$\{[A-Za-z_]+,,\}|\$\{[A-Za-z_]+\^\^\}|declare -A"
 )
+
+# The steps below are executed against the local `bash`. The runner uses
+# whichever bash the image ships, and where a bash-4-only builtin is missing it
+# is merely "command not found": the step still exits 0 but silently produces
+# no arguments. Prepending `enable -n` reproduces that older environment on
+# every platform, so the behavioural assertions below also hold on the ubuntu
+# leg instead of only failing on macOS.
+BASH_3_PRELUDE = "enable -n mapfile readarray 2>/dev/null || true\n"
 
 
 BLOCK_RE = re.compile(
@@ -55,6 +62,25 @@ def _step_scripts():
         textwrap.dedent("\n".join(line[10:] for line in body.rstrip("\n").split("\n")))
         for _, body in blocks
     ]
+
+
+def _bash(script, **kwargs):
+    """Run a workflow step under bash, feeding the script on stdin.
+
+    `bash -c <script>` hands the script to the shell through argv. On Windows
+    the MSYS runtime behind git-bash re-parses those argv bytes with its own
+    quoting rules and hands the script on as UTF-16, so a multi-line script
+    containing double quotes arrives interleaved with NUL bytes and dies with a
+    syntax error even though the shell itself is fine. Keeping the script on
+    stdin leaves argv empty, which is what actually fixes the Windows leg.
+    """
+    return subprocess.run(
+        ["bash"],
+        input=BASH_3_PRELUDE + script,
+        text=True,
+        check=False,
+        **kwargs,
+    )
 
 
 def test_workflow_steps_avoid_bash4_only_builtins():
@@ -139,15 +165,11 @@ def test_hostile_input_is_not_executed(tmp_path, label, payload_template):
         }
     )
 
-    first = subprocess.run(
-        ["bash", "-c", build], env=env, capture_output=True, text=True
-    )
+    first = _bash(build, env=env, capture_output=True)
     assert first.returncode == 0, first.stderr
 
     env["DRIFTCHECK_ARGS"] = github_output.read_text().rstrip("\n")
-    second = subprocess.run(
-        ["bash", "-c", run], env=env, capture_output=True, text=True
-    )
+    second = _bash(run, env=env, capture_output=True)
 
     assert not pwned.exists(), f"{label}: injected command executed"
 
@@ -174,7 +196,7 @@ def test_build_step_emits_valid_heredoc(tmp_path):
             "GITHUB_OUTPUT": str(github_output),
         }
     )
-    assert subprocess.run(["bash", "-c", build], env=env).returncode == 0
+    assert _bash(build, env=env).returncode == 0
 
     lines = github_output.read_text().split("\n")
     assert lines[0] == "driftcheck_args<<DRIFTCHECK_ARGS_EOF"
@@ -197,9 +219,7 @@ def test_build_step_emits_valid_heredoc(tmp_path):
             "PATH": f"{bindir}{os.pathsep}{os.environ['PATH']}",
         }
     )
-    out = subprocess.run(
-        ["bash", "-c", run], env=env, capture_output=True, text=True
-    ).stdout
+    out = _bash(run, env=env, capture_output=True).stdout
     argv = re.findall(r"ARGV<<(.*?)>>", out, re.S)
     assert argv == [
         ".",
