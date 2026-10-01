@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "driftcheck"
+name = "driftcheck-py"
 version = "0.1.47"
 description = "Detect version drift between docs and toolchain files (README vs Dockerfile, build.gradle, rust-toolchain.toml, package.json, etc.)"
 readme = "README.md"
