@@ -1,5 +1,11 @@
 """driftcheck — detect version drift between docs and toolchain."""
-__version__ = "0.1.47"
+
+from importlib.metadata import PackageNotFoundError, version as _metadata_version
+
+try:
+    __version__ = _metadata_version("driftcheck-py")
+except PackageNotFoundError:  # running from a source checkout, not an install
+    __version__ = "0.0.0.dev0"
 
 from .sarif import to_sarif
 from .detectors.actions import find_actions_node_drift
