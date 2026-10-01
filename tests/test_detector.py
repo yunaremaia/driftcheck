@@ -382,9 +382,10 @@ class TestEmittedPathsUsePosixSeparators:
         ]
         # Guard against the sweep passing because nothing was reported.
         assert reported, "fixture should report at least one drift path"
-        # Guard against the fixture silently not simulating Windows: this
-        # repo's own `relative_to()` must render with backslashes, otherwise
-        # the sweep above proves nothing.
+        # Guard against the sweep passing vacuously: `str()` must render with
+        # backslashes while `as_posix()` uses forward slashes, which is the
+        # exact distinction this test exists to enforce. On Windows the real
+        # platform supplies that difference; elsewhere the fixture simulates it.
         probe = (root / "docs" / "README.md").relative_to(root)
         assert "\\" in str(probe), "fixture is not simulating Windows"
         assert probe.as_posix() == "docs/README.md"

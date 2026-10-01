@@ -1,5 +1,6 @@
 """Pytest fixtures for driftcheck tests."""
 
+import os
 import pathlib
 
 import pytest
@@ -59,11 +60,20 @@ def windows_path(monkeypatch):
     Yields a callable that wraps a path (usually ``tmp_path``) into the root
     to hand to a detector. The patch is undone on teardown.
 
+    On Windows the paths already render with backslashes, so the fixture is a
+    no-op there: the same assertions then run against the real platform
+    behaviour instead of a simulation of it.
+
     Patching ``relative_to`` rather than ``Path`` itself keeps this working
     across every Python version in the CI matrix: ``str()`` and
     ``__fspath__`` are used internally by ``glob()``/``iterdir()`` to reach
     the filesystem, and those internals were rewritten in 3.12, 3.13 and 3.14.
     """
+    if os.name == "nt":
+        # Real Windows already yields backslashes from str(); simulating on top
+        # of that would double every separator.
+        return Path
+
     original = pathlib.PurePath.relative_to
 
     def patched(self, *args, **kwargs):
