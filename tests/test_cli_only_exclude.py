@@ -1,5 +1,7 @@
 """Tests for --only/--exclude detector name validation."""
 
+import sys
+
 import pytest
 from driftcheck.cli import _validate_detector_names, DETECTOR_INFO
 
@@ -61,7 +63,7 @@ class TestCliOnlyExcludeValidation:
         (tmp_path / "pyproject.toml").write_text("[project]\nrequires-python = \">=3.10\"\n")
         import subprocess
         result = subprocess.run(
-            ["python3", "-m", "driftcheck.cli", "--only", "python_drifts", str(tmp_path)],
+            [sys.executable, "-m", "driftcheck.cli", "--only", "python_drifts", str(tmp_path)],
             capture_output=True, text=True
         )
         assert result.returncode == 1  # drift detected (3.9 vs 3.10)
@@ -71,7 +73,7 @@ class TestCliOnlyExcludeValidation:
         (tmp_path / "README.md").write_text("# Test\n")
         import subprocess
         result = subprocess.run(
-            ["python3", "-m", "driftcheck.cli", "--only", "rust_drfit", str(tmp_path)],
+            [sys.executable, "-m", "driftcheck.cli", "--only", "rust_drfit", str(tmp_path)],
             capture_output=True, text=True
         )
         assert result.returncode == 2
@@ -83,7 +85,7 @@ class TestCliOnlyExcludeValidation:
         (tmp_path / "pyproject.toml").write_text("[project]\nrequires-python = \">=3.10\"\n")
         import subprocess
         result = subprocess.run(
-            ["python3", "-m", "driftcheck.cli", "--exclude", "python_drfit", str(tmp_path)],
+            [sys.executable, "-m", "driftcheck.cli", "--exclude", "python_drfit", str(tmp_path)],
             capture_output=True, text=True
         )
         # python_drfit is excluded from exclusion list, so python detector runs
@@ -96,7 +98,7 @@ class TestCliOnlyExcludeValidation:
         (tmp_path / "pyproject.toml").write_text("[project]\nrequires-python = \">=3.10\"\n")
         import subprocess
         result = subprocess.run(
-            ["python3", "-m", "driftcheck.cli", "--only", "python_drifts,foo_bar", str(tmp_path)],
+            [sys.executable, "-m", "driftcheck.cli", "--only", "python_drifts,foo_bar", str(tmp_path)],
             capture_output=True, text=True
         )
         # foo_bar is filtered out (warning), python_drifts runs
