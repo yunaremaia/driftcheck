@@ -448,3 +448,15 @@ what GitHub reads to render the **Sponsor** button on this repository.
 
 Use the Solana address only for intended donations. Anyone can generate a similar
 address, so verify the address against `.github/FUNDING.yml` before sending funds.
+
+If this tool is useful to you, a star helps other people find it.
+
+## Related tools
+
+- **[taintrace](https://github.com/yunaremaia/taintrace)** — trace and inspect AI agent execution
+- **[depscan](https://github.com/yunaremaia/depscan)** — scan dependencies across multiple ecosystems
+- **[agentcost](https://github.com/yunaremaia/agentcost)** — track and attribute LLM spend per agent
+- **[mcp-guard](https://github.com/yunaremaia/mcp-guard)** — audit MCP servers for unsafe permissions
+
+Part of a family of focused, single-purpose developer tools — each one does one thing
+and does it well.
