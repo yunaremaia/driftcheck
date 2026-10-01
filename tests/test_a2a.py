@@ -197,6 +197,26 @@ class TestFindA2ADrift:
         result = find_a2a_drift(tmp_path, docs)
         assert isinstance(result, list)
 
+    def test_card_file_path_uses_posix_separators(self, windows_path, tmp_path):
+        """The card path reported in a drift must use `/`, never `\\`.
+
+        `card_file` is reported verbatim in JSON/Markdown output, so a
+        backslash separator breaks diffs and `--file` filters.
+        """
+        root = windows_path(tmp_path)
+        card_dir = root / "services" / "agent"
+        card_dir.mkdir(parents=True)
+        (card_dir / "agent-card.json").write_text(
+            '{"name": "svc", "spec_version": "0.3"}'
+        )
+        docs = {"README.md": "# Project\nA2A protocol v1.0"}
+
+        result = find_a2a_drift(root, docs)
+        mismatches = [d for d in result if "mismatch" in d.get("detail", "").lower()]
+        assert mismatches, f"expected a version mismatch drift, got: {result}"
+        assert mismatches[0]["card_file"] == "services/agent/agent-card.json"
+        assert "\\" not in mismatches[0]["card_file"]
+
     def test_a2a_dir_cards(self, tmp_path):
         """Cards in .a2a/ directory are detected."""
         a2a_dir = tmp_path / ".a2a"

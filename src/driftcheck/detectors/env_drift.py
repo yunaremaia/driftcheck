@@ -226,7 +226,7 @@ def find_helm_values_drift(root: Path) -> list[dict]:
             if key in base_values and key in env_values:
                 if base_values[key] != env_values[key]:
                     drifts.append({
-                        "file": str(env_file.relative_to(root)),
+                        "file": env_file.relative_to(root).as_posix(),
                         "kind": "helm_values_drift",
                         "key": key,
                         "base_value": base_values[key],

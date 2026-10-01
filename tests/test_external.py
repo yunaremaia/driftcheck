@@ -164,3 +164,19 @@ class TestFindExternalResourceDrift:
         root = self._make_root(tmp_path, html, rel_path="assets/template.html")
         drifts = find_external_resource_drift(root)
         assert len(drifts) == 1
+
+    def test_emitted_path_uses_posix_separators(self, windows_path, tmp_path):
+        """Emitted `file` must use `/`, never `\\`.
+
+        The value is reported verbatim in JSON and Markdown output, so a
+        backslash separator breaks diffs and `--file` filters.
+        """
+        html = '<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>'
+        root = windows_path(tmp_path)
+        nested = root / "docs" / "site"
+        nested.mkdir(parents=True)
+        (nested / "index.html").write_text(html)
+        drifts = find_external_resource_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["file"] == "docs/site/index.html"
+        assert "\\" not in drifts[0]["file"]

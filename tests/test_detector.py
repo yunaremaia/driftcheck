@@ -318,3 +318,77 @@ kotlin = "1.9.0"
         drifts = find_gradle_catalog_drift(tmp_path)
         assert len(drifts) == 0
 
+
+class TestEmittedPathsUsePosixSeparators:
+    """scan_repo builds `{relative_path: contents}` maps that feed nearly every
+    detector, and those keys become the reported `file` value.
+
+    `str(Path.relative_to())` renders with the platform separator, so on
+    Windows the keys were `docs\\README.md`. That value reaches SARIF
+    `artifactLocation.uri`, the JSON `file` key, baseline comparisons and
+    `--file` filters, all of which expect a stable POSIX-relative path.
+    """
+
+    def test_doc_paths_use_posix_separators(self, windows_path, tmp_path):
+        root = windows_path(tmp_path)
+        docs_dir = root / "docs"
+        docs_dir.mkdir()
+        (root / "package.json").write_text(
+            '{"engines": {"node": "18.0.0"}}'
+        )
+        (docs_dir / "README.md").write_text("Requires Node 0.10.0\n")
+
+        result = scan_repo(root)
+        node_drifts = result["node_drifts"]
+        assert node_drifts, "fixture should produce a Node version drift"
+        assert node_drifts[0]["file"] == "docs/README.md"
+        assert "\\" not in node_drifts[0]["file"]
+
+    def test_no_emitted_path_contains_a_backslash(self, windows_path, tmp_path):
+        """Sweep every reported path in the scan result.
+
+        Guards the whole result dict, not one detector, so a new dict-keyed
+        collection in scan_repo cannot reintroduce the bug unnoticed.
+        """
+        root = windows_path(tmp_path)
+        (root / "package.json").write_text('{"engines": {"node": "18.0.0"}}')
+        (root / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\nversion = "0.1.0"\n'
+            'requires-python = ">=3.11"\n'
+        )
+        docker_dir = root / "docker"
+        docker_dir.mkdir()
+        (docker_dir / "Dockerfile").write_text("FROM node:18\n")
+        k8s_dir = root / "k8s"
+        k8s_dir.mkdir()
+        (k8s_dir / "deployment.yaml").write_text("kind: Deployment\n")
+        wf_dir = root / ".github" / "workflows"
+        wf_dir.mkdir(parents=True)
+        (wf_dir / "ci.yml").write_text(
+            "jobs:\n  build:\n    runs-on: ubuntu-20.04\n"
+        )
+        docs_dir = root / "docs"
+        docs_dir.mkdir()
+        (docs_dir / "README.md").write_text("Requires Node 0.10.0\n")
+
+        result = scan_repo(root)
+
+        reported = [
+            drift["file"]
+            for drifts in result.values()
+            if isinstance(drifts, list)
+            for drift in drifts
+            if isinstance(drift, dict) and isinstance(drift.get("file"), str)
+        ]
+        # Guard against the sweep passing because nothing was reported.
+        assert reported, "fixture should report at least one drift path"
+        # Guard against the fixture silently not simulating Windows: this
+        # repo's own `relative_to()` must render with backslashes, otherwise
+        # the sweep above proves nothing.
+        probe = (root / "docs" / "README.md").relative_to(root)
+        assert "\\" in str(probe), "fixture is not simulating Windows"
+        assert probe.as_posix() == "docs/README.md"
+
+        offenders = [f for f in reported if "\\" in f]
+        assert not offenders, f"paths emitted with backslashes: {offenders}"
+

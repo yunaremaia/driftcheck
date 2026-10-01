@@ -193,7 +193,7 @@ def find_a2a_drift(root: Path, docs: dict[str, str]) -> list[dict]:
         sv = extract_card_spec_version(card)
         if sv:
             ver = sv.lstrip('v')
-            card_versions.setdefault(ver, []).append(str(card_path.relative_to(root)))
+            card_versions.setdefault(ver, []).append(card_path.relative_to(root).as_posix())
 
     if doc_versions and card_versions:
         for doc_ver, doc_files in doc_versions.items():
@@ -213,7 +213,7 @@ def find_a2a_drift(root: Path, docs: dict[str, str]) -> list[dict]:
     for card_path, card in cards:
         caps = extract_card_capabilities(card)
         if caps:
-            card_caps_by_file[str(card_path.relative_to(root))] = caps
+            card_caps_by_file[card_path.relative_to(root).as_posix()] = caps
 
     doc_caps = {}
     for fname, content in docs.items():
@@ -247,7 +247,7 @@ def find_a2a_drift(root: Path, docs: dict[str, str]) -> list[dict]:
     for card_path, card in cards:
         eps = extract_card_endpoints(card)
         if eps:
-            card_endpoints[str(card_path.relative_to(root))] = eps
+            card_endpoints[card_path.relative_to(root).as_posix()] = eps
 
     doc_endpoints = {}
     endpoint_url_re = re.compile(r'(?:endpoint|url|address|invoke)\s*[:=]?\s*["\'>]*(?P<url>https?://[^\s"\'<>]+)', re.I)

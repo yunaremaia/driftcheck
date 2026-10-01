@@ -248,9 +248,9 @@ class Doctor:
                     try:
                         resolved = path.resolve()
                         if not str(resolved).startswith(str(self.root.resolve())):
-                            external_symlinks.append(str(path.relative_to(self.root)))
+                            external_symlinks.append(path.relative_to(self.root).as_posix())
                     except OSError:
-                        external_symlinks.append(str(path.relative_to(self.root)))
+                        external_symlinks.append(path.relative_to(self.root).as_posix())
         except OSError:
             pass
         if external_symlinks:
@@ -281,7 +281,7 @@ class Doctor:
         try:
             for path in self.root.rglob("*"):
                 if path.is_file() and path.suffix in binary_extensions:
-                    rel = str(path.relative_to(self.root))
+                    rel = path.relative_to(self.root).as_posix()
                     if rel not in gitignore_text:
                         binaries.append(rel)
         except OSError:
@@ -310,7 +310,7 @@ class Doctor:
                     try:
                         if path.stat().st_size > max_size:
                             size_mb = path.stat().st_size / 1_000_000
-                            large_files.append(f"{path.relative_to(self.root)} ({size_mb:.1f}MB)")
+                            large_files.append(f"{path.relative_to(self.root).as_posix()} ({size_mb:.1f}MB)")
                     except OSError:
                         pass
         except OSError:

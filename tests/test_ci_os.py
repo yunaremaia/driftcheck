@@ -96,6 +96,25 @@ class TestFindCiOsDrift:
         expected = {"ubuntu-18.04", "ubuntu-20.04", "macos-10.15", "macos-11", "windows-2016", "windows-2019"}
         assert set(CI_OS_DEPRECATED.keys()) == expected
 
+    def test_emitted_path_uses_posix_separators(self, windows_path, tmp_path):
+        """Emitted `file` must use `/`, never `\\`.
+
+        The value becomes SARIF `artifactLocation.uri` and the `file` key in
+        JSON output, and it is compared against `--file` filters and
+        baseline entries. `str(Path.relative_to())` yields backslashes on
+        Windows, so those consumers saw `.github\\workflows\\ci.yml`.
+        """
+        root = windows_path(tmp_path)
+        wf_dir = root / ".github" / "workflows"
+        wf_dir.mkdir(parents=True)
+        (wf_dir / "ci.yml").write_text(
+            "name: CI\njobs:\n  build:\n    runs-on: ubuntu-20.04\n"
+        )
+        drifts = find_ci_os_drift(root)
+        assert len(drifts) == 1
+        assert drifts[0]["file"] == ".github/workflows/ci.yml"
+        assert "\\" not in drifts[0]["file"]
+
     def test_deprecated_runner_with_comments(self, tmp_path):
         wf_dir = tmp_path / ".github" / "workflows"
         wf_dir.mkdir(parents=True)

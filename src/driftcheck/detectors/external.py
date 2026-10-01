@@ -37,7 +37,7 @@ def find_external_resource_drift(root: Path) -> list[dict]:
             text = html_path.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        rel = str(html_path.relative_to(root))
+        rel = html_path.relative_to(root).as_posix()
         for m in EXTERNAL_CDN_RE.finditer(text):
             drifts.append({
                 "file": rel,

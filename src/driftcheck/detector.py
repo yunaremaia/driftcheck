@@ -46,11 +46,11 @@ def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], li
                         files.add(fpath)
                     else:
                         skipped.append(
-                            f"Symlink '{fpath.relative_to(root)}' skipped (outside repo root)"
+                            f"Symlink '{fpath.relative_to(root).as_posix()}' skipped (outside repo root)"
                         )
                 except (OSError, RuntimeError):
                     skipped.append(
-                        f"Symlink '{fpath.relative_to(root)}' skipped (broken, inaccessible, or symlink loop)"
+                        f"Symlink '{fpath.relative_to(root).as_posix()}' skipped (broken, inaccessible, or symlink loop)"
                     )
             else:
                 files.add(fpath)
@@ -303,7 +303,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         if p.exists():
             content = _read_text_safe(p, max_size=max_file_size)
             if content is not None:
-                docs[str(p.relative_to(root))] = content
+                docs[p.relative_to(root).as_posix()] = content
     pkg_path = root / "package.json"
     package_text = _read_text_safe(pkg_path, max_size=max_file_size) or ""
     py_path = root / "pyproject.toml"
@@ -324,7 +324,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    dockerfiles[str(p.relative_to(root))] = content
+                    dockerfiles[p.relative_to(root).as_posix()] = content
     
     # Gradle build files
     gradle_files = {}
@@ -333,7 +333,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    gradle_files[str(p.relative_to(root))] = content
+                    gradle_files[p.relative_to(root).as_posix()] = content
     
     # Maven pom.xml files
     maven_files = {}
@@ -342,7 +342,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    maven_files[str(p.relative_to(root))] = content
+                    maven_files[p.relative_to(root).as_posix()] = content
     
     # Terraform files
     terraform_files = {}
@@ -351,7 +351,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    terraform_files[str(p.relative_to(root))] = content
+                    terraform_files[p.relative_to(root).as_posix()] = content
     
     # CircleCI config files
     circleci_files = {}
@@ -360,7 +360,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    circleci_files[str(p.relative_to(root))] = content
+                    circleci_files[p.relative_to(root).as_posix()] = content
     
     # GitLab CI config files
     gitlab_files = {}
@@ -369,7 +369,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    gitlab_files[str(p.relative_to(root))] = content
+                    gitlab_files[p.relative_to(root).as_posix()] = content
     
     # Kubernetes manifests
     k8s_files = {}
@@ -378,7 +378,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file() and (follow_symlinks or p in walked_files):
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    k8s_files[str(p.relative_to(root))] = content
+                    k8s_files[p.relative_to(root).as_posix()] = content
 
     # Docker Compose files (respect follow_symlinks policy)
     dc_files = {}
@@ -387,7 +387,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    dc_files[str(p.relative_to(root))] = content
+                    dc_files[p.relative_to(root).as_posix()] = content
 
 
     # Helm chart files (respect follow_symlinks policy)
@@ -397,7 +397,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    helm_files[str(p.relative_to(root))] = content
+                    helm_files[p.relative_to(root).as_posix()] = content
 
     # Ruby project files (Gemfile)
     gemfile_path = root / "Gemfile"
@@ -426,7 +426,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    csproj_files[str(p.relative_to(root))] = content
+                    csproj_files[p.relative_to(root).as_posix()] = content
 
     # Swift Package Manager
     swift_path = root / "Package.swift"
@@ -439,7 +439,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    pubspec_files[str(p.relative_to(root))] = content
+                    pubspec_files[p.relative_to(root).as_posix()] = content
     pubspec_text = "\n".join(pubspec_files.values()) if pubspec_files else ""
 
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
@@ -501,7 +501,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    deno_files[str(p.relative_to(root))] = content
+                    deno_files[p.relative_to(root).as_posix()] = content
     deno_text = "\n".join(deno_files.values()) if deno_files else ""
     deno_drifts = find_deno_drift(deno_text, docs)
 
@@ -512,7 +512,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    makefile_files[str(p.relative_to(root))] = content
+                    makefile_files[p.relative_to(root).as_posix()] = content
 
     makefile_text = "\n".join(makefile_files.values()) if makefile_files else ""
     makefile_drifts = find_makefile_drift(makefile_text, docs)
@@ -529,7 +529,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    cmake_files[str(p.relative_to(root))] = content
+                    cmake_files[p.relative_to(root).as_posix()] = content
     cmake_text = "\n".join(cmake_files.values()) if cmake_files else ""
     cmake_drifts = find_cmake_drift(cmake_text, docs)
 
@@ -553,7 +553,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    gradle_kts_files[str(p.relative_to(root))] = content
+                    gradle_kts_files[p.relative_to(root).as_posix()] = content
     gradle_kts_text = "\n".join(gradle_kts_files.values()) if gradle_kts_files else ""
     kotlin_drifts = find_kotlin_drift(gradle_kts_text, docs)
 
@@ -577,7 +577,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
                 seen_jenkins_paths.add(p)
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    jenkins_files[str(p.relative_to(root))] = content
+                    jenkins_files[p.relative_to(root).as_posix()] = content
 
     jenkins_drifts = find_jenkins_drift(jenkins_files, docs)
 
@@ -588,7 +588,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    version_files[str(p.relative_to(root))] = content
+                    version_files[p.relative_to(root).as_posix()] = content
 
     # Python version file drift (.python-version vs requires-python floor)
     python_version_file_drifts = find_python_version_file_drift(
@@ -653,7 +653,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
             if p.is_file():
                 content = _read_text_safe(p, max_size=max_file_size)
                 if content is not None:
-                    devcontainer_files[str(p.relative_to(root))] = content
+                    devcontainer_files[p.relative_to(root).as_posix()] = content
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
     devcontainer_drifts = find_devcontainer_drift(devcontainer_text, docs)
 
@@ -674,7 +674,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         if jf_path.exists():
             content = _read_text_safe(jf_path, max_size=max_file_size)
             if content is not None:
-                justfile_files[str(jf_path.relative_to(root))] = content
+                justfile_files[jf_path.relative_to(root).as_posix()] = content
 
     # Helm chart files
     chart_path = root / "Chart.yaml"
