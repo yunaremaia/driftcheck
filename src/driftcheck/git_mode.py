@@ -219,6 +219,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "npm_workspace_drifts": ["package.json", "pnpm-workspace.yaml"],
     "julia_drifts": ["Project.toml", "Manifest.toml", "README.md"],
     "cargo_feature_drifts": ["Cargo.toml", "README.md", "CONTRIBUTING.md"],
+    "rust_workspace_drifts": ["Cargo.toml", "README.md"],
     "bazel_drifts": [".bazelversion", "MODULE.bazel", "WORKSPACE.bazel", "README.md"],
     "nix_drifts": ["flake.lock", "flake.nix", "README.md"],
 }

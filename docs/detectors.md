@@ -1,6 +1,6 @@
 # Detectors
 
-driftcheck ships **61 detector modules** covering **68 registered detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
+driftcheck ships **86 detector modules** covering **76 registered detectors**. Each checks for a specific kind of version drift between toolchain files and documentation.
 
 ## Language Runtimes
 
@@ -22,6 +22,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `ruby_drifts` | `Gemfile` `ruby "x.y.z"` vs README. Major.minor comparison. |
 | `rust_drifts` | `rust-toolchain.toml` `channel` and `Cargo.toml` `rust-version` vs README. Minor-aware (patch differences ignored). |
 | `cargo_feature_drifts` | `Cargo.toml` `[features]` vs explicit feature lists in README. |
+| `rust_workspace_drifts` | Cargo workspace member `version` vs `[workspace.package]` version, cross-crate majority consensus, and `crates.io` badge versions in member READMEs. |
 | `npm_workspace_drifts` | Same dependency, different version ranges across workspace `package.json` files. |
 | `swift_drifts` | `Package.swift` `swift-tools-version` and dependency pins vs README. |
 

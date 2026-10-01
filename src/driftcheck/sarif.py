@@ -131,6 +131,11 @@ DRIFT_RULES = {
         "Cargo Feature Drift",
         "Cargo.toml [features] disagrees with feature lists in documentation",
     ),
+    "rust_workspace_drifts": (
+        "rust-workspace-version-drift",
+        "Rust Workspace Version Drift",
+        "A Cargo workspace member's version disagrees with [workspace.package] or the member majority",
+    ),
     "gh_actions_version_drifts": (
         "github-actions-version-drift",
         "GitHub Actions Outdated Version",
@@ -576,6 +581,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "Drift detected")
     elif drift_type == "cargo_feature_drifts":
         return d.get("detail", "Drift detected")
+    elif drift_type == "rust_workspace_drifts":
+        return d.get("detail", "Drift detected")
     elif drift_type == "npm_workspace_drifts":
         return d.get("detail", "Drift detected")
     elif drift_type == "pre_commit_drifts":
@@ -650,7 +657,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
         "mise_drifts", "bazel_drifts", "nix_drifts",
         "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "julia_drifts",
-        "cargo_feature_drifts", "npm_workspace_drifts",
+        "cargo_feature_drifts", "npm_workspace_drifts", "rust_workspace_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
     ]
 

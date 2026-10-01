@@ -51,6 +51,7 @@ IMPACT_DESCRIPTIONS: dict[str, str] = {
     "npm_workspace_drifts": "Workspaces pin the same dependency to different version ranges.",
     "julia_drifts": "README Julia package versions disagree with Project.toml or Manifest.toml.",
     "cargo_feature_drifts": "Cargo features advertised in docs do not match Cargo.toml [features].",
+    "rust_workspace_drifts": "A Cargo workspace member's version disagrees with [workspace.package] or with the other members.",
     "kotlin_drifts": "Documentation shows a different Kotlin plugin version than build.gradle.kts.",
     "pipfile_drifts": "Pipfile and Pipfile.lock have version mismatches — installs are not reproducible.",
     "conda_drifts": "Conda environment.yml has unpinned package versions — environments are not reproducible.",

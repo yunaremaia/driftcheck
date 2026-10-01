@@ -352,6 +352,7 @@ from .typosquat import find_typosquat_drift
 from .renovate import find_renovate_drift
 from .git_submodule_drift import find_git_submodule_drift
 from .cargo_features import find_cargo_feature_drift, parse_cargo_features
+from .rust_workspace import find_rust_workspace_drift
 from .npm_workspaces import find_npm_workspace_drift
 
 __all__ = [
@@ -574,6 +575,7 @@ __all__ = [
     # Cargo features
     "find_cargo_feature_drift",
     "parse_cargo_features",
+    "find_rust_workspace_drift",
     # npm workspaces
     "find_npm_workspace_drift",
     # Bazel
