@@ -36,6 +36,21 @@ _BUILTIN = set(sys.stdlib_module_names) | {
     "_distutils_hack",
 }
 
+# `tomllib` is stdlib from 3.11 onwards and the third-party `tomli` shim on 3.10.
+# The detectors import it through a try/except ImportError fallback, so the AST
+# walk always sees both spellings regardless of the running interpreter. Either
+# name satisfies the other, and on the 3.10 CI leg neither is in
+# `sys.stdlib_module_names`, so `tomllib` must not be reported as undeclared.
+_ALIASES = {"tomllib": "tomli", "tomli": "tomllib"}
+
+
+def _is_declared(module: str, declared: set[str]) -> bool:
+    """True when `module`, or its interchangeable alias, is declared."""
+    if module.lower() in declared:
+        return True
+    alias = _ALIASES.get(module.lower())
+    return alias is not None and alias in declared
+
 
 def _declared_requirements() -> list[str]:
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
@@ -88,7 +103,7 @@ def test_every_imported_module_is_declared():
     declared = _distribution_names(_declared_requirements())
     missing = {}
     for module, files in _imported_top_level_modules().items():
-        if module.lower() not in declared:
+        if not _is_declared(module, declared):
             missing[module] = files
     assert not missing, (
         "pyproject.toml does not declare every imported third-party module; "
@@ -104,7 +119,12 @@ def test_declared_dependencies_are_actually_imported():
     """The reverse check: a declared dependency nothing imports is dead weight."""
     declared = _distribution_names(_declared_requirements())
     imported = {module.lower() for module in _imported_top_level_modules()}
-    unused = sorted(declared - imported)
+    unused = sorted(
+        name
+        for name in declared
+        if name not in imported
+        and _ALIASES.get(name) not in imported
+    )
     assert not unused, (
         "declared dependencies that nothing in the package imports: "
         f"{unused}"
