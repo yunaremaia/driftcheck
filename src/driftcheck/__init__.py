@@ -66,6 +66,7 @@ from .detectors.python_version import find_python_version_file_drift
 from .detectors.renovate import find_renovate_drift
 from .detectors.git_submodule_drift import find_git_submodule_drift
 from .detectors.requirements import find_requirements_drift
+from .detectors.npm_workspaces import find_npm_workspace_drift
 from .detectors.julia import find_julia_drift
 from .detectors.cargo_features import find_cargo_feature_drift
 from .detectors.ruby import find_ruby_drift
@@ -137,6 +138,7 @@ __all__ = [
     "find_python_dep_freshness",
     "find_renovate_drift",
     "find_requirements_drift",
+    "find_npm_workspace_drift",
     "find_a2a_drift",
     "parse_agent_card",
     "extract_card_spec_version",

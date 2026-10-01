@@ -34,6 +34,7 @@ DRIFT_KEYS = [
     "typosquat_drifts",
     "cargo_feature_drifts",
     "poetry_drifts",
+    "npm_workspace_drifts",
     "julia_drifts",
     "renovate_drifts",
     "bazel_drifts",

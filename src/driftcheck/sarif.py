@@ -227,6 +227,11 @@ DRIFT_RULES = {
         "Julia Package Drift",
         "README Julia package version disagrees with Project.toml or Manifest.toml",
     ),
+    "npm_workspace_drifts": (
+        "npm-workspace-drift",
+        "npm Workspace Range Drift",
+        "The same dependency is declared with different version ranges across workspaces",
+    ),
     "kotlin_drifts": (
         "kotlin-version-drift",
         "Kotlin Version Drift",
@@ -571,6 +576,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("detail", "Drift detected")
     elif drift_type == "cargo_feature_drifts":
         return d.get("detail", "Drift detected")
+    elif drift_type == "npm_workspace_drifts":
+        return d.get("detail", "Drift detected")
     elif drift_type == "pre_commit_drifts":
         repo = d.get("repo", "repo")
         doc_ver = d.get("doc_version", "unknown")
@@ -643,7 +650,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
         "mise_drifts", "bazel_drifts", "nix_drifts",
         "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "julia_drifts",
-        "cargo_feature_drifts",
+        "cargo_feature_drifts", "npm_workspace_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
     ]
 
