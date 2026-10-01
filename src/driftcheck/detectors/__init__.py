@@ -89,6 +89,18 @@ from .gitlab import (
     GITLAB_IMAGE_RE,
     GITLAB_VER_RE,
 )
+from .a2a import (
+    parse_agent_card,
+    extract_card_spec_version,
+    extract_card_capabilities,
+    extract_card_endpoints,
+    find_a2a_drift,
+    is_agent_card_file,
+    A2A_VERSION_RE,
+    AGENT_CARD_PATTERNS,
+    CAPABILITY_RE,
+    JSONRPC_METHODS_RE,
+)
 from .actions import (
     find_actions_node_drift,
     find_gh_actions_version_drift,
@@ -410,6 +422,17 @@ __all__ = [
     "find_gitlab_drift",
     "GITLAB_IMAGE_RE",
     "GITLAB_VER_RE",
+    # A2A (Agent2Agent)
+    "parse_agent_card",
+    "extract_card_spec_version",
+    "extract_card_capabilities",
+    "extract_card_endpoints",
+    "find_a2a_drift",
+    "is_agent_card_file",
+    "A2A_VERSION_RE",
+    "AGENT_CARD_PATTERNS",
+    "CAPABILITY_RE",
+    "JSONRPC_METHODS_RE",
     # GitHub Actions
     "find_actions_node_drift",
     "find_gh_actions_version_drift",
