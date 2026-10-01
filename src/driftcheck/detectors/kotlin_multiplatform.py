@@ -172,7 +172,7 @@ def find_kotlin_multiplatform_drift(
 
                 drifts.append({
                     "type": "kotlin_multiplatform_drift",
-                    "file": str(readme_path.relative_to(root)),
+                    "file": readme_path.relative_to(root).as_posix(),
                     "library": key,
                     "catalog_version": catalog_ver,
                     "readme_version": readme_ver,

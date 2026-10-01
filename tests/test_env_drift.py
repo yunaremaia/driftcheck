@@ -152,6 +152,25 @@ class TestFindEnvDriftCombined:
         """No drift in any category."""
         assert find_env_drift_combined(tmp_path) == []
 
+    def test_helm_values_emitted_path_uses_posix_separators(
+        self, windows_path, tmp_path
+    ):
+        """Helm values drift `file` must use `/`, never `\\`.
+
+        The value is reported verbatim in JSON/Markdown output, so a
+        backslash separator breaks diffs and `--file` filters.
+        """
+        root = windows_path(tmp_path)
+        chart = root / "charts" / "app"
+        chart.mkdir(parents=True)
+        (chart / "values.yaml").write_text("replicaCount: 1\n")
+        (chart / "values.prod.yaml").write_text("replicaCount: 3\n")
+
+        drifts = find_helm_values_drift(root)
+        assert drifts, "fixture should produce helm values drift"
+        assert drifts[0]["file"] == "charts/app/values.prod.yaml"
+        assert "\\" not in drifts[0]["file"]
+
     def test_combined_multiple_drifts(self, tmp_path):
         """Multiple drift types detected."""
         # .env.example vs .env drift

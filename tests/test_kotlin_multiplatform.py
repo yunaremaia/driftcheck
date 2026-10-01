@@ -243,6 +243,27 @@ class TestFindKotlinMultiplatformDrift:
         drifts = find_kotlin_multiplatform_drift(tmp_path)
         assert len(drifts) >= 1
 
+    def test_emitted_path_uses_posix_separators(self, windows_path, tmp_path):
+        """Emitted `file` must use `/`, never `\\`.
+
+        The value is reported verbatim in JSON/Markdown output and compared
+        against `--file` filters, so a backslash separator breaks both.
+        """
+        root = windows_path(tmp_path)
+        catalog = root / "gradle" / "libs.versions.toml"
+        catalog.parent.mkdir(parents=True)
+        catalog.write_text('[versions]\nkotlin = "2.0.0"\n')
+        docs = root / "docs"
+        docs.mkdir()
+        (docs / "README.md").write_text(
+            "![Kotlin](https://img.shields.io/badge/Kotlin-1.9.22-blue)\n"
+        )
+
+        drifts = find_kotlin_multiplatform_drift(root)
+        assert drifts, "fixture should produce KMP drift"
+        assert drifts[0]["file"] == "docs/README.md"
+        assert "\\" not in drifts[0]["file"]
+
     def test_kmp_version_keys_constant(self):
         """KMP_VERSION_KEYS contains expected keys."""
         expected = {"kotlin", "kotlin-coroutines", "compose-bom", "compose-compiler", "kgp", "agp", "ksp"}

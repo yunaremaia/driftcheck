@@ -220,7 +220,7 @@ def find_python_version_drift(
                 text = wf.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
-            rel = str(wf.relative_to(root))
+            rel = wf.relative_to(root).as_posix()
             wf_ver = _python_version_from_workflow(text)
             if wf_ver is not None and wf_ver < floor_tuple:
                 wf_ver_str = f"{wf_ver[0]}.{wf_ver[1]}.{wf_ver[2]}"

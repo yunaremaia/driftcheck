@@ -230,3 +230,32 @@ class TestPrintDoctorReport:
         data = json.loads(captured.out)
         assert "checks" in data
         assert "summary" in data
+
+
+class TestDoctorPathsUsePosixSeparators:
+    """`driftcheck doctor` reports repo-relative paths to the user, and they
+    are matched against `.gitignore` entries, which are always written with
+    forward slashes.
+
+    `str(Path.relative_to())` renders with the platform separator, so on
+    Windows doctor reported `dist\\app.exe` and failed to match the
+    `dist/app.exe` line in `.gitignore`.
+    """
+
+    def test_binary_file_path_uses_posix_separators(self, windows_path, tmp_path):
+        root = windows_path(tmp_path)
+        (root / "README.md").write_text("# Test\n", encoding="utf-8")
+        (root / "pyproject.toml").write_text(
+            "[project]\nname = 'test'\nrequires-python = '>=3.10'\n",
+            encoding="utf-8",
+        )
+        dist = root / "dist"
+        dist.mkdir()
+        (dist / "app.exe").write_bytes(b"MZ\x00\x00")
+        # A .gitignore that correctly lists the file with a forward slash.
+        (root / ".gitignore").write_text("dist/app.exe\n", encoding="utf-8")
+
+        report = Doctor(root).run_all()
+        binary_check = next(c for c in report.checks if c.name == "binary_files")
+        # The forward-slash .gitignore entry must match, so nothing is flagged.
+        assert binary_check.status == "pass", binary_check.message

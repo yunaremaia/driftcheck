@@ -160,6 +160,34 @@ class TestFindPythonVersionDrift:
         )
         assert result == []
 
+    def test_workflow_path_uses_posix_separators(self, windows_path, tmp_path):
+        """Emitted `file` must use `/`, never `\\`.
+
+        The value is reported verbatim in JSON/Markdown output and compared
+        against `--file` filters and baseline entries, so a backslash
+        separator breaks all three.
+        """
+        root = windows_path(tmp_path)
+        wf_dir = root / ".github" / "workflows"
+        wf_dir.mkdir(parents=True)
+        (wf_dir / "ci.yml").write_text("""
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+""")
+
+        result = find_python_version_drift(
+            root, 'requires-python = ">=3.10"', None, None, {}
+        )
+        workflows = [d for d in result if d["type"] == "workflow"]
+        assert len(workflows) == 1, f"expected a workflow drift, got: {result}"
+        assert workflows[0]["file"] == ".github/workflows/ci.yml"
+        assert "\\" not in workflows[0]["file"]
+
     def test_no_drift_when_versions_match(self, tmp_path):
         """Python version in workflow matches pyproject requires-python."""
         root = self._make_root({
