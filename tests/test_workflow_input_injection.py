@@ -24,12 +24,48 @@ WORKFLOW = os.path.join(
     "driftcheck.yml",
 )
 
-# These tests execute the workflow's bash steps locally. GitHub's Windows
-# runners do ship bash (git-bash), so the steps are expected to run there too;
-# only a machine with no bash at all is skipped.
+# These tests execute the workflow's bash steps locally, so they need a real
+# POSIX bash. On GitHub-hosted Windows runners `bash` on PATH can resolve to
+# `C:\Windows\System32\bash.exe`, which is the WSL launcher rather than a shell:
+# with no distribution installed it prints a "Windows Subsystem for Linux"
+# banner and exits 1 without running anything. Git-bash ships at
+# `C:\Program Files\Git\bin\bash.exe`, so the candidates below are probed in
+# order and the first one that actually executes a script wins. `None` means no
+# usable bash, and only then are these tests skipped.
+BASH_CANDIDATES = (
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+)
+
+
+def _find_bash():
+    """Return the path of a bash that can actually run a script, else None."""
+    for name in ("bash", *BASH_CANDIDATES):
+        exe = shutil.which(name)
+        if not exe:
+            continue
+        try:
+            probe = subprocess.run(
+                [exe],
+                input="exit 0",
+                text=True,
+                capture_output=True,
+                timeout=60,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if probe.returncode == 0:
+            return exe
+    return None
+
+
+BASH = _find_bash()
+
 requires_bash = pytest.mark.skipif(
-    not shutil.which("bash"),
-    reason="needs a POSIX bash; the workflow runs on ubuntu-latest",
+    BASH is None,
+    reason="needs a working POSIX bash (git-bash); the workflow runs on ubuntu-latest",
 )
 
 # `mapfile` needs bash 4+; macOS still ships 3.2. The workflow must stay
@@ -42,8 +78,8 @@ BASH4_ONLY = re.compile(
 # whichever bash the image ships, and where a bash-4-only builtin is missing it
 # is merely "command not found": the step still exits 0 but silently produces
 # no arguments. Prepending `enable -n` reproduces that older environment on
-# every platform, so the behavioural assertions below also hold on the ubuntu
-# leg instead of only failing on macOS.
+# every platform, so the behavioural assertions below hold on the ubuntu leg
+# too instead of only failing on macOS.
 BASH_3_PRELUDE = "enable -n mapfile readarray 2>/dev/null || true\n"
 
 
@@ -69,13 +105,16 @@ def _bash(script, **kwargs):
 
     `bash -c <script>` hands the script to the shell through argv. On Windows
     the MSYS runtime behind git-bash re-parses those argv bytes with its own
-    quoting rules and hands the script on as UTF-16, so a multi-line script
+    quoting rules and passes the script on as UTF-16, so a multi-line script
     containing double quotes arrives interleaved with NUL bytes and dies with a
     syntax error even though the shell itself is fine. Keeping the script on
     stdin leaves argv empty, which is what actually fixes the Windows leg.
+
+    Every caller is marked `@requires_bash`, so `BASH` is already resolved.
     """
+    assert BASH is not None, "no usable bash found"
     return subprocess.run(
-        ["bash"],
+        [BASH],
         input=BASH_3_PRELUDE + script,
         text=True,
         check=False,
@@ -175,7 +214,9 @@ def test_hostile_input_is_not_executed(tmp_path, label, payload_template):
 
     argv = re.findall(r"ARGV<<(.*?)>>", second.stdout, re.S)
     carrying = [a for a in argv if "touch" in a or "PWNED" in a or a.startswith("x")]
-    assert len(carrying) == 1, f"{label}: payload spread over {len(carrying)} argv entries: {argv}"
+    assert len(carrying) == 1, (
+        f"{label}: payload spread over {len(carrying)} argv entries: {argv}"
+    )
 
 
 @requires_bash
@@ -206,9 +247,7 @@ def test_build_step_emits_valid_heredoc(tmp_path):
     bindir = tmp_path / "bin"
     bindir.mkdir()
     stub = bindir / "driftcheck"
-    stub.write_text(
-        '#!/bin/bash\nfor a in "$@"; do echo "ARGV<<$a>>"; done\nexit 0\n'
-    )
+    stub.write_text('#!/bin/bash\nfor a in "$@"; do echo "ARGV<<$a>>"; done\nexit 0\n')
     stub.chmod(0o755)
 
     env.update(
