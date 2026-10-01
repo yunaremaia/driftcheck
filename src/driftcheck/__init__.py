@@ -31,6 +31,14 @@ from .detectors.actions_version_drift import find_actions_version_drift
 from .detectors.git_tag import find_git_tag_drift
 from .detectors.gitlab import find_gitlab_drift
 from .detectors.go import find_go_drift
+from .detectors.a2a import (
+    parse_agent_card,
+    extract_card_spec_version,
+    extract_card_capabilities,
+    extract_card_endpoints,
+    find_a2a_drift,
+    is_agent_card_file,
+)
 from .detectors.gradle_catalog import find_gradle_catalog_drift
 from .detectors.helm import find_helm_drift
 from .detectors.env_drift import find_helm_values_drift
@@ -127,6 +135,12 @@ __all__ = [
     "find_python_dep_freshness",
     "find_renovate_drift",
     "find_requirements_drift",
+    "find_a2a_drift",
+    "parse_agent_card",
+    "extract_card_spec_version",
+    "extract_card_capabilities",
+    "extract_card_endpoints",
+    "is_agent_card_file",
     "find_julia_drift",
     "find_ruby_drift",
     "find_rust_drift",

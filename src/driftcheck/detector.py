@@ -120,6 +120,12 @@ from .detectors import (
     find_terraform_drift,
     find_circleci_drift,
     find_gitlab_drift,
+    find_a2a_drift,
+    is_agent_card_file,
+    parse_agent_card,
+    extract_card_spec_version,
+    extract_card_capabilities,
+    extract_card_endpoints,
     find_actions_node_drift,
     find_gh_actions_version_drift,
     find_k8s_drift,
@@ -457,6 +463,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     terraform_drifts = find_terraform_drift(terraform_files, docs)
     circleci_drifts = find_circleci_drift(circleci_files, docs)
     gitlab_drifts = find_gitlab_drift(gitlab_files, docs)
+    a2a_drifts = find_a2a_drift(root, docs)
     k8s_drifts = find_k8s_drift(k8s_files, docs)
     helm_drifts = find_helm_drift(helm_files, docs)
     dc_drifts = find_docker_compose_drift(dc_files, docs)
@@ -706,6 +713,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "terraform_drifts": terraform_drifts,
         "circleci_drifts": circleci_drifts,
         "gitlab_drifts": gitlab_drifts,
+        "a2a_drifts": a2a_drifts,
         "helm_drifts": helm_drifts,
         "dc_drifts": dc_drifts,
         "dependabot_drifts": dependabot_drifts,
