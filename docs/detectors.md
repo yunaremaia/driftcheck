@@ -33,6 +33,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `lockfile_drifts` | Missing, stale, or orphaned lockfiles (informational). |
 | `npmrc_drifts` | `.npmrc` registry vs README mentions. |
 | `package_manager_drifts` | `packageManager` field vs detected lockfile (npm/pnpm/yarn/bun). |
+| `npm_workspace_drifts` | Same dependency, different version ranges across workspace `package.json` files. |
 | `pnpm_drifts` | `pnpm-lock.yaml` version drift vs README. |
 | `pipfile_drifts` | `Pipfile` vs `Pipfile.lock` version mismatches. |
 | `poetry_drifts` | `pyproject.toml` `[tool.poetry]` dependency versions vs README. |

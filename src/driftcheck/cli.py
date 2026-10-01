@@ -64,6 +64,8 @@ DETECTOR_INFO = {
     "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
     "scala_drifts": ("scala", "build.sbt scalaVersion and libraryDependencies vs README"),
     "freshness_drifts": ("python-freshness", "Python pinned dependency versions vs PyPI latest"),
+
+    "npm_workspace_drifts": ("npm-workspaces", "dependency ranges across npm/pnpm workspace package.json files"),
     "bazel_drifts": ("bazel", "Bazel pins vs README"),
     "nix_drifts": ("nix", "Nix flake.lock nixpkgs pins vs README"),
     "poetry_drifts": ("poetry", "Poetry pyproject.toml [tool.poetry] dependencies vs README"),
@@ -97,7 +99,7 @@ DETECTOR_INFO = {
 # Mapping of project files to their relevant detectors for `driftcheck init`
 FILE_DETECTOR_MAP = {
     "Cargo.toml": ["rust_drifts", "cargo_feature_drifts"],
-    "package.json": ["node_drifts", "bun_drifts", "nvmrc_drifts", "package_lock_drifts", "package_version_drifts"],
+    "package.json": ["node_drifts", "bun_drifts", "nvmrc_drifts", "package_lock_drifts", "package_version_drifts", "npm_workspace_drifts"],
     "go.mod": ["go_drifts"],
     "pyproject.toml": ["python_drifts"],
     "setup.py": ["python_setup_drifts"],
@@ -916,6 +918,10 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Freshness drifts (Python pinned deps vs PyPI latest)
     for d in all_drifts.get("freshness_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']} {d['pinned_version']} → newer: {d['latest_version']} (PyPI)")
+
+    # npm workspace range drifts
+    for d in all_drifts.get("npm_workspace_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
 
     # Kotlin drifts
     for d in all_drifts.get("kotlin_drifts", []):

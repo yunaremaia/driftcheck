@@ -686,4 +686,11 @@ __all__ += [
     "find_frontmatter_drift",
     "find_helm_dependency_drift",
     "parse_manifest_versions",
-    "parse_project_compat",]
+    "parse_project_compat",
+]
+
+from .npm_workspaces import find_npm_workspace_drift
+
+__all__ += [
+    "find_npm_workspace_drift",
+]

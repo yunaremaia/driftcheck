@@ -227,7 +227,9 @@ from .detectors import (
     find_justfile_drift,
     find_go_replace_drift,
     find_frontmatter_drift,
-    find_helm_dependency_drift,)
+    find_helm_dependency_drift,
+    find_npm_workspace_drift,
+)
 
 
 def _read_files_parallel(root: Path, patterns: list[str]) -> str:
@@ -619,6 +621,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Package manager drift (packageManager field vs lockfile)
     package_manager_drifts = find_package_manager_drift(package_text or None, root, docs)
+    npm_workspace_drifts = find_npm_workspace_drift(root)
 
     # VSCode extensions drift
     vscode_ext_path = root / ".vscode" / "extensions.json"
@@ -765,6 +768,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "yarnrc_drifts": yarnrc_drifts,
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
         "package_manager_drifts": package_manager_drifts,
+        "npm_workspace_drifts": npm_workspace_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
         "git_tag_drifts": git_tag_drifts,

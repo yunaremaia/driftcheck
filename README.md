@@ -239,6 +239,7 @@ driftcheck --git-mode --git-base v1.0.0
 - **Nix**: `flake.lock` nixpkgs pins vs README mentions
 - **Engines**: `package.json` `engines` field consistency across package managers
 - **Requirements**: `requirements.txt` unpinned packages vs known latest
+- **npm workspaces**: same dependency declared at different ranges across workspace `package.json` files
 
 **CI/CD:**
 - **GitHub Actions**: outdated `uses: action@version` — compares against known latest versions for 18 popular actions; detects deprecated Node 20 runtime

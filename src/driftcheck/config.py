@@ -35,6 +35,7 @@ DRIFT_KEYS = [
     "cargo_feature_drifts",
     "poetry_drifts",
     "julia_drifts",
+    "npm_workspace_drifts",
     "renovate_drifts",
     "bazel_drifts",
     "nix_drifts",
