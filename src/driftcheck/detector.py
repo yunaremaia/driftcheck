@@ -20,6 +20,17 @@ from .plugins import load_plugins, run_plugin_detectors
 from .detectors.actions_version_drift import find_actions_version_drift
 
 
+def _is_within_root(target: Path, root_resolved: Path) -> bool:
+    """Return True when target is the repo root or lives inside it.
+
+    Compares path COMPONENTS. A plain string-prefix test would accept a
+    sibling directory whose name merely starts with the root's name:
+    "/…/repo-secrets/id_rsa".startswith("/…/repo") is True, so that file would
+    be treated as in-repo and read even under follow_symlinks=false.
+    """
+    return target == root_resolved or root_resolved in target.parents
+
+
 def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], list[str]]:
     """Walk directory tree, respecting symlink policy.
     
@@ -42,7 +53,7 @@ def _walk_files(root: Path, follow_symlinks: bool = True) -> tuple[set[Path], li
             if fpath.is_symlink():
                 try:
                     target = fpath.resolve()
-                    if follow_symlinks or str(target).startswith(str(root_resolved)):
+                    if follow_symlinks or _is_within_root(target, root_resolved):
                         files.add(fpath)
                     else:
                         skipped.append(
@@ -262,6 +273,24 @@ def _read_files_parallel(root: Path, patterns: list[str]) -> str:
     return "\n".join(contents)
 
 
+def _read_candidate(
+    path: Path,
+    walked_files: set[Path],
+    follow_symlinks: bool,
+    max_size: int | None,
+) -> str | None:
+    """Read a scanned file, honouring the follow_symlinks policy.
+
+    Root-level config files (pyproject.toml, README.md, package.json, ...) are
+    read directly rather than via _safe_glob, so they bypass the symlink policy
+    unless checked here. A file the walk rejected — e.g. a symlink escaping the
+    repo root — must not be read even though its path sits inside the root.
+    """
+    if not follow_symlinks and path not in walked_files:
+        return None
+    return _read_text_safe(path, max_size=max_size if max_size is not None else 1_000_000)
+
+
 def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None, max_file_size: int | None = None) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
@@ -287,7 +316,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         excluded = excluded | (set(DRIFT_KEYS) - enabled_detectors)
 
     tc_path = root / "rust-toolchain.toml"
-    toolchain_text = _read_text_safe(tc_path, max_size=max_file_size) or ""
+    toolchain_text = _read_candidate(tc_path, walked_files, follow_symlinks, max_file_size) or ""
     # collect doc files
     candidates = [root / "README.md", root / "CONTRIBUTING.md", root / "CONTRIBUTING-BEGINNERS.md"]
     candidates += list((root / "docs").glob("README*.md"))
@@ -300,29 +329,30 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
                     candidates.append(p)
     docs = {}
     for p in candidates:
-        if p.exists():
-            content = _read_text_safe(p, max_size=max_file_size)
-            if content is not None:
-                docs[p.relative_to(root).as_posix()] = content
+        # Honour the symlink policy: a doc candidate that the walk rejected
+        # (e.g. a symlink escaping the repo root) must not be read.
+        content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
+        if content is not None:
+            docs[p.relative_to(root).as_posix()] = content
     pkg_path = root / "package.json"
-    package_text = _read_text_safe(pkg_path, max_size=max_file_size) or ""
+    package_text = _read_candidate(pkg_path, walked_files, follow_symlinks, max_file_size) or ""
     py_path = root / "pyproject.toml"
-    pyproject_text = _read_text_safe(py_path, max_size=max_file_size) or ""
+    pyproject_text = _read_candidate(py_path, walked_files, follow_symlinks, max_file_size) or ""
     setup_cfg_path = root / "setup.cfg"
-    setup_cfg_text = _read_text_safe(setup_cfg_path, max_size=max_file_size)
+    setup_cfg_text = _read_candidate(setup_cfg_path, walked_files, follow_symlinks, max_file_size)
     setup_py_path = root / "setup.py"
-    setup_py_text = _read_text_safe(setup_py_path, max_size=max_file_size)
+    setup_py_text = _read_candidate(setup_py_path, walked_files, follow_symlinks, max_file_size)
     gomod_path = root / "go.mod"
-    gomod_text = _read_text_safe(gomod_path, max_size=max_file_size) or ""
+    gomod_text = _read_candidate(gomod_path, walked_files, follow_symlinks, max_file_size) or ""
     cargo_path = root / "Cargo.toml"
-    cargo_text = _read_text_safe(cargo_path, max_size=max_file_size) or ""
+    cargo_text = _read_candidate(cargo_path, walked_files, follow_symlinks, max_file_size) or ""
     
     # Dockerfiles (respect follow_symlinks policy)
     dockerfiles = {}
     for pattern in ["Dockerfile", "Dockerfile.*", "docker/Dockerfile", "docker/Dockerfile.*"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     dockerfiles[p.relative_to(root).as_posix()] = content
     
@@ -331,7 +361,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["build.gradle", "build.gradle.kts", "gradle/build.gradle", "gradle/build.gradle.kts"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     gradle_files[p.relative_to(root).as_posix()] = content
     
@@ -340,7 +370,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["pom.xml", "maven/pom.xml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     maven_files[p.relative_to(root).as_posix()] = content
     
@@ -349,7 +379,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["versions.tf", "*.tf", "terraform/*.tf"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     terraform_files[p.relative_to(root).as_posix()] = content
     
@@ -358,7 +388,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in [".circleci/config.yml", ".circleci/config.yaml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     circleci_files[p.relative_to(root).as_posix()] = content
     
@@ -367,7 +397,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in [".gitlab-ci.yml", ".gitlab-ci.yaml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     gitlab_files[p.relative_to(root).as_posix()] = content
     
@@ -376,7 +406,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["k8s/**/*.yaml", "k8s/**/*.yml", "kubernetes/**/*.yaml", "kubernetes/**/*.yml", "deploy/**/*.yaml", "deploy/**/*.yml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and (follow_symlinks or p in walked_files):
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     k8s_files[p.relative_to(root).as_posix()] = content
 
@@ -385,7 +415,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "docker/docker-compose.yml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     dc_files[p.relative_to(root).as_posix()] = content
 
@@ -395,49 +425,49 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["Chart.yaml", "charts/**/Chart.yaml", "values.yaml", "charts/**/values.yaml", "charts/**/values.*.yaml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     helm_files[p.relative_to(root).as_posix()] = content
 
     # Ruby project files (Gemfile)
     gemfile_path = root / "Gemfile"
-    gemfile_text = _read_text_safe(gemfile_path, max_size=max_file_size) or ""
+    gemfile_text = _read_candidate(gemfile_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # PHP/Composer project files
     composer_path = root / "composer.json"
-    composer_text = _read_text_safe(composer_path, max_size=max_file_size) or ""
+    composer_text = _read_candidate(composer_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Mise.toml (successor to .tool-versions / asdf)
     mise_path = root / "mise.toml"
-    mise_text = _read_text_safe(mise_path, max_size=max_file_size) or ""
+    mise_text = _read_candidate(mise_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # .tool-versions (asdf/mise)
     tv_path = root / ".tool-versions"
-    tool_versions_text = _read_text_safe(tv_path, max_size=max_file_size) or ""
+    tool_versions_text = _read_candidate(tv_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # .nvmrc
     nvmrc_path = root / ".nvmrc"
-    nvmrc_text = _read_text_safe(nvmrc_path, max_size=max_file_size) or ""
+    nvmrc_text = _read_candidate(nvmrc_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # .NET / C# project files (respect follow_symlinks policy)
     csproj_files = {}
     for pattern in ["*.csproj", "**/*.csproj", "src/**/*.csproj", "tests/**/*.csproj"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     csproj_files[p.relative_to(root).as_posix()] = content
 
     # Swift Package Manager
     swift_path = root / "Package.swift"
-    swift_text = _read_text_safe(swift_path, max_size=max_file_size) or ""
+    swift_text = _read_candidate(swift_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Dart/Flutter pubspec
     pubspec_files = {}
     for pattern in ["pubspec.yaml", "pubspec.yml"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     pubspec_files[p.relative_to(root).as_posix()] = content
     pubspec_text = "\n".join(pubspec_files.values()) if pubspec_files else ""
@@ -454,7 +484,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     sbt_parts = []
     for sbt_path in [root / "build.sbt", *sorted((root / "project").glob("*.scala"))]:
         if sbt_path.exists():
-            sbt_parts.append(_read_text_safe(sbt_path, max_size=max_file_size) or "")
+            sbt_parts.append(_read_candidate(sbt_path, walked_files, follow_symlinks, max_file_size) or "")
     scala_drifts = find_scala_drift("\n".join(sbt_parts), docs)
     count_drifts = find_count_drift(root, docs)
     actions_drifts = find_actions_node_drift(root)
@@ -499,7 +529,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["deno.json", "deno.jsonc", "deno/deno.json", "deno/deno.jsonc"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     deno_files[p.relative_to(root).as_posix()] = content
     deno_text = "\n".join(deno_files.values()) if deno_files else ""
@@ -510,7 +540,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["Makefile", "makefile", "GNUmakefile", "make/*.mk", "Makefile.*"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     makefile_files[p.relative_to(root).as_posix()] = content
 
@@ -519,7 +549,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Elixir
     mix_path = root / "mix.exs"
-    mix_text = _read_text_safe(mix_path, max_size=max_file_size) or ""
+    mix_text = _read_candidate(mix_path, walked_files, follow_symlinks, max_file_size) or ""
     elixir_drifts = find_elixir_drift(mix_text, docs)
 
     # CMake
@@ -527,7 +557,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["CMakeLists.txt", "cmake/CMakeLists.txt", "src/CMakeLists.txt"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     cmake_files[p.relative_to(root).as_posix()] = content
     cmake_text = "\n".join(cmake_files.values()) if cmake_files else ""
@@ -535,7 +565,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Requirements.txt
     req_path = root / "requirements.txt"
-    req_text = _read_text_safe(req_path, max_size=max_file_size) or ""
+    req_text = _read_candidate(req_path, walked_files, follow_symlinks, max_file_size) or ""
     requirements_drifts = find_requirements_drift(req_text, pyproject_text, docs)
     freshness_drifts = find_python_dep_freshness(req_text, pyproject_text, offline=False)
     bazel_drifts = find_bazel_drift(root)
@@ -543,7 +573,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Poetry (pyproject.toml with [tool.poetry] section)
     poetry_pyproject_path = root / "pyproject.toml"
-    poetry_pyproject_text = _read_text_safe(poetry_pyproject_path, max_size=max_file_size) or ""
+    poetry_pyproject_text = _read_candidate(poetry_pyproject_path, walked_files, follow_symlinks, max_file_size) or ""
     poetry_drifts = find_poetry_drift(poetry_pyproject_text, docs)
 
     # Kotlin (build.gradle.kts)
@@ -551,7 +581,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in ["build.gradle.kts", "gradle/build.gradle.kts"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     gradle_kts_files[p.relative_to(root).as_posix()] = content
     gradle_kts_text = "\n".join(gradle_kts_files.values()) if gradle_kts_files else ""
@@ -575,7 +605,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file() and p not in seen_jenkins_paths:
                 seen_jenkins_paths.add(p)
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     jenkins_files[p.relative_to(root).as_posix()] = content
 
@@ -586,7 +616,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in [".ruby-version", ".python-version", ".node-version", ".java-version", ".terraform-version"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     version_files[p.relative_to(root).as_posix()] = content
 
@@ -606,17 +636,17 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # NPMRC
     npmrc_path = root / ".npmrc"
-    npmrc_text = _read_text_safe(npmrc_path, max_size=max_file_size)
+    npmrc_text = _read_candidate(npmrc_path, walked_files, follow_symlinks, max_file_size)
     npmrc_drifts = find_npmrc_drift(npmrc_text, package_text or None, docs)
 
     # Yarn RC
     yarnrc_path = root / ".yarnrc.yml"
-    yarnrc_text = _read_text_safe(yarnrc_path, max_size=max_file_size)
+    yarnrc_text = _read_candidate(yarnrc_path, walked_files, follow_symlinks, max_file_size)
     yarnrc_drifts = find_yarnrc_drift(yarnrc_text, docs)
 
     # PNPM workspace
     pnpm_workspace_path = root / "pnpm-workspace.yaml"
-    pnpm_workspace_text = _read_text_safe(pnpm_workspace_path, max_size=max_file_size)
+    pnpm_workspace_text = _read_candidate(pnpm_workspace_path, walked_files, follow_symlinks, max_file_size)
     pnpm_workspace_drifts = find_pnpm_workspace_drift(pnpm_workspace_text, package_text or None, docs)
 
     # Package manager drift (packageManager field vs lockfile)
@@ -625,14 +655,14 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # VSCode extensions drift
     vscode_ext_path = root / ".vscode" / "extensions.json"
-    vscode_ext_text = _read_text_safe(vscode_ext_path, max_size=max_file_size)
+    vscode_ext_text = _read_candidate(vscode_ext_path, walked_files, follow_symlinks, max_file_size)
     vscode_ext_drifts = find_vscode_extensions_drift(vscode_ext_text, docs)
 
     # EditorConfig drift
     editorconfig_path = root / ".editorconfig"
-    editorconfig_text = _read_text_safe(editorconfig_path, max_size=max_file_size)
+    editorconfig_text = _read_candidate(editorconfig_path, walked_files, follow_symlinks, max_file_size)
     vscode_settings_path = root / ".vscode" / "settings.json"
-    vscode_settings_text = _read_text_safe(vscode_settings_path, max_size=max_file_size)
+    vscode_settings_text = _read_candidate(vscode_settings_path, walked_files, follow_symlinks, max_file_size)
     editorconfig_drifts = find_editorconfig_drift(editorconfig_text, docs, vscode_settings_text)
 
     # Taskfile
@@ -643,7 +673,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Pre-commit config drift
     pre_commit_path = root / ".pre-commit-config.yaml"
-    pre_commit_text = _read_text_safe(pre_commit_path, max_size=max_file_size) or ""
+    pre_commit_text = _read_candidate(pre_commit_path, walked_files, follow_symlinks, max_file_size) or ""
     pre_commit_drifts = find_pre_commit_drift(pre_commit_text, docs)
 
     # Devcontainer
@@ -651,7 +681,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for pattern in [".devcontainer/devcontainer.json", ".devcontainer/*.devcontainer.json", "devcontainer.json"]:
         for p in _safe_glob(root, pattern, walked_files, follow_symlinks):
             if p.is_file():
-                content = _read_text_safe(p, max_size=max_file_size)
+                content = _read_candidate(p, walked_files, follow_symlinks, max_file_size)
                 if content is not None:
                     devcontainer_files[p.relative_to(root).as_posix()] = content
     devcontainer_text = "\n".join(devcontainer_files.values()) if devcontainer_files else ""
@@ -659,38 +689,38 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # R language files
     description_path = root / "DESCRIPTION"
-    description_text = _read_text_safe(description_path, max_size=max_file_size) or ""
+    description_text = _read_candidate(description_path, walked_files, follow_symlinks, max_file_size) or ""
     renv_path = root / "renv.lock"
-    renv_text = _read_text_safe(renv_path, max_size=max_file_size) or ""
+    renv_text = _read_candidate(renv_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Terraform lock file
     tf_lock_path = root / ".terraform.lock.hcl"
-    lock_text = _read_text_safe(tf_lock_path, max_size=max_file_size) or ""
+    lock_text = _read_candidate(tf_lock_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Justfile
     justfile_files = {}
     for jf_pattern in ["justfile", "Justfile", ".justfile"]:
         jf_path = root / jf_pattern
         if jf_path.exists():
-            content = _read_text_safe(jf_path, max_size=max_file_size)
+            content = _read_candidate(jf_path, walked_files, follow_symlinks, max_file_size)
             if content is not None:
                 justfile_files[jf_path.relative_to(root).as_posix()] = content
 
     # Helm chart files
     chart_path = root / "Chart.yaml"
-    chart_text = _read_text_safe(chart_path, max_size=max_file_size) or ""
+    chart_text = _read_candidate(chart_path, walked_files, follow_symlinks, max_file_size) or ""
     helm_lock_path = root / "Chart.lock"
-    helm_lock_text = _read_text_safe(helm_lock_path, max_size=max_file_size) or ""
+    helm_lock_text = _read_candidate(helm_lock_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Go sum
     gosum_path = root / "go.sum"
-    gosum_text = _read_text_safe(gosum_path, max_size=max_file_size) or ""
+    gosum_text = _read_candidate(gosum_path, walked_files, follow_symlinks, max_file_size) or ""
 
     # Julia
     julia_path = root / "Project.toml"
-    julia_text = _read_text_safe(julia_path, max_size=max_file_size) or ""
+    julia_text = _read_candidate(julia_path, walked_files, follow_symlinks, max_file_size) or ""
     julia_manifest_path = root / "Manifest.toml"
-    julia_manifest_text = _read_text_safe(julia_manifest_path, max_size=max_file_size) or ""
+    julia_manifest_text = _read_candidate(julia_manifest_path, walked_files, follow_symlinks, max_file_size) or ""
 
     result = {
         "toolchain_version": parse_toolchain_version(toolchain_text),
