@@ -217,6 +217,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "mise_drifts": ["mise.toml", "README.md"],
     "poetry_drifts": ["pyproject.toml", "README.md", "CONTRIBUTING.md"],
     "julia_drifts": ["Project.toml", "Manifest.toml", "README.md"],
+    "cargo_feature_drifts": ["Cargo.toml", "README.md", "CONTRIBUTING.md"],
     "bazel_drifts": [".bazelversion", "MODULE.bazel", "WORKSPACE.bazel", "README.md"],
     "nix_drifts": ["flake.lock", "flake.nix", "README.md"],
 }

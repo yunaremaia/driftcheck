@@ -67,6 +67,7 @@ from .detectors.renovate import find_renovate_drift
 from .detectors.git_submodule_drift import find_git_submodule_drift
 from .detectors.requirements import find_requirements_drift
 from .detectors.julia import find_julia_drift
+from .detectors.cargo_features import find_cargo_feature_drift
 from .detectors.ruby import find_ruby_drift
 from .detectors.rust import find_rust_drift
 from .detectors.swift import find_swift_drift
@@ -143,6 +144,7 @@ __all__ = [
     "extract_card_endpoints",
     "is_agent_card_file",
     "find_julia_drift",
+    "find_cargo_feature_drift",
     "find_ruby_drift",
     "find_rust_drift",
     "find_swift_drift",

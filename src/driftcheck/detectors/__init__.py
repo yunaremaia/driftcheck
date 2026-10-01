@@ -351,6 +351,7 @@ from .fix import apply_fixes
 from .typosquat import find_typosquat_drift
 from .renovate import find_renovate_drift
 from .git_submodule_drift import find_git_submodule_drift
+from .cargo_features import find_cargo_feature_drift, parse_cargo_features
 
 __all__ = [
     # Rust
@@ -569,6 +570,9 @@ __all__ = [
     "find_mise_drift",
     # Renovate
     "find_renovate_drift",
+    # Cargo features
+    "find_cargo_feature_drift",
+    "parse_cargo_features",
     # Bazel
     "find_bazel_drift",
     # Nix

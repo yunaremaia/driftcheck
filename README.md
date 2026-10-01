@@ -211,6 +211,7 @@ driftcheck --git-mode --git-base v1.0.0
 
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
+- **Cargo features**: `Cargo.toml` `[features]` vs explicit `features = [...]` lists and `--features` flags in README
 - **Node**: `package.json` `engines.node` vs README
 - **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
 - **Package version**: `package.json` `version` vs explicit npm badge URLs, install commands, and changelog headers in README/docs

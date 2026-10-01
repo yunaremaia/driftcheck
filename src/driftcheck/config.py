@@ -32,6 +32,7 @@ DRIFT_KEYS = [
     "pre_commit_drifts",
     "changelog_drifts",
     "typosquat_drifts",
+    "cargo_feature_drifts",
     "poetry_drifts",
     "julia_drifts",
     "renovate_drifts",

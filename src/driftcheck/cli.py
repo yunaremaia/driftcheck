@@ -91,11 +91,12 @@ DETECTOR_INFO = {
     "devcontainer_drifts": ("devcontainer", "Devcontainer.json features/base image vs README"),
     "pre_commit_drifts": ("pre-commit", "Pre-commit hook versions vs .pre-commit-config.yaml"),
     "changelog_drifts": ("changelog", "CHANGELOG.md presence/content vs CONTRIBUTING.md policy"),
+    "cargo_feature_drifts": ("cargo-features", "Cargo.toml [features] vs README feature lists"),
 }
 
 # Mapping of project files to their relevant detectors for `driftcheck init`
 FILE_DETECTOR_MAP = {
-    "Cargo.toml": ["rust_drifts"],
+    "Cargo.toml": ["rust_drifts", "cargo_feature_drifts"],
     "package.json": ["node_drifts", "bun_drifts", "nvmrc_drifts", "package_lock_drifts", "package_version_drifts"],
     "go.mod": ["go_drifts"],
     "pyproject.toml": ["python_drifts"],
@@ -910,6 +911,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['detail']}")
     for d in all_drifts.get("git_submodule_drifts", []):
         print(f"driftcheck: {d['path']}: submodule {d['name']} {d['current_commit']} → should be {d['indexed_commit']}")
+    for d in all_drifts.get("cargo_feature_drifts", []):
+        print(f"driftcheck: {d['file']}: {d['detail']}")
     # Freshness drifts (Python pinned deps vs PyPI latest)
     for d in all_drifts.get("freshness_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']} {d['pinned_version']} → newer: {d['latest_version']} (PyPI)")

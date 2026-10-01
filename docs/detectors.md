@@ -21,6 +21,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 | `python_version_drifts` | `.python-version` vs `pyproject.toml` `requires-python` floor. |
 | `ruby_drifts` | `Gemfile` `ruby "x.y.z"` vs README. Major.minor comparison. |
 | `rust_drifts` | `rust-toolchain.toml` `channel` and `Cargo.toml` `rust-version` vs README. Minor-aware (patch differences ignored). |
+| `cargo_feature_drifts` | `Cargo.toml` `[features]` vs explicit feature lists in README. |
 | `swift_drifts` | `Package.swift` `swift-tools-version` and dependency pins vs README. |
 
 ## Package Managers & Lockfiles
