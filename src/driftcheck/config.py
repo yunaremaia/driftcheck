@@ -12,7 +12,7 @@ DRIFT_KEYS = [
     "rust_drifts", "node_drifts", "bun_drifts", "package_version_drifts", "python_drifts", "python_setup_drifts", "go_drifts",
     "count_drifts", "actions_drifts", "lineending_drifts", "docker_drifts", "docker_multistage_drifts", "docker_bases_drifts",
     "java_drifts", "maven_drifts", "terraform_drifts", "circleci_drifts",
-    "gitlab_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts",
+    "renovate_drifts", "gh_actions_version_drifts", "k8s_drifts", "helm_drifts", "git_submodule_drifts",
     "dc_drifts", "ci_os_drifts", "dotnet_drifts", "ruby_drifts", "php_drifts",
     "env_drifts",
     "env_example_drifts",

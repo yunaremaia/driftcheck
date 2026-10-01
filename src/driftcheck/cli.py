@@ -140,6 +140,7 @@ FILE_DETECTOR_MAP = {
     "Taskfile.yml": ["taskfile_drifts"],
     "environment.yml": ["conda_drifts"],
     "renovate.json": ["renovate_drifts"],
+    ".gitmodules": ["git_submodule_drifts"],
 }
 
 
@@ -905,6 +906,8 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['package']} {d['doc_version']} → should be {d['requirements_version']} (requirements.txt)")
     for d in all_drifts.get("scala_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
+    for d in all_drifts.get("git_submodule_drifts", []):
+        print(f"driftcheck: {d['path']}: submodule {d['name']} {d['current_commit']} → should be {d['indexed_commit']}")
     # Freshness drifts (Python pinned deps vs PyPI latest)
     for d in all_drifts.get("freshness_drifts", []):
         print(f"driftcheck: {d['file']}: {d['package']} {d['pinned_version']} → newer: {d['latest_version']} (PyPI)")
