@@ -110,7 +110,14 @@ Releases are automated via GitHub Actions:
 
 1. Version is bumped in `pyproject.toml` and `__init__.py`
 2. A tag `v0.1.X` is created and pushed
-3. `publish.yml` publishes to PyPI via trusted publishing
+3. `publish.yml` attempts to publish to PyPI via trusted publishing
+
+Step 3 currently fails with `invalid-publisher`: no trusted publisher is
+registered for this project on pypi.org, so `driftcheck` has never been
+published. The workflow itself is wired correctly, and
+`tests/test_publish_workflow_config.py` guards that wiring — the missing piece
+is the pypi.org publisher registration, which needs account access. Install
+from git in the meantime: `pip install git+https://github.com/yunaremaia/driftcheck.git`.
 
 ## PR Process
 
