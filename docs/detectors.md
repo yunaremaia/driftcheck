@@ -122,7 +122,7 @@ driftcheck ships **61 detector modules** covering **68 registered detectors**. E
 Many detectors can be referenced by short name in `--only`/`--exclude`:
 
 ```bash
-driftcheck --only rust,node,python,go
+driftcheck --only rust-cargo,node,python,go
 driftcheck --exclude lockfile,nvmrc,ci_os
 ```
 

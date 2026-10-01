@@ -261,19 +261,40 @@ def _detect_project_files(root: Path) -> list[str]:
     return found[:8]  # limit display
 
 
+def _detector_aliases() -> dict[str, str]:
+    """Map every accepted spelling to its canonical detector key.
+
+    `--list-detectors` prints the short name (e.g. `rust-cargo`) and the docs
+    use short names too (`--only rust,node`), so both spellings must work on
+    the command line. Short names are unique and never collide with a key.
+    """
+    aliases: dict[str, str] = {key: key for key in DETECTOR_INFO}
+    for key, (short, _desc) in DETECTOR_INFO.items():
+        aliases[short] = key
+    return aliases
+
+
 def _validate_detector_names(names: set[str], source: str) -> list[str]:
-    """Validate detector names against known detector keys."""
+    """Validate detector names against known keys and their short aliases."""
     known = set(DETECTOR_INFO.keys())
+    accepted = set(_detector_aliases())
     unknown = []
     for name in names:
-        if name not in known:
+        if name not in accepted:
             unknown.append(name)
-            suggestions = difflib.get_close_matches(name, known, n=3, cutoff=0.6)
+            suggestions = difflib.get_close_matches(name, sorted(accepted), n=3, cutoff=0.6)
             if suggestions:
                 print(f"driftcheck: unknown detector '{name}' (from {source}) — did you mean: {', '.join(suggestions)}?", file=__import__('sys').stderr)
             else:
                 print(f"driftcheck: unknown detector '{name}' (from {source}) — run --list-detectors for valid names", file=__import__('sys').stderr)
     return unknown
+
+
+def _resolve_detector_names(names: set[str]) -> set[str]:
+    """Translate accepted spellings (short name or key) to canonical keys."""
+    aliases = _detector_aliases()
+    return {aliases[n] for n in names if n in aliases}
+
 
 
 def _pre_commit_hook_entry() -> str:
@@ -506,6 +527,7 @@ def main(argv=None) -> int:
             if not valid_wanted:
                 print(f"driftcheck: error: no valid detector names in --only, aborting", file=__import__('sys').stderr)
                 return 2
+        wanted = _resolve_detector_names(wanted)
         result = {k: v for k, v in result.items() if k in wanted or not k.endswith("_drifts")}
     if args.exclude:
         excluded = {d.strip() for d in args.exclude.split(",")}
@@ -513,6 +535,7 @@ def main(argv=None) -> int:
         if unknown:
             unknown_set = set(unknown)
             excluded = excluded - unknown_set
+        excluded = _resolve_detector_names(excluded)
         result = {k: v for k, v in result.items() if k not in excluded}
 
     if args.as_sarif:

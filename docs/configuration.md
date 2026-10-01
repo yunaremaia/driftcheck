@@ -72,7 +72,7 @@ driftcheck --fail-on-informational
 CLI flags override `.driftcheck.toml`:
 
 ```bash
-driftcheck --only rust,node           # override exclude_detectors
+driftcheck --only rust-cargo,node           # override exclude_detectors
 driftcheck --exclude lockfile,nvmrc   # add to excluded list
 driftcheck --fail-on-informational    # promote informational drifts
 ```
