@@ -215,3 +215,41 @@ def test_key_is_a_known_drift_key():
     """--only/--exclude resolve the name, so the key must be registered."""
     assert "rust_workspace_drifts" in DRIFT_KEYS
     assert DETECTOR_INFO["rust_workspace_drifts"][0] == "rust-workspace"
+
+
+def test_emitted_paths_use_posix_separators():
+    """Emitted paths must use `/`, never `\\`.
+
+    The values become SARIF `artifactLocation.uri`, which is a URI and always
+    uses forward slashes. `str(Path.relative_to())` yields backslashes on
+    Windows, which broke the Windows CI matrix legs.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "Cargo.toml").write_text("""\
+[workspace.package]
+version = "1.2.3"
+
+[workspace]
+members = ["crates/*"]
+""")
+        (root / "crates" / "crate-a").mkdir(parents=True)
+        (root / "crates" / "crate-a" / "Cargo.toml").write_text("""\
+[package]
+name = "crate-a"
+version = "1.2.3"
+""")
+        (root / "crates" / "crate-b").mkdir(parents=True)
+        (root / "crates" / "crate-b" / "Cargo.toml").write_text("""\
+[package]
+name = "crate-b"
+version = "1.2.2"
+""")
+        (root / "crates" / "crate-b" / "README.md").write_text(
+            "[![crates.io](https://img.shields.io/crates/v/crate-b/1.0.0)](https://crates.io/crates/crate-b)\n"
+        )
+
+        drifts = find_rust_workspace_drift(root)
+        assert drifts, "fixture should produce drifts"
+        for d in drifts:
+            assert "\\" not in d["file"], f"backslash in emitted path: {d['file']!r}"
