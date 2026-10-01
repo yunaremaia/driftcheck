@@ -215,6 +215,7 @@ from .detectors import (
     find_cargo_feature_drift,
     find_renovate_drift,
     find_git_submodule_drift,
+    find_npm_workspace_drift,
     find_bazel_drift,
     find_nix_drift,
     find_scala_drift,
@@ -619,6 +620,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
 
     # Package manager drift (packageManager field vs lockfile)
     package_manager_drifts = find_package_manager_drift(package_text or None, root, docs)
+    npm_workspace_drifts = find_npm_workspace_drift(root)
 
     # VSCode extensions drift
     vscode_ext_path = root / ".vscode" / "extensions.json"
@@ -765,6 +767,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "yarnrc_drifts": yarnrc_drifts,
         "pnpm_workspace_drifts": pnpm_workspace_drifts,
         "package_manager_drifts": package_manager_drifts,
+        "npm_workspace_drifts": npm_workspace_drifts,
         "vscode_ext_drifts": vscode_ext_drifts,
         "editorconfig_drifts": editorconfig_drifts,
         "git_tag_drifts": git_tag_drifts,
