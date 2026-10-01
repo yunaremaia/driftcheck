@@ -3,6 +3,13 @@
 ## Install
 
 ```bash
+pip install driftcheck-py
+```
+
+The distribution on PyPI is `driftcheck-py`; the bare name `driftcheck` is taken
+by an unrelated package. From source:
+
+```bash
 pip install git+https://github.com/yunaremaia/driftcheck.git
 ```
 
