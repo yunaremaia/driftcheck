@@ -212,6 +212,7 @@ from .detectors import (
     parse_mise_tools,
     parse_pre_commit_revs,
     find_pre_commit_drift,
+    find_cargo_feature_drift,
     find_renovate_drift,
     find_git_submodule_drift,
     find_bazel_drift,
@@ -440,6 +441,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     pubspec_text = "\n".join(pubspec_files.values()) if pubspec_files else ""
 
     rust_drifts_multi = find_rust_drift_multi(toolchain_text, cargo_text, docs)
+    cargo_feature_drifts = find_cargo_feature_drift(cargo_text, docs)
     node_drifts = find_node_drift(package_text, docs)
     bun_drifts = find_bun_drift(package_text, docs)
     package_version_drifts = find_package_version_drift(package_text, docs)
@@ -694,6 +696,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "pyproject_python": parse_python_version_from_pyproject(pyproject_text),
         "gomod_version": parse_go_version_from_gomod(gomod_text),
         "rust_drifts": rust_drifts_multi,
+        "cargo_feature_drifts": cargo_feature_drifts,
         "node_drifts": node_drifts,
         "bun_drifts": bun_drifts,
         "package_version_drifts": package_version_drifts,

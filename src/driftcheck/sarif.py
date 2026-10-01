@@ -126,6 +126,11 @@ DRIFT_RULES = {
         "Git submodule commit drift",
         "Submodule points to a different commit than recorded in the parent repo index.",
     ),
+    "cargo_feature_drifts": (
+        "cargo-feature-drift",
+        "Cargo Feature Drift",
+        "Cargo.toml [features] disagrees with feature lists in documentation",
+    ),
     "gh_actions_version_drifts": (
         "github-actions-version-drift",
         "GitHub Actions Outdated Version",
@@ -564,6 +569,8 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"{pkg} {doc_ver} in docs should be {pp_ver} (pyproject.toml)"
     elif drift_type == "julia_drifts":
         return d.get("detail", "Drift detected")
+    elif drift_type == "cargo_feature_drifts":
+        return d.get("detail", "Drift detected")
     elif drift_type == "pre_commit_drifts":
         repo = d.get("repo", "repo")
         doc_ver = d.get("doc_version", "unknown")
@@ -636,6 +643,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "devcontainer_drifts", "compose_override_drifts", "helm_values_drifts",
         "mise_drifts", "bazel_drifts", "nix_drifts",
         "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "julia_drifts",
+        "cargo_feature_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
     ]
 
