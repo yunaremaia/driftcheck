@@ -25,10 +25,10 @@ driftcheck --fix     # auto-fix drifts in documentation files
 ## Install
 
 ```bash
-pip install driftcheck        # from PyPI
-# or
-pip install git+https://github.com/yunaremaia/driftcheck.git  # from source
+pip install git+https://github.com/yunaremaia/driftcheck.git
 ```
+
+driftcheck is not published on PyPI yet. Install from git as shown above.
 
 ## License
 

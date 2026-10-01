@@ -2,27 +2,86 @@
 
 All notable changes to driftcheck will be documented in this file.
 
-## [Unreleased]
+## [0.1.47] - 2026-10-01
+
+84 commits since 0.1.46. Highlights below; see the git history for the full list.
 
 ### Added
-- **`--baseline` mode for incremental drift detection**: accept current state as "known good" and only report NEW drifts
-  - `driftcheck --baseline` creates `.driftcheck-baseline.json` with current drift snapshot
-  - `driftcheck --baseline-update` updates baseline (preserves `first_seen` timestamps)
-  - `driftcheck --baseline-reset` removes the baseline file
-  - `driftcheck --baseline-show` displays baseline contents
-  - When a baseline exists, only NEW drifts fail the check (pre-existing are warnings)
-  - Baseline file auto-added to `.gitignore`
-  - JSON output includes `_baseline` metadata with new/pre-existing drift counts
-  - SARIF output includes baseline properties
-  - 27 new tests
 
-### Added
-- **`--explain` command**: explains why a drift was detected with file, line, values, diff, impact, and fix suggestion
-  - `--explain <detector:file>` for single drift
-  - `--explain-all` for all drifts
-  - `--explain-format json|text` for output format
-  - `--explain-fix` to apply suggested fixes
-  - 12 new tests
+**New detectors**
+
+- **npm workspace dependency ranges** (`npm_workspace_drifts`): the same dependency declared at
+  different version ranges across workspace `package.json` files
+- **Cargo features** (`cargo_feature_drifts`): `Cargo.toml` `[features]` vs explicit
+  `features = [...]` lists and `--features` flags in docs
+- **A2A (Agent2Agent) protocol** (`a2a_drifts`, informational): agent card `spec_version`,
+  capabilities and endpoints vs docs. Cross-platform `.a2a/` card discovery
+- **Python version drift** (`python_version_drifts`): unified detector for `.python-version`,
+  `requires-python` and README mentions
+- **Git submodule commits** (`git_submodule_drifts`): pinned submodule SHA vs docs
+- **`[tool.*]` config drift** (`pyproject_tool_drifts`): `[tool.ruff]`, `[tool.black]`,
+  `[tool.mypy]`, `[tool.pyright]` targets vs `requires-python`
+- **Python requirements** (`python_req_drifts`) and **legacy setup** (`python_setup_drifts`):
+  `requirements.txt` pins and `setup.py`/`setup.cfg` vs docs
+- **Justfile**: recipe/declaration drift in `justfile`
+- **Terraform lock** (`terraform_lock_drifts`): `.terraform.lock.hcl` provider versions vs docs
+- **R** (`r_drifts`): R version declarations (DESCRIPTION / renv) vs docs
+- **Go replace directives** (`go_replace_drifts`): `replace` entries in `go.mod` vs docs
+- **Frontmatter** (`frontmatter_drifts`): version claims in Markdown frontmatter
+- **Helm dependencies** (`helm_dependency_drifts`): `Chart.yaml` dependencies vs docs
+- **Julia** (`julia_drifts`): `Project.toml` compat bounds vs docs
+- **Changelog** (`changelog_drifts`), **Python freshness** (`freshness_drifts`) and
+  **uv.lock** detectors
+- **GitHub Actions version drift** (`actions_drifts`): action version references in docs
+
+**CLI and features**
+
+- **`driftcheck --explain`**: explains why a drift was detected (file, line, values, diff,
+  impact, fix suggestion)
+  - `--explain <detector:file>`, `--explain-all`, `--explain-format json|text`, `--explain-fix`
+- **`driftcheck --baseline`**: incremental drift detection — accept current state as known good
+  and report only NEW drifts
+  - `--baseline`, `--baseline-update`, `--baseline-reset`, `--baseline-show`
+  - Pre-existing drifts become warnings; `_baseline` metadata in JSON, properties in SARIF
+- **`driftcheck doctor`**: repository diagnostics (fixes #268)
+- **`driftcheck init`**: auto-detects project type and generates `.driftcheck.toml`
+  (detects 30+ project types; `--force`, `--dry-run`)
+- **Pre-commit staged-only mode** (#285)
+- **`package.json` version drift**: `version` vs badge URLs, install commands, changelog headers
+- **`package-lock` dependency resolution validation** (#286)
+- **`.driftcheck.toml` validation** with strict mode
+- **`--fail-on-informational`** flag and matching config option (#144)
+- **Configurable parallel read timeouts** (#238)
+- **Max file size OOM protection** (`max_file_size`, #150)
+- **CRLF/LF line-ending drift** vs `.gitattributes` policy (#216)
+
+### Fixed
+
+- `_print_blocking_drifts` now handles all drift types (#233)
+- External CDN detection reports all CDN references per file, not just the first (#228)
+- Symlink loop handling in `_walk_files` and prefix-collision symlink bypass in `_safe_glob`
+- Replaced hand-rolled TOML parser with `tomllib` (#151)
+- Replaced bare `except` with specific exceptions in detectors and `cli.py` (#309)
+- Wired `custom_detectors` config into `scan_repo` (#209)
+- Duplicate `git_tag_drifts` key in `DRIFT_RULES` (#298)
+- SARIF: URI-encoded file paths in `artifactLocation.uri` (#230), repo root URI base IDs (#282),
+  rule metadata for 7 newer detectors (#145)
+- Scala, changelog and freshness detectors registered in `scan_repo` and the CLI
+- All new detectors registered in `scan_repo` with proper file reading
+- Git-mode returns an empty set when there are no changed files
+- Windows compatibility: `tmp_path` instead of hardcoded `/tmp/`, cross-platform path handling
+
+### Documentation
+
+- Added `SECURITY.md` and `SUPPORT.md`
+- Added GitHub Stars badge
+- Resolved an unreconciled merge conflict block committed in README.md and docs/detectors.md
+- Repaired 4 malformed rows in the README detector comparison matrix
+- Removed a `rust_workspace.py` entry from MANIFEST.md — no such detector module exists
+
+### Changed
+
+- Removed the legacy `"drifts"` alias and dead `_read_files_parallel` (#146, #147)
 
 ## [0.1.46] - 2026-09-18
 
