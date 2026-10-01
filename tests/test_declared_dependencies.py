@@ -186,11 +186,24 @@ def test_stdlib_only_on_newer_pythons_is_not_reported_as_undeclared():
     not declare every imported third-party module: tomllib" even though
     `pip install` pulls the declared `tomli` shim that provides it there.
     """
-    assert "tomllib" not in _simulated_310_builtin()  # the simulated runner
+    # The simulated runner must differ from the real one by exactly `tomllib`,
+    # otherwise this test would be exercising the wrong runner.
+    simulated = _simulated_310_builtin()
+    real = set(sys.stdlib_module_names) | _VENDORED
+    assert simulated == real - {"tomllib"}, (
+        "the simulated 3.10 builtin set must be the real one minus tomllib; "
+        f"got a difference of {sorted(real.symmetric_difference(simulated))}"
+    )
+    if sys.version_info >= (3, 11):
+        # Only meaningful on a runner where `tomllib` is genuinely present:
+        # the subtraction above is what makes the simulation bite.
+        assert "tomllib" in real, (
+            "this test assumes tomllib is standard library from 3.11 onwards"
+        )
 
     missing = _missing_modules(
         _distribution_names(_declared_requirements()),
-        _simulated_310_builtin(),
+        simulated,
     )
     assert "tomllib" not in missing, (
         "tomllib is standard library from Python 3.11 onwards; on older "
@@ -223,12 +236,29 @@ def test_tomli_is_not_reported_as_unused_on_a_310_runner():
     On a 3.10 runner `tomllib` is a third-party import that the declared
     `tomli` satisfies, so `tomli` counts as used and must not be flagged as
     dead weight.
+
+    The AST walk sees whichever spelling the detectors actually wrote, so
+    the real import set may well contain `tomli` directly. The scenario
+    that needs the alias is a runner where only `tomllib` is reported, so
+    the alias is exercised explicitly rather than left to chance.
     """
     declared = _distribution_names(_declared_requirements())
     imported = {
         module.lower()
         for module in _imported_top_level_modules(_simulated_310_builtin())
     }
+
+    # A runner that only reports `tomllib`: the declared `tomli` has to be
+    # rescued by the alias, or it is dead weight.
+    only_tomllib = {"tomllib"}
+    assert not _is_unused("tomli", only_tomllib), (
+        "the alias must let a declared tomli satisfy an imported tomllib"
+    )
+    # ...and the alias must not rescue an unrelated name.
+    assert _is_unused("packaging", only_tomllib), (
+        "an unrelated dependency is never rescued by the TOML alias"
+    )
+
     unused = sorted(name for name in declared if _is_unused(name, imported))
     assert "tomli" not in unused, (
         "tomli is imported on Python 3.10 through the detectors' "
