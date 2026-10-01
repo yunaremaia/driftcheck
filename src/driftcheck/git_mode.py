@@ -180,6 +180,7 @@ DETECTOR_FILE_PATTERNS: dict[str, list[str]] = {
     "helm_values_drifts": ["values*.yaml", "values*.yml", "charts/**/values*.yaml"],
     "actions_drifts": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
     "gh_actions_version_drifts": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
+    "git_submodule_drifts": [".gitmodules"],
     "ci_os_drifts": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
     "lineending_drifts": [".gitattributes", "*.py", "*.js", "*.ts", "*.rs", "*.go", "*.java"],
     "count_drifts": ["skills/**", "README.md"],

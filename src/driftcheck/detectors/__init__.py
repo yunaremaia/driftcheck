@@ -335,6 +335,7 @@ from .pre_commit import (
 from .fix import apply_fixes
 from .typosquat import find_typosquat_drift
 from .renovate import find_renovate_drift
+from .git_submodule_drift import find_git_submodule_drift
 
 __all__ = [
     # Rust

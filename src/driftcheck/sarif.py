@@ -122,6 +122,10 @@ DRIFT_RULES = {
         "GitHub Actions Node 20 Deprecation",
         "Workflow uses a GitHub Actions version still pinned to deprecated Node 20 runtime",
     ),
+    "git_submodule_drifts": (
+        "Git submodule commit drift",
+        "Submodule points to a different commit than recorded in the parent repo index.",
+    ),
     "gh_actions_version_drifts": (
         "github-actions-version-drift",
         "GitHub Actions Outdated Version",

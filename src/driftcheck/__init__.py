@@ -56,6 +56,7 @@ from .detectors.pre_commit import find_pre_commit_drift
 from .detectors.python import find_python_drift
 from .detectors.python_version import find_python_version_file_drift
 from .detectors.renovate import find_renovate_drift
+from .detectors.git_submodule_drift import find_git_submodule_drift
 from .detectors.requirements import find_requirements_drift
 from .detectors.julia import find_julia_drift
 from .detectors.ruby import find_ruby_drift

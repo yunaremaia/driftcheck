@@ -22,6 +22,7 @@ IMPACT_DESCRIPTIONS: dict[str, str] = {
     "count_drifts": "README lists a different skill count than the actual skills/ directory — users see stale documentation.",
     "actions_drifts": "GitHub Actions still uses Node 20 which is deprecated — workflows will fail after GitHub removes the runner.",
     "gh_actions_version_drifts": "GitHub Actions uses outdated versions that may break or lose security patches.",
+    "git_submodule_drifts": "Git submodule points to a different commit than recorded in the parent repo index.",
     "lineending_drifts": "Missing .gitattributes leads to inconsistent line endings across platforms — causes noisy diffs and CI failures.",
     "docker_drifts": "Documentation references a different Docker base image than the actual Dockerfile — users pull the wrong image.",
     "docker_multistage_drifts": "Multi-stage Dockerfile has inconsistent base image tags across stages — leads to subtle runtime mismatches.",
