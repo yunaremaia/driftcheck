@@ -291,6 +291,71 @@ def _read_candidate(
     return _read_text_safe(path, max_size=max_size if max_size is not None else 1_000_000)
 
 
+def _escapes_root(path: Path, root_resolved: Path) -> bool:
+    """Return True when `path` reaches outside the repo root through a link.
+
+    Mirrors the rule _walk_files applies when it decides to skip a link, so a
+    file the walk rejected is recognisable later by the same test.
+
+    The test is on the RESOLVED path rather than on `path.is_symlink()`, because
+    a detector globbing `root/**/…` also reaches files reached through a
+    symlinked *directory*: those leaves are ordinary files, yet they live
+    outside the root and the walk never listed them. Comparing resolved
+    components (via _is_within_root) also keeps the sibling-directory case out,
+    where a plain string prefix would accept "/…/repo-secrets" for root "/…/repo".
+    """
+    try:
+        return not _is_within_root(path.resolve(), root_resolved)
+    except (OSError, RuntimeError):
+        # Broken link or symlink loop: the walk skips these too, and a target we
+        # cannot resolve cannot be shown to be inside the root.
+        return True
+
+
+def _drop_symlink_escaped_drifts(result: dict, root: Path, follow_symlinks: bool) -> dict:
+    """Drop findings whose file the follow_symlinks policy kept out of the walk.
+
+    `_read_candidate` covers the files scan_repo reads on a detector's behalf,
+    but detectors handed the repo root re-glob it themselves (`find_ci_os_drift`,
+    `find_typosquat_drift`, `find_rust_workspace_drift`, …) and never see the
+    walked set. Their findings escape that gate, so a symlink pointing outside
+    the root is read and published while the very same scan lists it under
+    `_skipped_symlinks` — a self-contradictory result, and an out-of-repo read
+    the operator explicitly opted out of.
+
+    Enforcing the policy once on the assembled result closes the gap for every
+    detector, including ones added later, instead of at ~60 individual read
+    sites. Nothing is added to the result: the existing `_skipped_symlinks`
+    entries already report each skipped link to the operator, and a synthetic
+    key here would surface in `--json` and in baseline comparisons.
+
+    Only escaping links are dropped. A finding about a merely absent file has
+    nothing to resolve and is kept, as is a symlink whose target stays inside
+    the root — both are what the walk would have read.
+    """
+    if follow_symlinks:
+        return result
+
+    root_resolved = root.resolve()
+    for key, drifts in result.items():
+        if not isinstance(drifts, list):
+            continue
+        result[key] = [
+            drift
+            for drift in drifts
+            if not (
+                isinstance(drift, dict)
+                and isinstance(drift.get("file"), str)
+                and drift["file"]
+                # A finding about a file that does not exist cannot have escaped
+                # through a link, and must survive the policy.
+                and (root / drift["file"]).exists()
+                and _escapes_root(root / drift["file"], root_resolved)
+            )
+        ]
+    return result
+
+
 def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None, max_file_size: int | None = None) -> dict:
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
@@ -829,6 +894,10 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     for key in list(result.keys()):
         if key in excluded:
             del result[key]
+
+    # Enforce the symlink policy on findings from detectors that read the repo
+    # themselves, after every detector (including plugins) has contributed.
+    _drop_symlink_escaped_drifts(result, root, follow_symlinks)
 
     # Include skipped symlinks for SARIF suppressed results (issue #128)
     if skipped_symlinks:

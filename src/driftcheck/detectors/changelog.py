@@ -109,9 +109,13 @@ def find_changelog_drift(root: Path, docs: dict[str, str]) -> list[dict]:
     """
     drifts: list[dict] = []
 
-    # Read CONTRIBUTING.md and CHANGELOG.md
-    contributing_path = root / CONTRIBUTING_PATH
-    contributing_text = contributing_path.read_text(encoding="utf-8", errors="replace") if contributing_path.is_file() else ""
+    # CONTRIBUTING.md is already in `docs`, read through scan_repo's
+    # follow_symlinks gate. Re-reading it here would bypass that gate and let a
+    # symlink pointing outside the repo root impose a policy on this repo — and
+    # the resulting drift would be attributed to CHANGELOG.md, so no
+    # file-based filter could catch it. Missing here means the policy rejected
+    # it (or it is absent), which is correctly "no contributing policy".
+    contributing_text = docs.get(CONTRIBUTING_PATH, "")
 
     changelog_path = root / CHANGELOG_PATH
     changelog_text = changelog_path.read_text(encoding="utf-8", errors="replace") if changelog_path.is_file() else None
