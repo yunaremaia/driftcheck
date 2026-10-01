@@ -9,7 +9,7 @@
 `README.md` says Rust 1.93.0 but `rust-toolchain.toml` pins 1.96.1? `CONTRIBUTING.md` says Node 18 but `package.json` engines says 24? `go.mod` says 1.23 but docs say 1.21? `driftcheck` catches it before your contributors hit a build failure.
 
 ```bash
-pip install git+https://github.com/yunaremaia/driftcheck.git
+pip install driftcheck-py
 driftcheck           # scan current repo
 driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
