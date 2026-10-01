@@ -44,6 +44,20 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, docs]
     runs-on: ubuntu-latest
+    # GitHub allows a single in-flight Pages deployment per repository, and
+    # actions/deploy-pages does not queue: a second concurrent create fails with
+    # "due to in progress deployment ... or wait for it to complete". Merging a
+    # batch of PRs lands several pushes on main within a minute, so without this
+    # group whichever deployment arrives second fails even though its build and
+    # tests are green. The group serializes them and cancel-in-progress drops the
+    # superseded one instead of publishing a stale build.
+    #
+    # This belongs on the job, not the workflow: a workflow-level group would
+    # also cancel the test matrix of a newer commit whenever an older commit
+    # reaches this step.
+    concurrency:
+      group: pages-deploy-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       pages: write
       id-token: write
