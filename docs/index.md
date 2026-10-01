@@ -7,7 +7,7 @@
 ## Quick Start
 
 ```bash
-pip install git+https://github.com/yunaremaia/driftcheck.git
+pip install driftcheck-py
 driftcheck           # scan current repo
 driftcheck --fix     # auto-fix drifts in documentation files
 ```
@@ -25,10 +25,15 @@ driftcheck --fix     # auto-fix drifts in documentation files
 ## Install
 
 ```bash
-pip install git+https://github.com/yunaremaia/driftcheck.git
+pip install driftcheck-py
 ```
 
-driftcheck is not published on PyPI yet. Install from git as shown above.
+The distribution on PyPI is `driftcheck-py`; the bare name `driftcheck` is taken
+by an unrelated package. From source:
+
+```bash
+pip install git+https://github.com/yunaremaia/driftcheck.git
+```
 
 ## License
 

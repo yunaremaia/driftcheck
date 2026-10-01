@@ -1,5 +1,6 @@
 # driftcheck
 [![CI](https://github.com/yunaremaia/driftcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yunaremaia/driftcheck/actions)
+[![PyPI](https://img.shields.io/pypi/v/driftcheck-py)](https://pypi.org/project/driftcheck-py/)
 [![Release](https://img.shields.io/github/v/release/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/yunaremaia/driftcheck) ![Stars](https://img.shields.io/github/stars/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
@@ -9,7 +10,15 @@
 `README.md` says Rust 1.93.0 but `rust-toolchain.toml` pins 1.96.1? `CONTRIBUTING.md` says Node 18 but `package.json` engines says 24? `go.mod` says 1.23 but docs say 1.21? `driftcheck` catches it before your contributors hit a build failure.
 
 ```bash
-pip install git+https://github.com/yunaremaia/driftcheck.git
+pip install driftcheck-py
+```
+
+The distribution on PyPI is `driftcheck-py` — the bare name `driftcheck` is taken
+by an unrelated package. Install from source with
+`pip install git+https://github.com/yunaremaia/driftcheck.git` if you need the
+tip of `main`.
+
+```bash
 driftcheck           # scan current repo
 driftcheck --json    # machine-readable
 driftcheck --fix     # auto-fix drifts in documentation files
