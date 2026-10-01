@@ -48,4 +48,4 @@ def test_custom_doc_paths_glob():
         # The doc says 3.10 but .python-version is 3.11.5 — doc is stale
         drift = result["python_version_drifts"][0]
         assert drift["type"] == "doc"
-        assert drift["file"] == "documentation/setup.md"
+        assert drift["file"].replace("\\", "/") == "documentation/setup.md"

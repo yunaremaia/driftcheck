@@ -112,10 +112,12 @@ def detect(root, docs):
         results = run_plugin_detectors(plugin_dir.parent, {}, plugins)
         assert "plugin_reader_drifts" in results
 
-    def test_plugin_cannot_escape_target_directory(self, plugin_dir):
+    def test_plugin_cannot_escape_target_directory(self, plugin_dir, tmp_path):
         """A plugin should not be able to access files outside the target."""
-        # Create a file outside the target
-        outside_file = Path("/tmp/secret_outside.txt")
+        # Create a file outside the target (use tempdir for cross-platform compat)
+        import tempfile
+        outside_dir = Path(tempfile.gettempdir())
+        outside_file = outside_dir / "secret_outside.txt"
         outside_file.write_text("secret data")
         
         try:
@@ -127,7 +129,9 @@ def register():
 def detect(root, docs):
     # Try to access file outside target
     try:
-        content = Path("/tmp/secret_outside.txt").read_text()
+        import tempfile
+        outside_file = Path(tempfile.gettempdir()) / "secret_outside.txt"
+        content = outside_file.read_text()
         return [{"file": "outside.txt", "detail": content}]
     except Exception as e:
         return [{"file": "outside.txt", "detail": f"blocked: {type(e).__name__}"}]

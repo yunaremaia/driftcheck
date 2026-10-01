@@ -200,7 +200,7 @@ jobs:
         )
         assert len(result) == 1
         assert result[0]["type"] == "workflow"
-        assert result[0]["file"] == ".github/workflows/ci.yml"
+        assert result[0]["file"].replace("\\", "/") == ".github/workflows/ci.yml"
         assert result[0]["tool"] == "Python"
         assert result[0]["workflow_version"] == "3.9.0"
         assert result[0]["doc_version"] == "3.9.0"
