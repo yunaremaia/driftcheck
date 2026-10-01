@@ -16,8 +16,18 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLISH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "publish.yml"
 
 
+def _read_text(path):
+    """Read a repo file as UTF-8.
+
+    The encoding is explicit because Windows defaults to cp1252, which cannot
+    decode characters in the Markdown files. Undecodable bytes are replaced
+    rather than raising, so an encoding problem can never mask a real finding.
+    """
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
 def _workflow_text():
-    return PUBLISH_WORKFLOW.read_text()
+    return _read_text(PUBLISH_WORKFLOW)
 
 
 def _block_after(text, key):
@@ -81,7 +91,7 @@ def test_docs_do_not_promise_pypi_install():
         path = REPO_ROOT / relative
         if not path.exists():
             continue
-        for number, line in enumerate(path.read_text().splitlines(), start=1):
+        for number, line in enumerate(_read_text(path).splitlines(), start=1):
             stripped = line.strip()
             if "pip install driftcheck" in stripped and "git+" not in stripped:
                 offenders.append(f"{relative}:{number}: {stripped}")
