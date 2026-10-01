@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import textwrap
 
 import pytest
@@ -23,6 +24,21 @@ WORKFLOW = os.path.join(
     "workflows",
     "driftcheck.yml",
 )
+
+# These tests execute the workflow's bash steps locally. Windows runners have
+# no POSIX bash by default (git-bash is not on PATH in CI), so skip there
+# instead of failing — the workflow itself only ever runs on ubuntu-latest.
+requires_bash = pytest.mark.skipif(
+    sys.platform.startswith("win") or not shutil.which("bash"),
+    reason="needs a POSIX bash; the workflow runs on ubuntu-latest",
+)
+
+# `mapfile` needs bash 4+; macOS still ships 3.2. The workflow must stay
+# parseable there, so the test suite guards against that regression.
+BASH4_ONLY = re.compile(
+    r"\bmapfile\b|\breadarray\b|\$\{[A-Za-z_]+,,\}|\$\{[A-Za-z_]+\^\^\}|declare -A"
+)
+
 
 BLOCK_RE = re.compile(
     r"      - name: (Build driftcheck args|Run driftcheck)\n(?:.*\n)*?"
@@ -39,6 +55,23 @@ def _step_scripts():
         textwrap.dedent("\n".join(line[10:] for line in body.rstrip("\n").split("\n")))
         for _, body in blocks
     ]
+
+
+def test_workflow_steps_avoid_bash4_only_builtins():
+    """The workflow must stay runnable under bash 3.2 (macOS default).
+
+    `mapfile`/`readarray` need bash 4+; using them here broke the CI matrix on
+    macOS while passing locally on bash 5. Comments are excluded so prose may
+    still name the builtins it avoids.
+    """
+    offenders = []
+    for idx, script in enumerate(_step_scripts()):
+        code = "\n".join(
+            line for line in script.split("\n") if not line.lstrip().startswith("#")
+        )
+        for match in BASH4_ONLY.finditer(code):
+            offenders.append(f"step {idx}: {match.group(0)}")
+    assert not offenders, "bash 4+ only construct in workflow: " + "; ".join(offenders)
 
 
 def test_workflow_has_no_template_injection_in_run_blocks():
@@ -61,6 +94,7 @@ def test_workflow_has_no_template_injection_in_run_blocks():
     assert not offenders, "input expressions inside run: -> " + "; ".join(offenders)
 
 
+@requires_bash
 @pytest.mark.parametrize(
     "label,payload_template",
     [
@@ -74,8 +108,6 @@ def test_workflow_has_no_template_injection_in_run_blocks():
 def test_hostile_input_is_not_executed(tmp_path, label, payload_template):
     """Run both steps locally with a hostile input; assert no command executes
     and the payload arrives as exactly one argv entry."""
-    if not shutil.which("bash"):
-        pytest.skip("bash not available")
     build, run = _step_scripts()
 
     pwned = tmp_path / "PWNED"
@@ -124,10 +156,9 @@ def test_hostile_input_is_not_executed(tmp_path, label, payload_template):
     assert len(carrying) == 1, f"{label}: payload spread over {len(carrying)} argv entries: {argv}"
 
 
+@requires_bash
 def test_build_step_emits_valid_heredoc(tmp_path):
     """The args heredoc must round-trip: one flag per line between the markers."""
-    if not shutil.which("bash"):
-        pytest.skip("bash not available")
     build, run = _step_scripts()
 
     github_output = tmp_path / "github_output"

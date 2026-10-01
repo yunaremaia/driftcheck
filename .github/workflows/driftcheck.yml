@@ -115,8 +115,12 @@ jobs:
           set +e
           # The heredoc sentinel appears twice (open + close); awk keeps only
           # what is between them, and one flag per line means no value is ever
-          # re-split on whitespace.
-          mapfile -t ARGS < <(printf '%s\n' "$DRIFTCHECK_ARGS" \
+          # re-split on whitespace. A while-read loop is used instead of
+          # `mapfile`, which needs bash 4+ (macOS still ships bash 3.2).
+          ARGS=()
+          while IFS= read -r _arg; do
+            [ -n "$_arg" ] && ARGS+=("$_arg")
+          done < <(printf '%s\n' "$DRIFTCHECK_ARGS" \
             | awk '/<<DRIFTCHECK_ARGS_EOF$/ {inside=1; next}
                    /^DRIFTCHECK_ARGS_EOF$/ {inside=0}
                    inside')
