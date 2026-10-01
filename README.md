@@ -1,6 +1,6 @@
 # driftcheck
 [![CI](https://github.com/yunaremaia/driftcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yunaremaia/driftcheck/actions)
-[![PyPI](https://img.shields.io/pypi/v/driftcheck)](https://pypi.org/project/driftcheck/)
+[![Release](https://img.shields.io/github/v/release/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/releases/latest)
 [![License](https://img.shields.io/github/license/yunaremaia/driftcheck) ![Stars](https://img.shields.io/github/stars/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
 
 
@@ -207,15 +207,12 @@ driftcheck is designed to run as a quality gate in CI pipelines. It exits with c
 driftcheck --git-mode --git-base v1.0.0
 ```
 
-### Checks (v0.1.46):
+### Checks (v0.1.47):
 
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
-<<<<<<< HEAD
 - **Cargo features**: `Cargo.toml` `[features]` vs explicit `features = [...]` lists and `--features` flags in README
-=======
 - **npm workspaces**: same dependency declared at different ranges across workspace `package.json` files
->>>>>>> b5531dd (feat(detector): add npm workspace dependency range drift (rebase of #376))
 - **Node**: `package.json` `engines.node` vs README
 - **Bun**: `package.json` `engines.bun` vs README — major.minor comparison
 - **Package version**: `package.json` `version` vs explicit npm badge URLs, install commands, and changelog headers in README/docs
@@ -329,7 +326,7 @@ the files staged for the next commit:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.46
+    rev: v0.1.47
     hooks:
       - id: driftcheck
         args: ["--no-informational"]
@@ -357,9 +354,9 @@ pre-commit install
 
 ### Stats
 
-- **66 detector modules** covering 50+ toolchains and file formats
-- **71 registered detectors** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
-- **1291 tests** with >95% code coverage
+- **85 detector modules** covering 50+ toolchains and file formats
+- **74 registered drift keys** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
+- **1511 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
@@ -432,8 +429,22 @@ See the [API Reference](docs/api.md) for embedding driftcheck in scripts and CI 
 | Ruby | ruby-version | `ruby_version_drifts` | .ruby-version vs README |
 | Rust | rust-cargo | `rust_drifts` | Rust Cargo.toml rust-version |
 | Rust | rust-toolchain | `drifts` | Rust toolchain.toml channel |
-|| Security | typosquat | `typosquat_drifts` | Typosquat detection in dependencies (informational) |
-|| AI Agents | a2a | `a2a_drifts` | A2A agent card spec_version vs docs, capabilities, endpoints (informational) |
-|| Documentation | changelog | `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational) |
-|| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
+| Security | typosquat | `typosquat_drifts` | Typosquat detection in dependencies (informational) |
+| AI Agents | a2a | `a2a_drifts` | A2A agent card spec_version vs docs, capabilities, endpoints (informational) |
+| Documentation | changelog | `changelog_drifts` | CHANGELOG.md presence/content vs CONTRIBUTING.md policy (informational) |
+| Terraform | terraform | `terraform_drifts` | Terraform versions.tf provider |
 | Terraform | terraform-version | `terraform_version_drifts` | .terraform-version vs README |
+
+## Sponsoring / Treasury
+
+driftcheck is MIT licensed and maintained in the open. If it saves you time, you can
+support continued development through GitHub Sponsors or the Solana treasury below.
+
+Funding details are declared in [`.github/FUNDING.yml`](.github/FUNDING.yml), which is
+what GitHub reads to render the **Sponsor** button on this repository.
+
+- **GitHub Sponsors:** [@yunaremaia](https://github.com/sponsors/yunaremaia)
+- **Solana:** `Eeztv1nCYUt1fwGWpzKC948gaWfjejYCAuLtUMgzDWbW`
+
+Use the Solana address only for intended donations. Anyone can generate a similar
+address, so verify the address against `.github/FUNDING.yml` before sending funds.

@@ -1,10 +1,10 @@
-# Driftcheck Manifest — v0.1.46
+# Driftcheck Manifest — v0.1.47
 
 ## Core Stats
-- **66 detector modules** (files in `src/driftcheck/detectors/` excluding `__init__.py`)
-- **70 registered detectors** (DRIFT_KEYS in `src/driftcheck/config.py`)
+- **85 detector modules** (files in `src/driftcheck/detectors/` excluding `__init__.py`)
+- **74 registered drift keys** (DRIFT_KEYS in `src/driftcheck/config.py`)
 - **70 find_* functions** across detector modules (plus `to_sarif`)
-- **1301 tests** with >95% code coverage
+- **1511 tests** with >95% code coverage
 - **SARIF 2.1.0** output for GitHub Code Scanning
 
 ## Recent Commits
@@ -83,7 +83,6 @@ All 66 detector modules are documented in the README "Checks" section, though so
 | `requirements.py` | (part of Python) |
 | `ruby.py` | Ruby |
 | `rust.py` | Rust |
-| `rust_workspace.py` | (part of Rust) |
 | `swift.py` | Swift |
 | `taskfile.py` | Taskfile |
 | `terraform.py` | Terraform |
