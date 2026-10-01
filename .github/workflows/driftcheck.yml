@@ -66,44 +66,73 @@ jobs:
       - name: Build driftcheck args
         id: args
         shell: bash
+        env:
+          INPUT_DETECTORS: ${{ inputs.detectors }}
+          INPUT_EXCLUDE: ${{ inputs.exclude }}
+          INPUT_FAIL_ON_INFORMATIONAL: ${{ inputs.fail-on-informational }}
+          INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
+          INPUT_SARIF_UPLOAD: ${{ inputs.sarif-upload }}
         run: |
-          ARGS=""
-          if [ -n "${{ inputs.detectors }}" ]; then
-            ARGS="$ARGS --only ${{ inputs.detectors }}"
+          # Inputs are read from env, never interpolated into the script body:
+          # an Actions expression is expanded by the runner *before* bash parses
+          # the line, so quoting it here would not stop a caller from injecting
+          # shell syntax (zizmor: template-injection).
+          # --only/--exclude take a comma-separated list, so each input maps to
+          # exactly one argv entry.
+          ARGS=()
+          # Collapse embedded newlines/CRs so a value can never span two
+          # lines of the heredoc and turn into an extra argv entry.
+          INPUT_DETECTORS=${INPUT_DETECTORS//$'\r'/}
+          INPUT_DETECTORS=${INPUT_DETECTORS//$'\n'/ }
+          INPUT_EXCLUDE=${INPUT_EXCLUDE//$'\r'/}
+          INPUT_EXCLUDE=${INPUT_EXCLUDE//$'\n'/ }
+          [ -n "$INPUT_DETECTORS" ] && ARGS+=(--only "$INPUT_DETECTORS")
+          [ -n "$INPUT_EXCLUDE" ] && ARGS+=(--exclude "$INPUT_EXCLUDE")
+          if [ "$INPUT_FAIL_ON_INFORMATIONAL" != "true" ]; then
+            ARGS+=(--no-informational)
           fi
-          if [ -n "${{ inputs.exclude }}" ]; then
-            ARGS="$ARGS --exclude ${{ inputs.exclude }}"
-          fi
-          if [ "${{ inputs.fail-on-informational }}" = "true" ]; then
-            ARGS="$ARGS"
-          else
-            ARGS="$ARGS --no-informational"
-          fi
-          if [ "${{ inputs.output-format }}" = "json" ]; then
-            ARGS="$ARGS --json"
-          elif [ "${{ inputs.output-format }}" = "csv" ]; then
-            ARGS="$ARGS --csv"
-          elif [ "${{ inputs.output-format }}" = "sarif" ] || [ "${{ inputs.sarif-upload }}" = "true" ]; then
-            ARGS="$ARGS --sarif"
-          fi
-          echo "driftcheck_args=$ARGS" >> $GITHUB_OUTPUT
+          case "$INPUT_OUTPUT_FORMAT" in
+            json)  ARGS+=(--json) ;;
+            csv)   ARGS+=(--csv) ;;
+            sarif) ARGS+=(--sarif) ;;
+          esac
+          [ "$INPUT_SARIF_UPLOAD" = "true" ] && ARGS+=(--sarif)
+          # One flag per line in a heredoc: no value can be word-split on re-read.
+          {
+            echo "driftcheck_args<<DRIFTCHECK_ARGS_EOF"
+            printf '%s\n' "${ARGS[@]}"
+            echo "DRIFTCHECK_ARGS_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Run driftcheck
         id: driftcheck
+        shell: bash
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+          INPUT_FAIL_ON_DRIFT: ${{ inputs.fail-on-drift }}
+          DRIFTCHECK_ARGS: ${{ steps.args.outputs.driftcheck_args }}
         run: |
           set +e
-          driftcheck "${{ inputs.path }}" ${{ steps.args.outputs.driftcheck_args }}
+          # The heredoc sentinel appears twice (open + close); awk keeps only
+          # what is between them, and one flag per line means no value is ever
+          # re-split on whitespace.
+          mapfile -t ARGS < <(printf '%s\n' "$DRIFTCHECK_ARGS" \
+            | awk '/<<DRIFTCHECK_ARGS_EOF$/ {inside=1; next}
+                   /^DRIFTCHECK_ARGS_EOF$/ {inside=0}
+                   inside')
+          driftcheck "$INPUT_PATH" "${ARGS[@]}"
           EXIT_CODE=$?
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
           if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "drift=true" >> $GITHUB_OUTPUT
+            echo "drift=true" >> "$GITHUB_OUTPUT"
           else
-            echo "drift=false" >> $GITHUB_OUTPUT
+            echo "drift=false" >> "$GITHUB_OUTPUT"
           fi
-          if [ "${{ inputs.fail-on-drift }}" = "true" ]; then
+          if [ "$INPUT_FAIL_ON_DRIFT" = "true" ]; then
             exit $EXIT_CODE
           fi
           exit 0
+
 
       - name: Upload SARIF
         if: inputs.sarif-upload || inputs.output-format == 'sarif'
@@ -115,4 +144,4 @@ jobs:
       - name: Post to job summary
         if: always() && steps.driftcheck.outputs.drift != 'true'
         run: |
-          echo "## ✅ Driftcheck: No drift found" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Driftcheck: No drift found" >> "$GITHUB_STEP_SUMMARY"
