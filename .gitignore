@@ -11,3 +11,8 @@ site/
 .coverage.*
 coverage.xml
 htmlcov/
+
+# CodeGraph local symbol index (built by /root/.hermes/scripts/codegraph-tests.sh).
+# Generated, per-developer, and contains an absolute-path map of the whole tree --
+# it must never be committed.
+.codegraph/
