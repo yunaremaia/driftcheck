@@ -117,8 +117,15 @@ Outcome:
 |----------|-------|
 | Closed as implemented (`completed`) | 28 |
 | Closed as duplicate (`not planned`) | 11 |
-| Left open | 31 |
+| Closed as not this repository (`not planned`) | 1 |
+| Left open | 37 |
 | Closed as contradicted by design | 0 |
+
+77 open at the start, 40 closed, 37 remaining. Nothing was closed as contradicted
+or out of date: every close names a source file, a test file, the issue it
+duplicates, or the repository the work actually belongs to. Two issues (#143,
+#147) were left open with a comment recording that a CHANGELOG entry claims they
+were already fixed when no code changed.
 
 Two CHANGELOG claims did not survive verification and are worth flagging:
 
