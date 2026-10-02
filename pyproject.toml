@@ -31,6 +31,27 @@ driftcheck = "driftcheck.cli:main"
 [project.urls]
 Homepage = "https://github.com/yunaremaia/driftcheck"
 
+[tool.pytest.ini_options]
+# --cov lives here (not in the CI command line) so a local `pytest -q` and the
+# CI run measure exactly the same thing. The gate itself is the fail_under key
+# in [tool.coverage.report] below - do not duplicate it as --cov-fail-under.
+addopts = "--cov=driftcheck --cov-report=term-missing"
+
+[tool.coverage.run]
+# Statement coverage, matching what `pytest --cov=driftcheck` measured when the
+# floor below was chosen. Branch coverage is a stricter metric; turning it on
+# drops the total and needs the floor re-derived from a fresh measurement.
+source = ["driftcheck"]
+
+[tool.coverage.report]
+# The floor is enforced from this file, never from a CI flag, so there is a
+# single source of truth. Measured total on main is 89.56%; coverage rounds the
+# total to a whole percent before comparing, so keep this strictly below the
+# rounded total (90) or the gate loses its margin.
+fail_under = 89
+show_missing = true
+skip_covered = false
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["driftcheck*"]

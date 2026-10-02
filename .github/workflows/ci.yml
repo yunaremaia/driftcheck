@@ -23,7 +23,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e . && pip install pytest
+      - run: pip install -e . && pip install pytest pytest-cov
+      # --cov and the coverage floor come from pyproject.toml, not from here,
+      # so a local `pytest -q` and CI enforce the identical gate.
       - run: pytest -q
       - run: python -m driftcheck --help
 
