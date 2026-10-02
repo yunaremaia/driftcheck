@@ -22,10 +22,17 @@ pip install pytest pytest-cov
 ## Running Tests
 
 ```bash
-pytest -q                          # run all tests
-pytest tests/test_csv_output.py    # run specific test file
-pytest -q --cov=driftcheck --cov-report=term-missing  # with coverage
+pytest -q                          # run all tests (coverage on, gate enforced)
+pytest -q --no-cov tests/test_csv_output.py    # run a subset, skip the gate
 ```
+
+Coverage is enabled by default through `addopts` in `pyproject.toml`, and the
+floor is `fail_under` in `[tool.coverage.report]`. A full `pytest -q` therefore
+fails if the total drops below the floor. When you run a subset the total is
+naturally far below it, so pass `--no-cov` for targeted runs.
+
+When you add tests, keep the floor honest: it is a floor, not a ratchet. Raise it
+in the same PR that pushes the total up.
 
 We aim for 90%+ coverage on new code.
 

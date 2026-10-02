@@ -365,7 +365,7 @@ pre-commit install
 
 - **85 detector modules** covering 50+ toolchains and file formats
 - **74 registered drift keys** (including split environment detectors, lockfile variants, plugin system, and A2A protocol drift detection)
-- **1589 tests** with >95% code coverage
+- **1617 tests**, with a CI-enforced coverage floor of 89% (measured total: 89.56%)
 - **SARIF 2.1.0** output for GitHub Code Scanning
 - **Plugin system** for custom detectors
 - **Pre-commit hook** support
