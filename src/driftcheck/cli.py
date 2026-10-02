@@ -1064,6 +1064,8 @@ def _print_informational(all_drifts: dict) -> None:
             print(f"driftcheck: info: {d['file']}: orphaned — {d['detail']}")
     for d in all_drifts.get("nvmrc_drifts", []):
         print(f"driftcheck: info: {d['file']}: Node {d.get('doc_version')} → should be {d.get('nvmrc_version')} (.nvmrc)")
+    for d in all_drifts.get("typosquat_drifts", []):
+        print(f"driftcheck: info: {d['file']}: {d['detail']} (suspected typosquat)")
 
 
 if __name__ == "__main__":
