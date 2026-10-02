@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
-src/driftcheck.egg-info/
+*.egg-info/
+build/
 dist/
 .pytest_cache/
 site/
