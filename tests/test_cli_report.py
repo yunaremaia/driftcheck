@@ -15,6 +15,21 @@ def test_init_creates_config(tmp_path):
     assert "[driftcheck]" in content
 
 
+def test_malformed_config_reports_an_error_not_a_traceback(tmp_path, capsys):
+    """A malformed .driftcheck.toml must be a user error, not a crash.
+
+    The old lenient parser silently applied a half-parsed config; tomllib
+    raises, so the CLI has to translate that into a message and exit code.
+    """
+    (tmp_path / "README.md").write_text("# demo\nPython 3.11\n")
+    (tmp_path / ".driftcheck.toml").write_text("[driftcheck\nexclude_detectors = [\n")
+    result = main([str(tmp_path)])
+    captured = capsys.readouterr()
+    assert result == 2
+    assert "invalid .driftcheck.toml" in captured.err
+    assert "Traceback" not in captured.err
+
+
 def test_init_does_not_overwrite(tmp_path, capsys):
     """--init does not overwrite an existing config."""
     config = tmp_path / ".driftcheck.toml"

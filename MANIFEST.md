@@ -9,7 +9,7 @@
 
 ## Recent Commits
 - `73a6829` fix: handle symlink loops in _walk_files
-- `070dccc` fix: replace hand-rolled TOML parser with tomllib (fixes #151) (#264)
+- `070dccc` fix: replace hand-rolled TOML parser with tomllib (fixes #151) (#264) — **empty commit; it changed no files**
 - `6f6eeeb` fix: wire custom_detectors config into scan_repo (fixes #209) (#245)
 - `efd7789` docs: update test count from 1284 to 1308 in MANIFEST.md
 - `9271761` fix(test): remove duplicate dict keys flagged by ruff F601

@@ -60,7 +60,10 @@ All notable changes to driftcheck will be documented in this file.
 - `_print_blocking_drifts` now handles all drift types (#233)
 - External CDN detection reports all CDN references per file, not just the first (#228)
 - Symlink loop handling in `_walk_files` and prefix-collision symlink bypass in `_safe_glob`
-- Replaced hand-rolled TOML parser with `tomllib` (#151)
+- Replaced the hand-rolled TOML parser with `tomllib` (`tomli` backport on Python 3.10) —
+  inline comments, multi-line arrays and `#` inside quoted strings now parse correctly,
+  and a malformed `.driftcheck.toml` reports an error instead of silently applying a
+  half-parsed config (#143, #151). See the correction note below.
 - Replaced bare `except` with specific exceptions in detectors and `cli.py` (#309)
 - Wired `custom_detectors` config into `scan_repo` (#209)
 - Duplicate `git_tag_drifts` key in `DRIFT_RULES` (#298)
@@ -81,7 +84,20 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Changed
 
-- Removed the legacy `"drifts"` alias and dead `_read_files_parallel` (#146, #147)
+- Removed the legacy `"drifts"` alias (#146)
+- Removed the dead `_read_files_parallel` helper and its now-unused
+  `ThreadPoolExecutor` imports; the function had no callers in `src/` or `tests/` (#147)
+
+### Correction notes
+
+- **`070dccc` ("replace hand-rolled TOML parser with tomllib", #151) was an empty commit.**
+  Its message and the entry in `MANIFEST.md` claimed it replaced `_parse_toml`, but the
+  commit changed no files and `_parse_toml` remained the hand-rolled parser. The
+  replacement actually landed later, together with the dead-code removal above; the
+  "Fixed" entry above now describes the shipped state rather than `070dccc`.
+- **`dffd414` (#147) removed only the `"drifts"` alias.** `_read_files_parallel` was
+  still present and still uncalled, so the earlier "Removed ... dead
+  `_read_files_parallel` (#146, #147)" entry did not match the tree either.
 
 ## [0.1.46] - 2026-09-18
 

@@ -8,13 +8,12 @@ Configuration:
     customizing detection behavior. See README for details.
 
 Performance:
-    File I/O is parallelized via ThreadPoolExecutor for large repos.
+    Scans walk the tree once and read only the files a detector needs.
 """
 from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from .config import load_config, get_excluded_detectors
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors.actions_version_drift import find_actions_version_drift
@@ -243,36 +242,6 @@ from .detectors import (
     find_helm_dependency_drift,)
 
 
-def _read_files_parallel(root: Path, patterns: list[str]) -> str:
-    """Read multiple files in parallel using ThreadPoolExecutor.
-    
-    Returns concatenated file contents separated by newlines.
-    """
-    files = []
-    for pattern in patterns:
-        for p in root.glob(pattern):
-            if p.is_file():
-                files.append(p)
-    
-    if not files:
-        return ""
-    
-    contents = []
-    with ThreadPoolExecutor(max_workers=min(8, len(files))) as executor:
-        futures = {
-            executor.submit(lambda p=p: _read_text_safe(p, max_size=1_000_000)): p
-            for p in files
-        }
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                if result is not None:
-                    contents.append(result)
-            except Exception:
-                pass
-    return "\n".join(contents)
-
-
 def _read_candidate(
     path: Path,
     walked_files: set[Path],
@@ -360,7 +329,7 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     """Scan a repo on disk, return {toolchain_version, drifts}.
 
     Configuration is loaded from .driftcheck.toml if present.
-    File I/O is parallelized via ThreadPoolExecutor for large repos.
+    The tree is walked once and only the files a detector needs are read.
     
     Args:
         root: repo root path

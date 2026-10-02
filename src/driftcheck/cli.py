@@ -13,6 +13,11 @@ from .git_mode import (
     DETECTOR_FILE_PATTERNS,
 )
 
+try:  # Python 3.11+ stdlib
+    import tomllib
+except ImportError:  # Python 3.10 backport (declared in pyproject.toml)
+    import tomli as tomllib  # type: ignore[no-redef]
+
 # Drift types that are informational (non-blocking) — reported but don't fail the check
 INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts", "changelog_drifts"}
 
@@ -492,7 +497,15 @@ def main(argv=None) -> int:
         if not args.quiet:
             print(f"driftcheck: git-mode — {len(changed)} file(s) changed, {len(enabled_detectors)} detector(s) relevant")
 
-    result = scan_repo(Path(args.path), enabled_detectors=enabled_detectors, max_file_size=args.max_file_size)
+    # A malformed .driftcheck.toml used to be swallowed by a lenient parser and
+    # silently applied as garbage config; tomllib raises instead, so report it
+    # as a user error instead of a traceback (issue #143 / #151).
+    try:
+        result = scan_repo(Path(args.path), enabled_detectors=enabled_detectors, max_file_size=args.max_file_size)
+    except tomllib.TOMLDecodeError as e:
+        print(f"driftcheck: error: invalid .driftcheck.toml: {e}", file=__import__('sys').stderr)
+        print("driftcheck: run 'driftcheck doctor' to validate the config", file=__import__('sys').stderr)
+        return 2
 
     # Baseline integration: compare against baseline if one exists
     from .baseline import load_baseline, compare_against_baseline
