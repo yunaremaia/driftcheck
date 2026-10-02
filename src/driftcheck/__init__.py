@@ -68,6 +68,7 @@ from .detectors.pnpm import find_pnpm_workspace_drift
 from .detectors.poetry import find_poetry_drift
 from .detectors.pre_commit import find_pre_commit_drift
 from .detectors.python import find_python_drift
+from .detectors.python_freshness import find_python_dep_freshness
 from .detectors.python_version import find_python_version_file_drift
 from .detectors.renovate import find_renovate_drift
 from .detectors.git_submodule_drift import find_git_submodule_drift
@@ -86,9 +87,11 @@ from .detectors.typosquat import find_typosquat_drift
 from .detectors.version_files import find_version_file_drift
 from .detectors.vscode import find_vscode_extensions_drift
 from .detectors.yarnrc import find_yarnrc_drift
+from .detector import scan_repo
 
 __all__ = [
     "to_sarif",
+    "scan_repo",
     "find_actions_node_drift",
     "find_bazel_drift",
     "find_bun_drift",
