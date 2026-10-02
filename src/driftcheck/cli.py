@@ -2,7 +2,9 @@
 from __future__ import annotations
 import argparse, csv, json, io
 import difflib
+import os
 from pathlib import Path
+from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
 from .config import DRIFT_KEYS
@@ -151,6 +153,55 @@ FILE_DETECTOR_MAP = {
     ".gitmodules": ["git_submodule_drifts"],
 }
 
+# Directories that never hold first-party files `driftcheck init` should act on:
+# vendored dependencies, build output, tool caches and VCS metadata. They hold
+# the overwhelming majority of files in a real repo, so skipping them is what
+# keeps detector discovery proportional to the project's own source.
+# Mirrors `detectors.external.SKIP_DIRS`, which applies the same rule to the
+# recursive HTML scan.
+DETECTION_SKIP_DIRS = frozenset({
+    "node_modules", "vendor", "bower_components", ".git", ".hg", ".svn",
+    "__pycache__", ".venv", "venv", "env", ".tox", ".nox", ".eggs",
+    "build", "dist", "out", "target", ".next", ".nuxt", ".gradle", ".m2",
+    ".cache", ".mypy_cache", ".pytest_cache", ".ruff_cache", "htmlcov",
+    "site-packages", ".terraform", ".idea", ".vscode",
+})
+
+# Characters of each YAML file inspected for a Kubernetes manifest. The old code
+# did `read_text()[:2000]`, which decoded the entire file first and threw
+# everything past 2 kB away.
+_YAML_HEAD_CHARS = 2000
+
+
+def _iter_yaml_files(root: Path) -> Iterator[Path]:
+    """Yield ``*.yaml``/``*.yml`` files under `root`, skipping vendored trees.
+
+    Single pruned walk shared by the k8s and Helm probes below. The previous
+    implementation called `root.rglob("*.yaml")` twice plus
+    `root.rglob("*.yml")` and `root.rglob("Chart.yaml")` -- four complete
+    traversals of the repository, each of which walked `node_modules`, `.git`,
+    `.venv` and friends (#301).
+
+    Symlinked directories are not followed, matching `os.walk`'s default.
+    """
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        # Pruning in place stops descent; a check inside the loop would still
+        # pay for the walk itself.
+        dirnames[:] = [d for d in dirnames if d not in DETECTION_SKIP_DIRS]
+        for filename in filenames:
+            if filename.endswith((".yaml", ".yml")):
+                yield Path(dirpath) / filename
+
+
+def _is_k8s_manifest(path: Path) -> bool:
+    """Return True when the head of `path` looks like a Kubernetes manifest."""
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as fh:
+            head = fh.read(_YAML_HEAD_CHARS)
+    except OSError:
+        return False
+    return "apiVersion:" in head and "kind:" in head
+
 
 def _detect_detectors(root: Path) -> list[str]:
     """Auto-detect relevant detectors based on project files."""
@@ -175,21 +226,16 @@ def _detect_detectors(root: Path) -> list[str]:
         detected.add("gh_actions_version_drifts")
         detected.add("ci_os_drifts")
     
-    # Check for kubernetes manifests
-    if list(root.rglob("*.yaml")) or list(root.rglob("*.yml")):
-        # Check for k8s files (Deployment, Service, etc.)
-        for f in root.rglob("*.yaml"):
-            try:
-                content = f.read_text()[:2000]
-                if "apiVersion:" in content and "kind:" in content:
-                    detected.add("k8s_drifts")
-                    break
-            except (OSError, ValueError):
-                pass
-    
-    # Check for helm charts
-    if (root / "Chart.yaml").exists() or list(root.rglob("Chart.yaml")):
+    # Check for kubernetes manifests and helm charts. Both probes share one
+    # pruned walk: they look for the same YAML files, so walking the repo
+    # separately for each was paying for the traversal 4x over (#301).
+    if (root / "Chart.yaml").exists():
         detected.add("helm_drifts")
+    for yaml_path in _iter_yaml_files(root):
+        if yaml_path.name == "Chart.yaml":
+            detected.add("helm_drifts")
+        elif _is_k8s_manifest(yaml_path):
+            detected.add("k8s_drifts")
     
     # Check for version manager files
     for vfile in [".ruby-version", ".python-version", ".node-version", ".java-version", ".terraform-version"]:
