@@ -1,7 +1,6 @@
 """NVMRC drift detection: .nvmrc vs package.json engines.node."""
 from __future__ import annotations
 import re
-from pathlib import Path
 
 NVMRC_RE = re.compile(r'^v?(\d+(?:\.\d+)*)', re.MULTILINE)
 

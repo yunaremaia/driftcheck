@@ -36,6 +36,34 @@ in the same PR that pushes the total up.
 
 We aim for 90%+ coverage on new code.
 
+## Linting
+
+```bash
+pip install ruff
+ruff check src/
+```
+
+The `lint` CI job runs exactly that, so a local run and CI enforce the identical
+gate. Rule selection, `target-version` and the linted path all come from
+`pyproject.toml` — do not pass `--select` on the command line, or your run and CI
+will diverge.
+
+The gate covers **pyflakes only** (`select = ["F"]`): undefined names, unused
+imports and variables, and stale `__all__` entries. That is the subset that finds
+real defects, and `src/` is clean under it. The wider `E501`/`I001`/`UP`/`B` set is
+deferred and enumerated in `BACKLOG.md`; widen `select` there one group at a
+time, in its own PR.
+
+Two conventions the gate depends on:
+
+- **`src/` only, never `tests/`.** The linter must never create pressure to
+  weaken or delete a test to satisfy it.
+- **No `# noqa`, no blanket `[tool.ruff.lint.per-file-ignores]` entry.** Fix the
+  import, or — if it is a deliberate re-export — add the name to that module's
+  `__all__`. A name in `__all__` that the module does not define is an
+  `AttributeError` on `from <module> import *`, so it is a defect, not a style
+  choice.
+
 **Testing / CI Tip:**
 When testing CLI behavior locally or verifying strict rules, use `--fail-on-informational` to treat informational drifts (such as missing lockfiles) as exit code 1 failures.
 

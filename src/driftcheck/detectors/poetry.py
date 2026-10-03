@@ -1,7 +1,6 @@
 """Poetry pyproject.toml drift detection: pyproject.toml vs README."""
 from __future__ import annotations
 import re
-from pathlib import Path
 
 # Match pyproject.toml [tool.poetry.dependencies] and [tool.poetry.dev-dependencies]
 POETRY_PYTHON_RE = re.compile(

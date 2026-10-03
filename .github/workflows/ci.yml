@@ -5,7 +5,27 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      # Rule selection, target version and the linted path all come from
+      # pyproject.toml, so this command and a local `ruff check src/` enforce
+      # the identical gate. src/ only - never tests/.
+      - run: ruff check src/
+      # `ruff format --check` is deliberately not run: formatting the tree is a
+      # separate, reviewable change (see BACKLOG.md).
+      - run: ruff check --select=F --statistics src/
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:

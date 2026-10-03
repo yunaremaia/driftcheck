@@ -5,10 +5,7 @@ was detected, showing file, line, values, diff, impact, and suggested fix.
 """
 from __future__ import annotations
 
-import difflib
-import re
 from pathlib import Path
-from typing import Any
 
 
 # Detector-level impact descriptions — keyed by drift type

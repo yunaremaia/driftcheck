@@ -399,6 +399,9 @@ __all__ = [
     "DOCKER_TAG_RE",
     "FROM_LINE_RE",
     "FLOATING_TAGS",
+    "parse_dockerfile_instructions",
+    "find_dockerfile_instruction_drift",
+    "DOCKERFILE_INSTRUCTIONS",
     # Java
     "parse_gradle_java_version",
     "find_java_drift",
@@ -515,6 +518,8 @@ __all__ = [
     # Deno
     "parse_deno_version",
     "find_deno_drift",
+    "DENO_JSON_VER_RE",
+    "DENO_DOC_RE",
     # Swift
     "parse_swift_version_from_package",
     "find_swift_drift",
@@ -563,6 +568,8 @@ __all__ = [
     "find_git_tag_drift",
     "parse_semver",
     "SEMVER_RE",
+    # Git submodule
+    "find_git_submodule_drift",
     # Devcontainer
     "parse_devcontainer_image",
     "parse_devcontainer_features",
@@ -606,7 +613,6 @@ __all__ = [
     # NVMRC
     "parse_nvmrc_version",
     "find_nvmrc_drift",
-    "NVMRC_RE",
     # Package manager
     "parse_package_manager_field",
     "detect_lockfile_manager",
@@ -625,7 +631,6 @@ __all__ = [
     # Tool versions
     "parse_tool_versions",
     "find_tool_versions_drift",
-    "TOOL_VERSION_RE",
     # Version files
     "parse_ruby_version",
     "parse_python_version",
@@ -668,7 +673,7 @@ from .changelog import find_changelog_drift
 from .bazel import find_bazel_drift
 from .nix import find_nix_drift
 from .scala import find_scala_drift, parse_sbt
-from .julia import find_julia_drift
+from .julia import find_julia_drift, parse_manifest_versions, parse_project_compat
 from .pyproject_tools import find_pyproject_tool_drift
 from .python_req import find_python_req_drift
 from .r_lang import find_r_drift

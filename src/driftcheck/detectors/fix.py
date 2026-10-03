@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .rust import DOC_RE, TOOLCHAIN_RE
+from .rust import DOC_RE
 from .node import NODE_RE
 from .package_version import fix_package_version_reference
 from .python import PY_RE

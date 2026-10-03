@@ -119,6 +119,7 @@ __all__ = [
     "find_gh_actions_version_drift",
     "find_actions_version_drift",
     "find_git_tag_drift",
+    "find_git_submodule_drift",
     "find_gitlab_drift",
     "find_go_drift",
     "find_gradle_catalog_drift",

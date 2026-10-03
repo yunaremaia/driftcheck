@@ -1,7 +1,6 @@
 """Tool-versions drift detection: .tool-versions (asdf/mise) vs README."""
 from __future__ import annotations
 import re
-from pathlib import Path
 
 # Map of tool name in .tool-versions to common README mention patterns
 TOOL_PATTERNS = {

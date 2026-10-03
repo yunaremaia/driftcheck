@@ -37,6 +37,30 @@ Homepage = "https://github.com/yunaremaia/driftcheck"
 # in [tool.coverage.report] below - do not duplicate it as --cov-fail-under.
 addopts = "--cov=driftcheck --cov-report=term-missing"
 
+[tool.ruff]
+# ruff is not formatted by hand: only the selected rules below are enforced, so
+# a ruff upgrade cannot widen the gate on its own.
+target-version = "py310"
+line-length = 120
+# src/ is the linted surface: tests are deliberately excluded so this gate never
+# pressures a future change into weakening or deleting a test. CI passes the
+# path explicitly too, so the gate holds even if this key is dropped.
+include = ["src/**/*.py"]
+
+[tool.ruff.lint]
+# Scoped to pyflakes (F) on purpose. F is the subset that finds real defects -
+# undefined names, dead imports, stale __all__ entries - and src/ is clean under
+# it. The wider E501/I001/UP/B set is still ~810 findings of pre-existing style
+# debt; it is recorded in BACKLOG.md and ratcheted in later, so this gate stays
+# reviewable instead of arriving as an unreviewable reformat. Widen `select`
+# when that debt is paid down.
+select = ["F"]
+
+[tool.ruff.lint.per-file-ignores]
+# None today. Every F finding in src/ was fixed at the source rather than
+# exempted; do not add a blanket entry here - fix the import or, for a genuine
+# re-export, add the name to that module's __all__.
+
 [tool.coverage.run]
 # Statement coverage, matching what `pytest --cov=driftcheck` measured when the
 # floor below was chosen. Branch coverage is a stricter metric; turning it on
