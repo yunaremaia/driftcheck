@@ -41,10 +41,54 @@ DRIFT_KEYS = [
     "poetry_drifts",
     "npm_workspace_drifts",
     "julia_drifts",
-    "renovate_drifts",
     "bazel_drifts",
     "nix_drifts",
+    # Keys emitted by scan_repo that were previously absent from this list.
+    # DRIFT_KEYS is the exit-code gate (cli.py builds `all_drifts` from it), so
+    # a key missing here was detected, serialised into --json, written to --csv
+    # and reported by --sarif at level=error -- while the process still exited 0.
+    "a2a_drifts",
+    "dockerfile_instruction_drifts",
+    "freshness_drifts",
+    "frontmatter_drifts",
+    "gitlab_drifts",
+    "go_replace_drifts",
+    "helm_dependency_drifts",
+    "justfile_drifts",
+    "kmp_drifts",
+    "pyproject_tool_drifts",
+    "python_req_drifts",
+    "python_version_file_drifts",
+    "r_drifts",
+    "scala_drifts",
+    "terraform_lock_drifts",
 ]
+
+# Drift types that are reported but never fail the check.
+#
+# This lives here, in the leaf module, because it used to be duplicated as
+# `INFORMATIONAL_DRIFTS` (cli.py) and `INFORMATIONAL_TYPES` (sarif.py). The two
+# copies had drifted apart: `changelog_drifts` and `typosquat_drifts` were
+# non-blocking for the exit code while SARIF still emitted them at
+# `level=error`, so `typosquat_drifts` opened a blocking Code Scanning alert
+# while the process exited 0. Severity has to be one fact, so both consumers
+# read it from here.
+#
+# `freshness_drifts` is included deliberately: it is the only detector whose
+# verdict comes from outside the repository. `find_python_dep_freshness`
+# queries live PyPI, so the same tree yields a different answer depending on
+# network reachability and on what was published upstream that day. A blocking
+# gate must be a property of the repo under test; this one is a property of the
+# internet.
+INFORMATIONAL_DRIFT_KEYS = {
+    "external_resource_drifts",
+    "dependabot_drifts",
+    "lockfile_drifts",
+    "nvmrc_drifts",
+    "typosquat_drifts",
+    "changelog_drifts",
+    "freshness_drifts",
+}
 
 # Default configuration
 DEFAULT_CONFIG = {
