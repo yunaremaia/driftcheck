@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .config import INFORMATIONAL_DRIFT_KEYS
+
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 
 # Drift type metadata: (rule_id, rule_name, rule_description)
@@ -465,7 +467,11 @@ DRIFT_RULES = {
 }
 
 # Drift types that are informational (SARIF level: warning)
-INFORMATIONAL_TYPES = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts"}
+#
+# Imported from config.py rather than redeclared: this used to be a separate
+# literal that fell behind the CLI's copy, which meant a key could be
+# informational for the exit code while SARIF still emitted it at level=error.
+INFORMATIONAL_TYPES = INFORMATIONAL_DRIFT_KEYS
 
 
 def _make_rule(rule_id: str, name: str, description: str) -> dict:

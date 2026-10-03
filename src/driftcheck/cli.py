@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
-from .config import DRIFT_KEYS
+from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
 from .git_mode import (
     get_changed_and_untracked,
     get_staged_files,
@@ -21,7 +21,13 @@ except ImportError:  # Python 3.10 backport (declared in pyproject.toml)
     import tomli as tomllib  # type: ignore[no-redef]
 
 # Drift types that are informational (non-blocking) — reported but don't fail the check
-INFORMATIONAL_DRIFTS = {"external_resource_drifts", "dependabot_drifts", "lockfile_drifts", "nvmrc_drifts", "typosquat_drifts", "changelog_drifts"}
+#
+# Single source of truth lives in config.py: it used to be duplicated here and
+# in sarif.py, and the copies diverged (see the comment on
+# INFORMATIONAL_DRIFT_KEYS). Severity has to be one fact -- a key that is
+# informational for the exit code must not be `level=error` in SARIF, or
+# Code Scanning opens a blocking alert the CLI considers harmless.
+INFORMATIONAL_DRIFTS = INFORMATIONAL_DRIFT_KEYS
 
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
@@ -70,6 +76,9 @@ DETECTOR_INFO = {
     "cmake_drifts": ("cmake", "CMakeLists.txt cmake_minimum_required version vs README"),
     "requirements_drifts": ("requirements", "requirements.txt package versions vs pyproject.toml/README"),
     "npm_workspace_drifts": ("npm-workspaces", "Dependency ranges across npm/pnpm workspace package.json files"),
+    "engines_drifts": ("engines", "package.json engines vs installed runtime versions"),
+    "git_submodule_drifts": ("git-submodule", ".gitmodules pins vs checked-out submodule commits"),
+    "julia_drifts": ("julia", "Julia Project.toml/Manifest.toml pins vs README"),
     "scala_drifts": ("scala", "build.sbt scalaVersion and libraryDependencies vs README"),
     "freshness_drifts": ("python-freshness", "Python pinned dependency versions vs PyPI latest"),
     "bazel_drifts": ("bazel", "Bazel pins vs README"),
@@ -98,9 +107,23 @@ DETECTOR_INFO = {
     "git_tag_drifts": ("git-tag", "Latest git tag vs README version mentions"),
     "devcontainer_drifts": ("devcontainer", "Devcontainer.json features/base image vs README"),
     "pre_commit_drifts": ("pre-commit", "Pre-commit hook versions vs .pre-commit-config.yaml"),
+    "renovate_drifts": ("renovate", "Renovate config presets vs repository reality"),
     "changelog_drifts": ("changelog", "CHANGELOG.md presence/content vs CONTRIBUTING.md policy"),
     "cargo_feature_drifts": ("cargo-features", "Cargo.toml [features] vs README feature lists"),
     "rust_workspace_drifts": ("rust-workspace", "Cargo workspace member versions vs [workspace.package]"),
+    # Keys emitted by detector.py that were previously missing here. DETECTOR_INFO
+    # backs `--list-detectors` and `--only`, so a key absent from it cannot be
+    # selected on the command line at all.
+    "a2a_drifts": ("a2a", "Agent-to-Agent protocol peer versions vs README"),
+    "dockerfile_instruction_drifts": ("dockerfile-instruction", "Dockerfile instructions vs docs"),
+    "frontmatter_drifts": ("frontmatter-version", "Markdown frontmatter versions vs toolchain pins"),
+    "go_replace_drifts": ("go-replace", "go.mod replace directives vs go.sum"),
+    "helm_dependency_drifts": ("helm-dependency", "Chart.yaml dependencies vs Chart.lock"),
+    "justfile_drifts": ("justfile", "justfile tool pins vs README"),
+    "pyproject_tool_drifts": ("pyproject-tool", "pyproject.toml [tool.*] version tables"),
+    "python_req_drifts": ("python-req", "requirements.txt pins vs PEP 621 dependencies"),
+    "r_drifts": ("r", "R package versions vs README (DESCRIPTION/renv)"),
+    "terraform_lock_drifts": ("terraform-lock", ".terraform.lock.hcl vs required_providers"),
 }
 
 # Mapping of project files to their relevant detectors for `driftcheck init`
