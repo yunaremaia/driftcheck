@@ -122,8 +122,89 @@ DRIFT_RULES = {
         "Workflow uses a GitHub Actions version still pinned to deprecated Node 20 runtime",
     ),
     "git_submodule_drifts": (
-        "Git submodule commit drift",
+        "git-submodule-commit-drift",
+        "Git Submodule Commit Drift",
         "Submodule points to a different commit than recorded in the parent repo index.",
+    ),
+    "package_version_drifts": (
+        "package-json-version-drift",
+        "package.json Version Drift",
+        "Documentation references a package version that doesn't match package.json version",
+    ),
+    "pyproject_tool_drifts": (
+        "pyproject-tool-drift",
+        "Pyproject Tool Target Drift",
+        "pyproject.toml [tool.*] Python target disagrees with requires-python or another tool",
+    ),
+    "python_req_drifts": (
+        "python-req-drift",
+        "Python Requirements Drift",
+        "requirements.txt and pyproject.toml [project].dependencies disagree",
+    ),
+    "justfile_drifts": (
+        "justfile-drift",
+        "Justfile Tool Drift",
+        "justfile tool pin disagrees with documentation",
+    ),
+    "terraform_lock_drifts": (
+        "terraform-lock-drift",
+        "Terraform Lock Drift",
+        ".terraform.lock.hcl version does not satisfy required_providers",
+    ),
+    "r_drifts": (
+        "r-package-drift",
+        "R Package Drift",
+        "README R package version disagrees with DESCRIPTION or renv.lock",
+    ),
+    "go_replace_drifts": (
+        "go-replace-drift",
+        "Go Module Replace Drift",
+        "go.mod require, replace, or exclude disagrees with go.sum",
+    ),
+    "frontmatter_drifts": (
+        "frontmatter-version-drift",
+        "Frontmatter Version Drift",
+        "Markdown YAML frontmatter version disagrees with the toolchain",
+    ),
+    "helm_dependency_drifts": (
+        "helm-dependency-drift",
+        "Helm Dependency Drift",
+        "Chart.lock version does not satisfy the Chart.yaml dependency constraint",
+    ),
+    "a2a_drifts": (
+        "a2a-agent-card-drift",
+        "A2A Agent Card Drift",
+        "Agent card spec_version or capabilities disagree with documented A2A version",
+    ),
+    "changelog_drifts": (
+        "changelog-entry-drift",
+        "Changelog Entry Drift",
+        "Repository version or changelog entry disagrees with the declared package version",
+    ),
+    "dockerfile_instruction_drifts": (
+        "dockerfile-instruction-drift",
+        "Dockerfile Instruction Drift",
+        "Documentation mentions a Dockerfile instruction (EXPOSE, WORKDIR, ENTRYPOINT) that disagrees with the Dockerfile",
+    ),
+    "freshness_drifts": (
+        "python-dep-freshness-drift",
+        "Python Dependency Freshness Drift",
+        "Pinned Python dependency version trails the latest release",
+    ),
+    "kmp_drifts": (
+        "kmp-version-drift",
+        "Kotlin Multiplatform Version Drift",
+        "gradle/libs.versions.toml KMP version disagrees with README badges",
+    ),
+    "python_version_file_drifts": (
+        "python-version-file-drift-pyproject",
+        "Python Version File Drift",
+        "README documentation references a Python version that doesn't match .python-version, pyproject.toml requires-python, setup.cfg or setup.py",
+    ),
+    "scala_drifts": (
+        "scala-version-drift",
+        "Scala Version Drift",
+        "README Scala or artifact version disagrees with build.sbt on major.minor",
     ),
     "cargo_feature_drifts": (
         "cargo-feature-drift",
@@ -658,6 +739,11 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "env_example_drifts", "gradle_catalog_drifts", "poetry_drifts", "julia_drifts",
         "cargo_feature_drifts", "npm_workspace_drifts", "rust_workspace_drifts",
         "pre_commit_drifts", "renovate_drifts", "typosquat_drifts",
+        "git_submodule_drifts", "package_version_drifts", "pyproject_tool_drifts",
+        "python_req_drifts", "justfile_drifts", "terraform_lock_drifts", "r_drifts",
+        "go_replace_drifts", "frontmatter_drifts", "helm_dependency_drifts",
+        "a2a_drifts", "changelog_drifts", "dockerfile_instruction_drifts",
+        "freshness_drifts", "kmp_drifts", "python_version_file_drifts", "scala_drifts",
     ]
 
     for drift_type in drift_keys:
