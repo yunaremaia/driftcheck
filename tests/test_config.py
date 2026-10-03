@@ -164,3 +164,79 @@ class TestLoadConfigToml:
             assert "rust_drifts" not in result
             # node drifts should still be present
             assert "node_drifts" in result
+
+
+class TestLoadConfigTopLevelKeys:
+    """Top-level keys must be honoured, not silently dropped.
+
+    `load_config` flattened top-level keys with `if k not in cfg`, but `cfg`
+    is pre-seeded from DEFAULT_CONFIG, so that condition was False for every
+    key that has a default. A documented top-level `exclude_detectors` was
+    therefore ignored while the same key under [driftcheck] worked: a silent
+    misconfiguration where the requested exclusion has no effect and the
+    drift the user wanted suppressed is still reported.
+    """
+
+    def test_top_level_exclude_detectors_is_honored(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".driftcheck.toml").write_text('exclude_detectors = ["node"]\n')
+            config = load_config(root)
+            assert config["exclude_detectors"] == ["node"]
+            assert get_excluded_detectors(config) == {"node_drifts"}
+
+    def test_top_level_scalar_overrides_a_default(self):
+        """A defaulted scalar must be overridable at top level too."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".driftcheck.toml").write_text(
+                "follow_symlinks = false\nmax_file_size = 500\n"
+            )
+            config = load_config(root)
+            assert config["follow_symlinks"] is False
+            assert config["max_file_size"] == 500
+
+    def test_driftcheck_section_still_wins_over_top_level(self):
+        """Precedence rule: [driftcheck] overrides the same top-level key."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".driftcheck.toml").write_text(
+                'exclude_detectors = ["node"]\n\n[driftcheck]\nexclude_detectors = ["rust"]\n'
+            )
+            config = load_config(root)
+            assert config["exclude_detectors"] == ["rust"]
+            assert get_excluded_detectors(config) == {"rust_drifts"}
+
+    def test_unknown_top_level_scalar_key_is_accepted(self):
+        """Preserved behaviour: a key with no default is still picked up."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".driftcheck.toml").write_text("unknown_knob = 42\n")
+            config = load_config(root)
+            assert config["unknown_knob"] == 42
+
+    def test_foreign_toml_table_does_not_leak_into_config(self):
+        """A non-driftcheck table is not config; it must not land in cfg."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / ".driftcheck.toml").write_text(
+                '[tool.example]\nname = "x"\n\n[something-else]\nk = 1\n'
+            )
+            config = load_config(root)
+            assert "tool" not in config
+            assert "something-else" not in config
+            assert not [k for k, v in config.items() if isinstance(v, dict)]
+
+    def test_top_level_exclusion_reaches_scan_repo(self):
+        """End-to-end: the top-level exclusion actually suppresses the drift."""
+        from driftcheck.detector import scan_repo
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "rust-toolchain.toml").write_text('channel = "1.96.1"')
+            (root / "package.json").write_text('{"engines": {"node": "24.x"}}')
+            (root / "README.md").write_text("Rust 1.96.1 and Node 24")
+            (root / ".driftcheck.toml").write_text('exclude_detectors = ["rust"]\n')
+            result = scan_repo(root)
+            assert "rust_drifts" not in result
+            assert "node_drifts" in result
+
