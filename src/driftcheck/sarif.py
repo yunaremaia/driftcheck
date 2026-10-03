@@ -698,6 +698,22 @@ def _make_relative_path(file: str, root: Path | None) -> str:
         return path.name  # fallback avoids leaking paths outside the repo root
 
 
+def _fallback_rule(drift_type: str) -> tuple[str, str, str]:
+    """Derive a SARIF rule for a drift key that has no curated ``DRIFT_RULES``.
+
+    A key with no hand-written rule is still a real finding, so it gets a
+    deterministic rule derived from its name instead of being dropped. Rule ids
+    stay unique because they are a pure function of the key.
+    """
+    base = drift_type.removesuffix("_drifts")
+    label = base.replace("_", " ").strip() or "drift"
+    return (
+        f"{base}-drift",
+        label.title(),
+        f"Drift reported by the {label} detector.",
+    )
+
+
 def to_sarif(result: dict, version: str | None = None, root: Path | None = None) -> dict:
     """Convert driftcheck scan result to SARIF 2.1.0 document.
 
@@ -746,15 +762,30 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "freshness_drifts", "kmp_drifts", "python_version_file_drifts", "scala_drifts",
     ]
 
-    for drift_type in drift_keys:
+    # Walk the curated list first, then any remaining ``*_drifts`` key that is
+    # present in the result but not on it. Plugin detectors register at runtime
+    # under ``f"plugin_{name}_drifts"`` and are merged in with
+    # ``result.update(plugin_results)``, so no literal key exists for them --
+    # iterating ``drift_keys`` alone dropped every plugin finding from SARIF
+    # with no warning. Retention is the contract here: anything the detectors
+    # reported must reach the output, so an unknown key gets a derived rule
+    # instead of being discarded.
+    walk_keys = list(drift_keys) + sorted(
+        key
+        for key in result
+        if key.endswith("_drifts") and key not in drift_keys
+    )
+
+    for drift_type in walk_keys:
         entries = result.get(drift_type, [])
         if not entries:
             continue
 
         meta = DRIFT_RULES.get(drift_type)
-        if not meta:
-            continue
-        rule_id, rule_name, rule_desc = meta
+        if meta is None:
+            rule_id, rule_name, rule_desc = _fallback_rule(drift_type)
+        else:
+            rule_id, rule_name, rule_desc = meta
 
         if rule_id not in rule_set:
             rules.append(_make_rule(rule_id, rule_name, rule_desc))
