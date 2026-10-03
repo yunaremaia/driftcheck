@@ -4,21 +4,38 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "driftcheck-py"
-version = "0.1.50"
+version = "0.1.51"
 description = "Detect version drift between docs and toolchain files (README vs Dockerfile, build.gradle, rust-toolchain.toml, package.json, etc.)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Yunare Maia", email = "yunare@gmail.com" }]
-keywords = ["drift", "docs", "version", "consistency", "cli"]
+keywords = [
+    "version-drift",
+    "documentation-drift",
+    "readme-lint",
+    "rust-toolchain",
+    "toml",
+    "docker",
+    "github-actions",
+    "pre-commit",
+    "monorepo",
+    "ci",
+    "static-analysis",
+    "documentation",
+    "consistency",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
 ]
 dependencies = [
     "packaging>=23.0",
@@ -29,7 +46,15 @@ dependencies = [
 driftcheck = "driftcheck.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yunaremaia/driftcheck"
+# Homepage is the documentation site, not the repository: PyPI already renders
+# the source next to this list, so the prominent slot earns its place by pointing
+# at the guides a visitor actually lands on.
+Homepage = "https://yunaremaia.github.io/driftcheck/"
+Documentation = "https://yunaremaia.github.io/driftcheck/getting-started/"
+Source = "https://github.com/yunaremaia/driftcheck"
+Issues = "https://github.com/yunaremaia/driftcheck/issues"
+Changelog = "https://github.com/yunaremaia/driftcheck/blob/main/CHANGELOG.md"
+Funding = "https://github.com/sponsors/yunaremaia"
 
 [tool.pytest.ini_options]
 # --cov lives here (not in the CI command line) so a local `pytest -q` and the

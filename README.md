@@ -1,6 +1,8 @@
 # driftcheck
 [![CI](https://github.com/yunaremaia/driftcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yunaremaia/driftcheck/actions)
 [![PyPI](https://img.shields.io/pypi/v/driftcheck-py)](https://pypi.org/project/driftcheck-py/)
+[![Downloads](https://static.pepy.tech/badge/driftcheck-py)](https://pypi.org/project/driftcheck-py/)
+[![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blue.svg)](https://yunaremaia.github.io/driftcheck/)
 [![Release](https://img.shields.io/github/v/release/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/yunaremaia/driftcheck) ![Stars](https://img.shields.io/github/stars/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
@@ -17,6 +19,12 @@ The distribution on PyPI is `driftcheck-py` — the bare name `driftcheck` is ta
 by an unrelated package. Install from source with
 `pip install git+https://github.com/yunaremaia/driftcheck.git` if you need the
 tip of `main`.
+
+Full guides — configuration, every detector, CI integration, plugins — live in
+the **[documentation site](https://yunaremaia.github.io/driftcheck/)**. Start at
+[Getting Started](https://yunaremaia.github.io/driftcheck/getting-started/), and
+see the [detector reference](https://yunaremaia.github.io/driftcheck/detectors/)
+for what driftcheck checks.
 
 ```bash
 driftcheck           # scan current repo
