@@ -10,13 +10,38 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Yunare Maia", email = "yunare@gmail.com" }]
-keywords = ["drift", "docs", "version", "consistency", "cli"]
+keywords = [
+    "drift",
+    "docs",
+    "version",
+    "consistency",
+    "cli",
+    "version-drift",
+    "readme",
+    "dockerfile",
+    "docker",
+    "gradle",
+    "rust-toolchain",
+    "package-json",
+    "toolchain",
+    "dependency",
+    "stale",
+    "mismatch",
+    "ci",
+    "lint",
+    "release",
+    "pre-commit",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
 ]
@@ -30,6 +55,10 @@ driftcheck = "driftcheck.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/yunaremaia/driftcheck"
+Repository = "https://github.com/yunaremaia/driftcheck"
+Issues = "https://github.com/yunaremaia/driftcheck/issues"
+Funding = "https://github.com/sponsors/yunaremaia"
+Changelog = "https://github.com/yunaremaia/driftcheck/blob/main/CHANGELOG.md"
 
 [tool.pytest.ini_options]
 # --cov lives here (not in the CI command line) so a local `pytest -q` and the
