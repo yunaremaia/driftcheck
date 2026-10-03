@@ -115,7 +115,6 @@ def detect(root, docs):
     def test_plugin_cannot_escape_target_directory(self, plugin_dir, tmp_path):
         """A plugin should not be able to access files outside the target."""
         # Create a file outside the target (use tempdir for cross-platform compat)
-        import tempfile
         outside_dir = Path(tempfile.gettempdir())
         outside_file = outside_dir / "secret_outside.txt"
         outside_file.write_text("secret data")

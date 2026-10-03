@@ -22,6 +22,29 @@ All notable changes to driftcheck will be documented in this file.
   detector added without its SARIF wiring now fails the suite instead of disappearing from
   Code Scanning.
 
+### Changed
+
+- **Lint gate over `tests/` narrowed to `F821` instead of dropped entirely.** `tests/`
+  stays out of the pyflakes (`F`) gate, so that gate still cannot pressure a change into
+  weakening or deleting a test. It gains one narrower rule, `F821` (undefined name),
+  because an undefined name is a `NameError` the moment the line runs rather than a style
+  opinion — so this rule cannot be satisfied by touching a test. The rest of pyflakes over
+  `tests/` stays ungated; the measured remainder is recorded in BACKLOG.md.
+
+- Removed 6 redundant in-function reimports in `tests/` (`test_deno.py`,
+  `test_detector.py`, `test_plugin_sandbox.py`) that shadowed a module-scope import of the
+  same name.
+
+### Fixed
+
+- **`tests/test_version.py` raised `NameError` instead of skipping.** The test called
+  `pytest.skip()` but the module never imported `pytest`, so on any machine where the
+  distribution metadata resolves to the `0.0.0.dev0` dev placeholder — a plain source
+  checkout, i.e. any local dev run without `pip install -e .` — pytest reported the test
+  as **failed** with `NameError: name 'pytest' is not defined` rather than skipping it.
+  CI never saw it because CI installs the package, so the branch that skips was never
+  taken there. Now verified to skip correctly with the package absent.
+
 ## [0.1.47] - 2026-10-01
 
 84 commits since 0.1.46. Highlights below; see the git history for the full list.

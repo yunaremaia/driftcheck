@@ -59,7 +59,7 @@ def test_php_drift_same_major_minor():
 
 
 # ---- Bun drift tests ----
-from driftcheck.detector import find_bun_drift, parse_bun_version_from_package, scan_repo
+from driftcheck.detector import find_bun_drift, parse_bun_version_from_package
 
 def test_parse_bun_version_basic():
     pkg = '{"engines": {"bun": ">=1.0"}}'

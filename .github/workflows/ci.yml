@@ -22,6 +22,17 @@ jobs:
       # pyproject.toml, so this command and a local `ruff check src/` enforce
       # the identical gate. src/ only - never tests/.
       - run: ruff check src/
+      # A second, narrower gate over tests/: F821 (undefined name) ONLY.
+      # tests/ stays out of the full pyflakes gate above so this gate can never
+      # pressure a change into weakening or deleting a test, but an undefined
+      # name is a NameError the moment it runs - a defect, not a style opinion -
+      # so it is worth catching. The inline --config only rewrites `include`
+      # (which is what excludes tests/ from the gate above); target-version and
+      # every other setting still come from pyproject.toml. Do not replace it
+      # with --isolated, which would drop target-version and start flagging
+      # version-gated builtins. Do not widen this to F: that reintroduces the
+      # ~150 findings of F401/F811 style debt the src/ gate is scoped to avoid.
+      - run: ruff check --select=F821 --config 'include = ["tests/**/*.py"]' tests/
       # `ruff format --check` is deliberately not run: formatting the tree is a
       # separate, reviewable change (see BACKLOG.md).
       - run: ruff check --select=F --statistics src/

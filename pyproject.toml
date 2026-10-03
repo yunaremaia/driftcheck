@@ -71,6 +71,15 @@ line-length = 120
 # pressures a future change into weakening or deleting a test. CI passes the
 # path explicitly too, so the gate holds even if this key is dropped.
 include = ["src/**/*.py"]
+# tests/ is excluded from the `F` gate above on purpose, and stays excluded.
+# It gets ONE narrower gate instead, F821 (undefined name), passed explicitly
+# by CI as `ruff check --select=F821 --config 'include = ["tests/**/*.py"]' tests/`.
+# An undefined name is not a style opinion: it is a NameError the moment that
+# line runs, so this rule cannot pressure anyone into weakening or deleting a
+# test - it only catches code that was already broken. It is scoped separately
+# because the rest of pyflakes over tests/ is mostly style debt (F401/F811),
+# and gating that would reintroduce exactly the pressure the `F` gate avoids.
+# Keep it separate so widening one never silently widens the other.
 
 [tool.ruff.lint]
 # Scoped to pyflakes (F) on purpose. F is the subset that finds real defects -

@@ -37,6 +37,35 @@ Last batch triage: 2026-10-02 (see [Triage log](#triage-log)).
 | Issue | Title | Notes |
 |-------|-------|-------|
 | — | Pay down the deferred ruff rule set (`E501`, `I001`, `UP`, `B`) | Enumerated below. Do not widen `select` before this is done. |
+| — | Pay down the remaining pyflakes debt in `tests/` (`F401`, `F841`) | Measured below. Deliberately left ungated. |
+
+### Deliberately not gated: pyflakes over `tests/`
+
+The lint gate is scoped to `F` on `src/` only. `tests/` gets one narrower
+gate, `F821` (undefined name), because an undefined name is a `NameError` the
+moment the line runs rather than a style opinion, so it cannot pressure a
+change into weakening or deleting a test. That split is not a compromise on
+the original intent — it is the intent, applied at the granularity the intent
+actually holds at.
+
+The rest of pyflakes over `tests/` stays ungated on purpose. Measured on `main`
+at `a4b6bc2` with ruff 0.16.10, `ruff check --select=F
+--config 'include = ["tests/**/*.py"]' --statistics tests/` reports **144**
+findings:
+
+| Rule | Count | Why it stays ungated |
+|------|-------|----------------------|
+| `F401` | 131 | Unused imports in tests are usually deliberate: they pin a public name as importable, or they exist so a fixture reads as self-contained. Gating this would turn "delete the import" into the cheapest way to make CI green — the pressure this gate was built to avoid. Fixing 131 by hand is also a 131-line diff with no defect in it. |
+| `F841` | 13 | Not safe to auto-fix. `capsys.readouterr()` and `Path.touch()`-style calls look unused but have side effects (they drain a buffer, they create a file); deleting the binding is correct, deleting the call silently breaks the test it belongs to. |
+
+`F811` was 6 and is now **0** — the redundant in-function reimports were
+removed in the same commit that added the `F821` gate. That one was different:
+a reimport of a name already bound at module scope is neither deliberate nor
+load-bearing, it is just a copy-paste artifact.
+
+So the standing rule is: `F821` is enforced everywhere, the rest of `F` is
+enforced on `src/` only, and the rest of `F` over `tests/` is a style backlog
+that nobody should have to pay to keep the gate green.
 
 ### Deferred ruff rules, measured 2026-10-03
 
