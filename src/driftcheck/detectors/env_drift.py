@@ -9,7 +9,6 @@ Detects drift between:
 from __future__ import annotations
 import re
 from pathlib import Path
-from typing import Any
 
 # Patterns for environment config files
 ENV_PATTERN = re.compile(r'^(?P<key>[A-Z][A-Z0-9_]*)\s*=\s*(?P<value>.*)$', re.MULTILINE)

@@ -3,7 +3,6 @@
 Reads .driftcheck.toml from repo root to customize detection behavior.
 """
 from __future__ import annotations
-import os
 from pathlib import Path
 from typing import Any
 

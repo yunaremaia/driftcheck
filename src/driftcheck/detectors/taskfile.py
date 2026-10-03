@@ -8,7 +8,6 @@ Detects drift between Taskfile.yml and Makefile when both exist:
 from __future__ import annotations
 import re
 from pathlib import Path
-from typing import Any
 
 TASKFILE_TASK_RE = re.compile(r'^\s{2}([a-zA-Z_][a-zA-Z0-9_-]*)\s*:', re.MULTILINE)
 MAKEFILE_TASK_RE = re.compile(r'^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:', re.MULTILINE)

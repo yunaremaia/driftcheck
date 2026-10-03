@@ -13,8 +13,7 @@ Performance:
 from __future__ import annotations
 import os
 from pathlib import Path
-from typing import Any
-from .config import load_config, get_excluded_detectors
+from .config import load_config, get_excluded_detectors, DRIFT_KEYS
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors.actions_version_drift import find_actions_version_drift
 
@@ -239,7 +238,9 @@ from .detectors import (
     find_justfile_drift,
     find_go_replace_drift,
     find_frontmatter_drift,
-    find_helm_dependency_drift,)
+    find_helm_dependency_drift,
+    parse_tool_versions,
+    parse_nvmrc_version,)
 
 
 def _read_candidate(
@@ -967,6 +968,42 @@ __all__ = [
     "find_devcontainer_drift",
     # Environment drift
     "find_env_drift_combined",
+    # Parser helpers. driftcheck.detector is the legacy flat facade: before the
+    # detectors/ subpackage existed these callables were imported from here, so
+    # they stay reachable from this module for backward compatibility. They are
+    # already public on driftcheck.detectors; listing them here keeps __all__ an
+    # accurate description of what this module re-exports.
+    "parse_from_stages",
+    "is_agent_card_file",
+    "parse_agent_card",
+    "extract_card_spec_version",
+    "extract_card_capabilities",
+    "extract_card_endpoints",
+    "parse_makefile_versions",
+    "parse_mix_elixir_version",
+    "parse_cmake_version",
+    "parse_poetry_pyproject",
+    "parse_kotlin_version",
+    "parse_jenkins_node_agent",
+    "parse_jenkins_nodejs_version",
+    "parse_jenkins_python_version",
+    "parse_jenkins_docker_images",
+    "parse_ruby_version",
+    "parse_python_version",
+    "parse_node_version",
+    "parse_java_version",
+    "parse_terraform_version",
+    "parse_python_version_file",
+    "parse_npmrc",
+    "parse_yarnrc_version",
+    "parse_pnpm_workspace",
+    "parse_package_manager_field",
+    "detect_lockfile_manager",
+    "parse_vscode_extensions",
+    "get_latest_git_tag",
+    "parse_editorconfig",
+    "parse_mise_tools",
+    "parse_pre_commit_revs",
     # Orchestrator
     "scan_repo",
 ]

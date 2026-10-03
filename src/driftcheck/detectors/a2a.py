@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Callable
 
 # A2A spec version patterns seen in docs
 A2A_VERSION_RE = re.compile(

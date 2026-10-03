@@ -20,7 +20,6 @@ Python operations).
 from __future__ import annotations
 import builtins
 import importlib.util
-import sys
 import os as _os
 from pathlib import Path
 from typing import Any, Callable

@@ -32,6 +32,45 @@ Last batch triage: 2026-10-02 (see [Triage log](#triage-log)).
 | [#186](https://github.com/yunaremaia/driftcheck/issues/186) | `fix.py` corrupts files on non-version matches | Confirmed: `replace(old, new, 1)` at `src/driftcheck/detectors/fix.py:144,156`. |
 | [#197](https://github.com/yunaremaia/driftcheck/issues/197) | Bidirectional `--fix` with direction auto-detection | |
 
+## Tooling
+
+| Issue | Title | Notes |
+|-------|-------|-------|
+| — | Pay down the deferred ruff rule set (`E501`, `I001`, `UP`, `B`) | Enumerated below. Do not widen `select` before this is done. |
+
+### Deferred ruff rules, measured 2026-10-03
+
+The lint gate that landed in this cycle is scoped to pyflakes (`--select=F`)
+only, because that is the subset that finds real defects and `src/` is clean
+under it. Measured on `main` at `c90b1de` with ruff 0.16.10,
+`python3 -m ruff check --select=E,F,I,UP,B --statistics src/` reported **810**
+findings, of which 62 were pyflakes. Those 62 are fixed and gated; the rest is
+pre-existing style debt and is the work this entry tracks.
+
+Current standing of the non-`F` rules, re-measured on the lint-gate branch with
+`line-length = 120` now set in `pyproject.toml` — **225 findings**:
+
+| Rule | Count | What it is |
+|------|-------|------------|
+| `E501` | 115 | Line too long. Was **637** at ruff's default 88 columns; `line-length = 120` is now pinned in `pyproject.toml`, which is most of the difference. The remaining 115 still need a decision. |
+| `I001` | 74 | Unsorted imports. Mechanical, but conflicts with hand-written import ordering in `detector.py`. |
+| `B007` | 18 | Unused loop variable. |
+| `E701` | 5 | Multiple statements on one line (`if x: return y`). |
+| `B028` | 3 | `stacklevel` missing on a `warnings.warn` inside `except`. |
+| `UP035` | 2 | Deprecated import (`typing.Callable` and friends). Was 3; one is gone with the `a2a.py` cleanup. |
+| `B033` | 2 | Duplicate entries in a `set` literal. |
+| `UP045` | 2 | `Optional[X]` → `X \| None`. |
+| `UP015` | 2 | Redundant `open(..., "r")` mode. |
+| `E402` | 1 | Module import not at top of file (`src/driftcheck/detector.py`, deliberate). |
+| `E401` | 1 | Multiple imports on one line. |
+
+Suggested order when picking this up: `E501` and `I001` first (they are the
+bulk and are mechanical), then the small-count correctness-ish rules (`B033`,
+`B028`, `E701`, `E401`), then `UP`. Widen `[tool.ruff.lint] select` one group at
+a time so each stays reviewable — that is the whole reason the gate shipped
+narrow. `ruff format --check` is also not run in CI and is not part of the 810
+above; formatting the tree is its own change.
+
 ## Bug fixes (verified on `main`)
 
 | Issue | Title | Evidence |

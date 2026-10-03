@@ -328,7 +328,6 @@ def _detector_aliases() -> dict[str, str]:
 
 def _validate_detector_names(names: set[str], source: str) -> list[str]:
     """Validate detector names against known keys and their short aliases."""
-    known = set(DETECTOR_INFO.keys())
     accepted = set(_detector_aliases())
     unknown = []
     for name in names:
@@ -585,7 +584,7 @@ def main(argv=None) -> int:
             unknown_set = set(unknown)
             valid_wanted = wanted - unknown_set
             if not valid_wanted:
-                print(f"driftcheck: error: no valid detector names in --only, aborting", file=__import__('sys').stderr)
+                print("driftcheck: error: no valid detector names in --only, aborting", file=__import__('sys').stderr)
                 return 2
         wanted = _resolve_detector_names(wanted)
         result = {k: v for k, v in result.items() if k in wanted or not k.endswith("_drifts")}
@@ -785,7 +784,7 @@ def _print_report(result: dict) -> None:
                     file_counts[fname] = file_counts.get(fname, 0) + 1
         if file_counts:
             top_files = sorted(file_counts.items(), key=lambda x: -x[1])[:5]
-            print(f"- **Top files:**")
+            print("- **Top files:**")
             for fname, count in top_files:
                 print(f"  - `{fname}`: {count} drift(s)")
 

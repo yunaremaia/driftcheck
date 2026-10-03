@@ -1,7 +1,6 @@
 """Pre-commit config drift detection: .pre-commit-config.yaml rev vs README."""
 from __future__ import annotations
 import re
-from pathlib import Path
 
 # Single pattern to match pre-commit version mentions in docs
 PRE_COMMIT_RE = re.compile(r'pre-commit\s+v?(\d+(?:\.\d+)*)', re.I)

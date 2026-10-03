@@ -28,19 +28,24 @@ CHARSET_RE = re.compile(
 
 
 def parse_editorconfig(text: str) -> dict[str, str]:
-    """Parse .editorconfig into a flat dict of settings."""
+    """Parse .editorconfig into a flat dict of settings.
+
+    Section headers are skipped and keys from every section land in the same
+    flat mapping, so a setting repeated across sections resolves to the last
+    occurrence in the file.
+    """
     config = {}
-    current_section = None
-    
+
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#") or stripped.startswith(";"):
             continue
-        
+
+        # Skip the section header itself: it is not a key=value pair, and a
+        # header like "[a=b]" would otherwise be parsed as one.
         if stripped.startswith("[") and stripped.endswith("]"):
-            current_section = stripped[1:-1]
             continue
-        
+
         if "=" in stripped:
             key, _, value = stripped.partition("=")
             key = key.strip().lower()

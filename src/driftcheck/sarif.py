@@ -6,7 +6,6 @@ GitLab Vulnerability Reports, and any other consumer that speaks SARIF.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 

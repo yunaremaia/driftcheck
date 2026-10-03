@@ -1,7 +1,6 @@
 """Mise.toml drift detection: mise.toml (rtx/asdf successor) vs README mentions."""
 from __future__ import annotations
 import re
-from pathlib import Path
 
 try:
     import tomllib  # Python 3.11+ stdlib
