@@ -956,8 +956,75 @@ def _list_detectors() -> None:
         print(f"  {short:20s} [{blocking:14s}] {desc}")
 
 
+# Drift keys whose findings `_print_blocking_drifts` formats by hand. Anything
+# else it receives falls through to the generic renderer at the end of the
+# function, so this list is a formatting preference and never a gate: a key that
+# is missing here still reaches stdout.
+_HAND_FORMATTED_BLOCKING_KEYS = frozenset({
+    "rust_drifts", "node_drifts", "bun_drifts",
+    "package_version_drifts", "python_drifts", "python_setup_drifts",
+    "go_drifts", "requirements_drifts", "count_drifts",
+    "actions_drifts", "lineending_drifts", "docker_drifts",
+    "docker_multistage_drifts", "docker_bases_drifts", "java_drifts",
+    "maven_drifts", "terraform_drifts", "circleci_drifts",
+    "gitlab_drifts", "k8s_drifts", "gh_actions_version_drifts",
+    "helm_drifts", "dc_drifts", "ci_os_drifts",
+    "dotnet_drifts", "ruby_drifts", "php_drifts",
+    "tool_versions_drifts", "taskfile_drifts", "swift_drifts",
+    "deno_drifts", "dart_drifts", "makefile_drifts",
+    "elixir_drifts", "cmake_drifts", "scala_drifts",
+    "git_submodule_drifts", "cargo_feature_drifts", "rust_workspace_drifts",
+    "npm_workspace_drifts", "kotlin_drifts",
+    "pipfile_drifts", "conda_drifts", "poetry_drifts",
+    "gradle_catalog_drifts", "npmrc_drifts", "jenkins_drifts",
+    "ruby_version_drifts", "python_version_drifts", "python_version_file_drifts",
+    "node_version_drifts", "java_version_drifts", "terraform_version_drifts",
+    "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
+    "package_lock_drifts", "vscode_ext_drifts", "editorconfig_drifts",
+    "git_tag_drifts", "env_drifts",
+})
+
+
+def _render_generic_drift(key: str, d: dict) -> str:
+    """One line for a finding with no hand-written formatter.
+
+    Mirrors `--report`'s fallback so a detector without a bespoke block is
+    described the same way in both surfaces.
+    """
+    file = d.get("file", "?")
+    detail = d.get("detail")
+    if not detail:
+        tool = d.get("tool", "")
+        doc_v = d.get("doc_version", "")
+        actual_v = (
+            d.get("suggested") or d.get("toolchain_version") or d.get("package_version")
+            or d.get("gomod_version") or d.get("pyproject_version") or d.get("config_version")
+            or d.get("makefile_version") or d.get("requirements_version") or d.get("gradle_version")
+            or d.get("maven_version") or d.get("mix_version") or d.get("gemfile_version")
+            or d.get("taskfile_version") or d.get("tool_versions_version") or d.get("version_file")
+            or d.get("setup_version") or d.get("pubspec_version") or d.get("deno_json_version")
+            or d.get("pinned_version") or d.get("latest_version") or d.get("actual_count")
+            or d.get("namespace_version") or d.get("cli_version") or d.get("schema_version")
+            or ""
+        )
+        if tool:
+            detail = f"{tool} {doc_v} → should be {actual_v}"
+        else:
+            detail = str(d)
+    return f"driftcheck: {file}: {detail} ({key})"
+
+
 def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
-    """Print all blocking drift types."""
+    """Print all blocking drift types.
+
+    The hand-written blocks below format the common shapes readably. Every
+    remaining blocking key is rendered by the generic fallback at the end, so
+    the text output cannot disagree with the exit-code gate about which
+    findings exist: `all_drifts` is built from the same `_drift_keys_in` walk
+    `_blocking_drifts` uses (see `main`), and this function used to enumerate
+    62 hand-written keys, which meant 22 curated blocking keys plus every
+    runtime `plugin_*` key failed the build while printing nothing at all.
+    """
     for d in all_drifts.get("rust_drifts", []):
         target = d.get("toolchain_version") or d.get("cargo_version")
         print(f"driftcheck: {d['file']}: Rust {d['doc_version']} → should be {target}")
@@ -1137,17 +1204,36 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     for d in all_drifts.get("env_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
 
-    # Plugin drifts (generic handler)
+    # Generic fallback: every blocking key with no hand-written formatter above.
+    #
+    # This has to be derived from `all_drifts` rather than a fixed list, because
+    # the key space is open: `plugin_{name}_drifts` keys are born at runtime and
+    # a curated key can be registered without a printer block. A finding that
+    # trips the exit code and prints nothing is the worst outcome driftcheck can
+    # produce -- the operator sees a clean report while the build fails.
     for key, drifts in all_drifts.items():
-        if key.startswith("plugin_") and key.endswith("_drifts"):
-            for d in drifts:
-                detail = d.get("detail", d.get("doc_version", str(d)))
-                fname = d.get("file", "unknown")
-                print(f"driftcheck: {fname}: {detail}")
+        if not isinstance(drifts, list) or not drifts:
+            continue
+        if key in _HAND_FORMATTED_BLOCKING_KEYS or key in INFORMATIONAL_DRIFTS:
+            continue
+        for d in drifts:
+            print(_render_generic_drift(key, d) if isinstance(d, dict) else f"driftcheck: {d} ({key})")
+
+
+_HAND_FORMATTED_INFORMATIONAL_KEYS = frozenset({
+    "external_resource_drifts", "dependabot_drifts", "lockfile_drifts",
+    "nvmrc_drifts", "typosquat_drifts",
+})
 
 
 def _print_informational(all_drifts: dict) -> None:
-    """Print informational (non-blocking) drift types."""
+    """Print informational (non-blocking) drift types.
+
+    Same fallback contract as `_print_blocking_drifts`: the hand-written blocks
+    below are a formatting preference, and any other informational key reaches
+    stdout through the generic loop at the end. `changelog_drifts` had no block
+    at all, so it was silently invisible in the one mode a human reads.
+    """
     for d in all_drifts.get("external_resource_drifts", []):
         print(f"driftcheck: info: {d['file']}: {d['detail']} ({d['url']})")
     for d in all_drifts.get("dependabot_drifts", []):
@@ -1166,6 +1252,16 @@ def _print_informational(all_drifts: dict) -> None:
         print(f"driftcheck: info: {d['file']}: Node {d.get('doc_version')} → should be {d.get('nvmrc_version')} (.nvmrc)")
     for d in all_drifts.get("typosquat_drifts", []):
         print(f"driftcheck: info: {d['file']}: {d['detail']} (suspected typosquat)")
+
+    # Generic fallback, same contract as `_print_blocking_drifts`.
+    for key, drifts in all_drifts.items():
+        if not isinstance(drifts, list) or not drifts:
+            continue
+        if key in _HAND_FORMATTED_INFORMATIONAL_KEYS or key not in INFORMATIONAL_DRIFTS:
+            continue
+        for d in drifts:
+            line = _render_generic_drift(key, d) if isinstance(d, dict) else f"driftcheck: {d} ({key})"
+            print(line.replace("driftcheck: ", "driftcheck: info: ", 1))
 
 
 if __name__ == "__main__":
