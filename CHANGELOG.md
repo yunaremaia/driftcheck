@@ -2,6 +2,26 @@
 
 All notable changes to driftcheck will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **SARIF output no longer silently drops detectors.** 17 detectors were detected and
+  printed normally but never reached `--sarif` output, because `to_sarif` gates on two
+  independent structures — the `drift_keys` list it walks and the `DRIFT_RULES` mapping it
+  looks up — and a key missing from either is skipped without any warning. This affected 9
+  externally contributed detectors (`package_version`, `pyproject_tool`, `python_req`,
+  `justfile`, `terraform_lock`, `r`, `go_replace`, `frontmatter`, `helm_dependency`) whose
+  rule wiring was lost in a rebase, plus `git_submodule`, `a2a`, `changelog`,
+  `dockerfile_instruction`, `freshness`, `kmp`, `python_version_file` and `scala`.
+- **`git_submodule_drifts` rule was malformed.** It was a 2-tuple while the rest are
+  3-tuples `(rule_id, name, description)`, so its rule id and name could not be unpacked
+  consistently with every other rule.
+- Added `tests/test_sarif_coverage.py`, which asserts every drift key emitted by
+  `detector.py` is reachable in SARIF and that every rule is a well-formed 3-tuple, so a
+  detector added without its SARIF wiring now fails the suite instead of disappearing from
+  Code Scanning.
+
 ## [0.1.47] - 2026-10-01
 
 84 commits since 0.1.46. Highlights below; see the git history for the full list.
