@@ -18,6 +18,7 @@ into the SARIF document rather than being dropped.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -111,9 +112,18 @@ def test_sarif_gate_test_cannot_see_runtime_keys() -> None:
     If plugin keys ever become literals in ``detector.py``, this test fails and
     points at the coverage gap it used to leave.
     """
-    from tests.test_sarif_coverage import EMITTED  # noqa: PLC0415
+    # Loaded by path, not by ``from tests....``: ``tests/`` is not a package,
+    # so that import only resolves when the repo root happens to be on
+    # sys.path -- which is true locally and false in CI.
+    coverage_mod = importlib.util.spec_from_file_location(
+        "_sarif_coverage_guard",
+        Path(__file__).resolve().parent / "test_sarif_coverage.py",
+    )
+    assert coverage_mod is not None and coverage_mod.loader is not None
+    module = importlib.util.module_from_spec(coverage_mod)
+    coverage_mod.loader.exec_module(module)
 
-    assert not any(k.startswith("plugin_") for k in EMITTED), (
+    assert not any(k.startswith("plugin_") for k in module.EMITTED), (
         "plugin drift keys are now visible to the ast-based guard; the "
         "runtime-path tests in this file should be reconciled with it"
     )
