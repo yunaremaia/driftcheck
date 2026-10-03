@@ -29,6 +29,41 @@ except ImportError:  # Python 3.10 backport (declared in pyproject.toml)
 # Code Scanning opens a blocking alert the CLI considers harmless.
 INFORMATIONAL_DRIFTS = INFORMATIONAL_DRIFT_KEYS
 
+
+def _drift_keys_in(result: dict) -> list[str]:
+    """Every ``*_drifts`` key this result carries, curated ones plus the rest.
+
+    ``DRIFT_KEYS`` is a hand-maintained list, but the key space it has to cover
+    is open: `plugins.run_plugin_detectors` builds ``f"plugin_{name}_drifts"``
+    at runtime and `detector.scan_repo` merges those in with
+    ``result.update(...)``. Enumerating only the list therefore drops every
+    runtime key -- the finding was detected, serialised into ``--json``, written
+    to ``--csv`` as ``severity=blocking`` and reported by ``--sarif`` at
+    ``level=error``, while the process still exited 0.
+
+    This is the same fix #476 applied to the SARIF walk, and for the same
+    reason: a registry closed over an open-ended key space cannot be a fixed
+    list. The list still drives ``--only``/``--exclude`` and config validation,
+    where the names have to be known in advance; deciding whether a finding
+    fails the build only needs to know what is in the result.
+    """
+    extra = sorted(
+        key
+        for key, value in result.items()
+        if key.endswith("_drifts") and key not in DRIFT_KEYS and value
+    )
+    return list(DRIFT_KEYS) + extra
+
+
+def _blocking_drifts(result: dict) -> dict:
+    """Findings in ``result`` that must fail the build, keyed by drift key."""
+    return {
+        k: result[k]
+        for k in _drift_keys_in(result)
+        if k not in INFORMATIONAL_DRIFTS and result.get(k)
+    }
+
+
 # Detector metadata: key -> (short_name, description)
 DETECTOR_INFO = {
     "rust_drifts": ("rust-cargo", "Rust Cargo.toml rust-version vs README"),
@@ -596,8 +631,7 @@ def main(argv=None) -> int:
 
     if args.report:
         _print_report(result)
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
-        return 1 if any(blocking.values()) else 0
+        return 1 if _blocking_drifts(result) else 0
 
     # Filter detectors if requested (with validation)
     if args.only:
@@ -629,16 +663,14 @@ def main(argv=None) -> int:
             sarif_doc["runs"][0]["properties"] = sarif_doc["runs"][0].get("properties", {})
             sarif_doc["runs"][0]["properties"]["baseline"] = result.get("_baseline", {})
         print(json.dumps(sarif_doc, indent=2))
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
-        return 1 if any(blocking.values()) else 0
+        return 1 if _blocking_drifts(result) else 0
 
     if args.no_informational:
         result = {k: v for k, v in result.items() if k not in INFORMATIONAL_DRIFTS}
 
     if args.as_csv:
         _print_csv(result)
-        blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
-        return 1 if any(blocking.values()) else 0
+        return 1 if _blocking_drifts(result) else 0
 
     if args.fix:
         fixed = apply_fixes(Path(args.path), result)
@@ -649,8 +681,8 @@ def main(argv=None) -> int:
             print("driftcheck: no drifts to fix")
             return 0
 
-    all_drifts = {k: result.get(k, []) for k in DRIFT_KEYS}
-    blocking_drifts = {k: v for k, v in all_drifts.items() if k not in INFORMATIONAL_DRIFTS}
+    all_drifts = {k: result.get(k, []) for k in _drift_keys_in(result)}
+    blocking_drifts = _blocking_drifts(result)
 
     # When baseline exists, only NEW drifts are blocking (pre-existing are warnings)
     if baseline and comparison:
@@ -767,7 +799,7 @@ def _init_config(root: Path, force: bool = False, dry_run: bool = False) -> int:
 
 def _print_report(result: dict) -> None:
     """Output a markdown report of all drifts with statistical summary."""
-    blocking = {k: result.get(k, []) for k in DRIFT_KEYS if k not in INFORMATIONAL_DRIFTS}
+    blocking = _blocking_drifts(result)
     informational = {k: result.get(k, []) for k in DRIFT_KEYS if k in INFORMATIONAL_DRIFTS}
     has_blocking = any(blocking.values())
     has_informational = any(informational.values())
