@@ -121,12 +121,23 @@ def load_config(root: Path = Path(".")) -> dict[str, Any]:
     if toml_path.exists():
         text = toml_path.read_text(encoding="utf-8")
         raw = _parse_toml(text)
-        # Flatten: [driftcheck] section takes top-level precedence
+        # Flatten: [driftcheck] section takes top-level precedence.
+        #
+        # Top-level keys are applied first and [driftcheck] second, so the
+        # section still wins. The previous `if k not in cfg` guard was meant to
+        # express that precedence, but `cfg` is pre-seeded from
+        # DEFAULT_CONFIG, so the condition was False for every key that has a
+        # default: a top-level `exclude_detectors = ["node"]` was dropped on the
+        # floor while the same key under [driftcheck] worked. That is a silent
+        # misconfiguration — the user excludes a detector and driftcheck keeps
+        # reporting the drift anyway — so the default must be overridable.
+        for k, v in raw.items():
+            # A foreign table such as [tool.foo] or [something-else] parses as a
+            # dict; it is not driftcheck config and must not land in cfg.
+            if k != "driftcheck" and not isinstance(v, dict):
+                cfg[k] = v
         if "driftcheck" in raw:
             for k, v in raw["driftcheck"].items():
-                cfg[k] = v
-        for k, v in raw.items():
-            if k != "driftcheck" and k not in cfg:
                 cfg[k] = v
     return cfg
 
