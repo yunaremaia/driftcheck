@@ -240,6 +240,80 @@ def test_unformatted_key_fallback_is_not_a_repr(key: str) -> None:
     assert "requests" in message
 
 
+def test_curated_keys_survive_a_generic_payload() -> None:
+    """No branch may *require* a field to reach the fallback.
+
+    ``_drift_message`` is the only formatter between a detector payload and the
+    alert text, and it is reached from the exported ``to_sarif`` -- so a branch
+    that indexes instead of calling ``.get()`` does not degrade one finding, it
+    aborts the whole document: the ``KeyError`` propagates out of ``to_sarif``,
+    the CLI prints no SARIF at all, and every other finding in the run is lost
+    with it.
+
+    The payload is the generic one: ``file`` plus ``detail``. That is the shape
+    ``tests/test_sarif_severity_contract.py`` feeds every curated key, and the
+    shape a caller building a result dict by hand produces. That file has to
+    carry a per-key override for ``docker_bases_drifts`` to dodge this crash --
+    the workaround is the evidence, and this test is what removes the need for
+    it.
+    """
+    payload = {"file": "README.md", "detail": "sample finding"}
+    offenders: dict[str, str] = {}
+    for key in DRIFT_RULES:
+        try:
+            _drift_message(key, payload)
+        except Exception as exc:  # noqa: BLE001 -- the report is the point
+            offenders[key] = f"{type(exc).__name__}: {exc}"
+    assert not offenders, (
+        "these branches raise on a payload that omits their detector-specific "
+        f"fields, taking the whole SARIF document down with them: {offenders}"
+    )
+
+
+def test_docker_bases_message_does_not_require_the_image_field() -> None:
+    """The floating-tag branch renders without ``image`` and still names the tag.
+
+    The placeholder is pinned, not just "some text". A fallback that renders the
+    drift with the subject missing -- an empty string, ``None``, an empty
+    template -- also avoids the ``KeyError``, and it also produces a message
+    that no longer says what drifted. Requiring ``image:`` to still be there is
+    what tells those two fixes apart; verified by mutation, since the weaker
+    "does not raise" assertion passed against a fallback of ``""``.
+    """
+    message = _drift_message("docker_bases_drifts", {"file": "Dockerfile", "tag": "latest"})
+    assert "image:latest" in message, message
+    assert "floating" in message, message
+
+
+def test_docker_bases_sibling_message_does_not_require_the_image_field() -> None:
+    """The sibling-divergence branch renders without ``image``, tags intact.
+
+    Asserted on the content rather than on "it did not raise" on purpose: a
+    fallback that swallowed the drift to avoid the ``KeyError`` would satisfy
+    the weaker assertion and silence the finding, which is the opposite of the
+    fix. Same reason the subject is required here -- see the test above.
+    """
+    message = _drift_message(
+        "docker_bases_drifts", {"file": "Dockerfile", "tags": ["3.11", "3.12"]}
+    )
+    assert message == "image pinned differently across Dockerfiles: 3.11, 3.12", message
+
+
+def test_to_sarif_emits_every_finding_when_one_payload_omits_its_image() -> None:
+    """One malformed entry must not cost the run its other findings."""
+    result = {
+        "rust_drifts": [
+            {"file": "README.md", "doc_version": "1.93.0", "toolchain_version": "1.96.1"}
+        ],
+        "docker_bases_drifts": [{"file": "Dockerfile", "tag": "latest"}],
+    }
+    doc = to_sarif(result, version="0.0.0")
+    assert len(doc["runs"][0]["results"]) == 2, (
+        "a docker base finding without an image field cost the run its other "
+        "findings"
+    )
+
+
 def test_detail_is_preferred_over_the_field_summary() -> None:
     """A detector that wrote a sentence keeps it verbatim."""
     payload = {"file": "go.mod", "detail": "errors v0.9.1 missing from go.sum", "package": "errors"}

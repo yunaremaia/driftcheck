@@ -62,33 +62,24 @@ BLOCKING_LEVELS = {"error"}
 # A finding entry rich enough that no detector-specific formatter needs to guess:
 # one `file`, one `detail`. Every key in INFORMATIONAL_DRIFT_KEYS must survive
 # `_drift_message` on these fields alone, otherwise the level assertions below
-# would be asserting on a result the document never emitted.
+# would be asserting on a result the document never emitted. That every curated
+# key survives it is asserted directly in
+# ``tests/test_sarif_message_retention.test_curated_keys_survive_a_generic_payload``;
+# ``docker_bases_drifts`` used to need an override here to dodge a ``KeyError``
+# from an unguarded ``d["image"]``, which is why no per-key payload lives in
+# this file any more.
 SAMPLE_FINDING = {"file": "README.md", "detail": "sample finding"}
-
-# ``_drift_message`` special-cases a few detectors and reads their fields
-# unconditionally, so the generic sample above crashes the formatter for them --
-# ``docker_bases_drifts`` does ``d["image"]`` (sarif.py), which is a message
-# formatting defect rather than a severity one. Supplying the field the real
-# detector always emits keeps this file testing severity: a formatter crash
-# must not be able to fail a level assertion for the wrong reason.
-SAMPLE_OVERRIDES = {
-    "docker_bases_drifts": {"file": "Dockerfile", "image": "python", "tag": "latest"},
-}
-
-
-def _sample_for(key: str) -> dict:
-    return SAMPLE_OVERRIDES.get(key, SAMPLE_FINDING)
 
 
 def _levels_for(key: str) -> list[str]:
     """Every SARIF level ``key``'s sample findings are published at."""
-    doc = to_sarif({key: [_sample_for(key)]}, version="0.0.0")
+    doc = to_sarif({key: [SAMPLE_FINDING]}, version="0.0.0")
     return [r["level"] for r in doc["runs"][0]["results"]]
 
 
 def _rule_for(key: str) -> dict:
     """The rule descriptor ``key`` contributes to the driver."""
-    doc = to_sarif({key: [_sample_for(key)]}, version="0.0.0")
+    doc = to_sarif({key: [SAMPLE_FINDING]}, version="0.0.0")
     rules = doc["runs"][0]["tool"]["driver"]["rules"]
     assert len(rules) == 1, f"{key} contributed {len(rules)} rules, expected 1"
     return rules[0]
