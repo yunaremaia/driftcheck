@@ -1070,8 +1070,16 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: PHP {d['doc_version']} → should be {d['composer_version']} (composer.json)")
     for d in all_drifts.get("tool_versions_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['tool_versions_version']} (.tool-versions)")
+    # Taskfile drifts
+    #
+    # `find_taskfile_drift` compares task *names* between Taskfile.yml and the
+    # Makefile, so it emits `file`, `kind`, `detail` and `keys` -- never a
+    # version pair. This block used to read `d['tool']`, `d['doc_version']` and
+    # `d['taskfile_version']`, all three of which the detector cannot produce,
+    # so a Makefile/Taskfile mismatch raised KeyError on `d['tool']` and took
+    # the rest of the text report down with it.
     for d in all_drifts.get("taskfile_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['taskfile_version']} (Taskfile.yml)")
+        print(f"driftcheck: {d['file']}: {d['detail']}")
     for d in all_drifts.get("swift_drifts", []):
         print(f"driftcheck: {d['file']}: Swift {d['doc_version']} → should be {d['package_version']} (Package.swift)")
     for d in all_drifts.get("deno_drifts", []):
@@ -1104,9 +1112,15 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['detail']}")
     for d in all_drifts.get("npm_workspace_drifts", []):
         print(f"driftcheck: {d['file']}: {d['detail']}")
-    # Freshness drifts (Python pinned deps vs PyPI latest)
-    for d in all_drifts.get("freshness_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['package']} {d['pinned_version']} → newer: {d['latest_version']} (PyPI)")
+    # Freshness drifts (Python pinned deps vs PyPI latest) have no hand block here
+    # on purpose. `freshness_drifts` is in `INFORMATIONAL_DRIFT_KEYS`, and this
+    # function's blocks print without the `info:` marker -- so a block here
+    # printed the finding once as if it failed the build, and then the generic
+    # fallback in `_print_informational` printed it a second time with the
+    # marker. Every freshness finding appeared twice, and the two lines
+    # disagreed on severity. It is rendered once, by the shared fallback
+    # (`describe_drift`), which is also what `--report` and `to_sarif` use, so
+    # the three surfaces say the same thing about the same finding.
 
     # Kotlin drifts
     for d in all_drifts.get("kotlin_drifts", []):
@@ -1149,10 +1163,6 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.java-version)")
     for d in all_drifts.get("terraform_version_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.terraform-version)")
-
-    # NPMRC drifts
-    for d in all_drifts.get("npmrc_drifts", []):
-        print(f"driftcheck: {d['file']}: npm registry {d['doc_registry']} → should be {d['npmrc_registry']} (.npmrc)")
 
     # Yarn RC drifts
     for d in all_drifts.get("yarnrc_drifts", []):
