@@ -116,15 +116,28 @@ def _make_repo(root: Path) -> None:
 
 
 def _run(root: Path, flag: str) -> str:
-    env = {**os.environ, "PYTHONPATH": REPO_SRC}
+    # Both halves are explicit and both are needed. ``PYTHONIOENCODING`` fixes
+    # the child's *emitted* encoding; ``encoding=`` fixes this process's
+    # *decode*. They are independent, and a Windows runner's ambient cp1252
+    # cannot represent the report's UTF-8 (the emoji and the arrow in
+    # "→ should be"). Getting only one wrong is invisible until the other
+    # changes -- and the symptom lands nowhere near the cause: the decode
+    # error kills subprocess's reader thread, so ``run()`` returns a
+    # CompletedProcess whose ``stdout`` was never appended to, i.e. **None**.
+    # See tests/test_harness_encoding.py, which pins this failure mode.
+    env = {**os.environ, "PYTHONPATH": REPO_SRC, "PYTHONIOENCODING": "utf-8"}
     proc = subprocess.run(
         [sys.executable, "-m", "driftcheck", flag],
         cwd=root,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=env,
     )
     assert proc.returncode in (0, 1), f"unexpected exit {proc.returncode}: {proc.stderr}"
+    assert proc.stdout is not None, (
+        f"--report produced no stdout (rc={proc.returncode}); stderr: {proc.stderr}"
+    )
     return proc.stdout
 
 
