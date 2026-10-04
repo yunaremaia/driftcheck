@@ -199,3 +199,120 @@ def test_cli_explain_fix(tmp_path, monkeypatch, capsys):
 
     content = (tmp_path / "README.md").read_text()
     assert "1.96.1" in content
+
+
+# --- explain: both halves for findings that name no documented field ---
+#
+# The payloads below are verbatim from `--json` output of real scans. Before
+# `describe_pair` existed these findings rendered "Actual: " with nothing after
+# it, an empty "Expected", an empty diff, and a fix of "Cannot determine fix",
+# while the same finding printed its real values in the scan -- which is the
+# user-visible defect this pins.
+
+
+def test_explain_renders_both_values_for_a_finding_with_no_documented_field(tmp_path):
+    """A real actions finding is explained with both halves filled in.
+
+    Real ``actions_drifts`` payload shape (``a2a-drift/.github/workflows/ci.yml``):
+    no ``doc_*`` field anywhere, which is 301 of 330 measured findings.
+    """
+    workflow = "name: CI\n\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n"
+    (tmp_path / "ci.yml").write_text(workflow)
+    drift = {"file": "ci.yml", "action": "actions/checkout", "current": "v4",
+             "suggested": "v5", "pos": workflow.index("actions/checkout")}
+
+    result = Explainer(tmp_path).explain(drift, "actions_drifts")
+
+    assert result["actual"] == "v4"
+    assert result["expected"] == "v5"
+    assert result["diff"] == "- v4\n+ v5"
+    assert "actions/checkout" not in result["diff"]
+    assert result["line"] == 6
+    assert "replace 'v4' with 'v5'" in result["fix"]
+
+
+def test_explain_text_shows_the_pair_for_a_no_documented_field_finding(tmp_path):
+    """The text surface prints the same two values the scan printed."""
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.poetry.dependencies]\nhttpx = "^0.27"\n')
+    drift = {"file": "pyproject.toml", "package": "httpx", "pinned_version": "0.27",
+             "latest_version": "0.28.1", "pos": 0}
+
+    text = Explainer(tmp_path).explain_text(drift, "freshness_drifts")
+
+    assert "Actual: 0.27" in text
+    assert "Expected: 0.28.1" in text
+    assert "httpx" not in text.split("Fix:")[0].split("Diff:")[1]
+
+
+def test_a_condition_finding_is_fixed_by_its_own_sentence_not_by_a_refusal(tmp_path):
+    """A finding with no pair reports its own condition as the fix.
+
+    Real ``lockfile_missing`` payload from ``a2a-drift``: ``poetry.lock`` is
+    absent, so there is no value to substitute and no fix this function can
+    apply. Saying "Cannot determine fix" about a finding that carries its own
+    explanation is the wrong answer -- the sentence is the fix.
+    """
+    (tmp_path / "poetry.lock").write_text("")
+    drift = {"file": "poetry.lock", "kind": "lockfile_missing",
+             "detail": "missing poetry.lock \u2014 pyproject.toml exists but no "
+                       "lockfile found (run package manager install)", "pos": 0}
+
+    result = Explainer(tmp_path).explain(drift, "lockfile_drifts")
+
+    assert "Cannot determine fix" not in result["fix"]
+    assert result["fix"] == result["fix"].strip()
+    assert "missing poetry.lock" in result["fix"]
+    assert result["actual"] == ""
+    assert result["diff"] == ""
+
+
+def test_find_line_uses_a_recorded_offset_rather_than_searching_for_the_value(tmp_path):
+    """A detector's recorded offset is the exact line, even when it is not the first.
+
+    Many detectors record ``m.start()``, so the offset of the value the finding
+    is about -- not the first line that merely mentions it.
+    """
+    content = "# Project\n\nNode 18.0.0\n\n## Other\n\nNode 18.0.0\n"
+    (tmp_path / "README.md").write_text(content)
+    explainer = Explainer(tmp_path)
+
+    first = content.index("18.0.0")
+    second = content.index("18.0.0", first + 1)
+    assert explainer._find_line("README.md", "18.0.0", second) == 7
+    assert explainer._find_line("README.md", "18.0.0", first) == 3
+
+
+def test_find_line_falls_back_to_searching_when_pos_is_not_tracked(tmp_path):
+    """A literal ``0`` means "offset not tracked", so the search still runs.
+
+    Measured over the real corpus, 92 findings carry ``pos=0`` (lockfiles,
+    typosquat and freshness detectors record no offset) and 175 carry a real one.
+    A falsy offset is indistinguishable from a real offset of zero, so it must
+    not be taken as "line 1" or as "no line".
+    """
+    (tmp_path / "README.md").write_text("# Project\n\nRust 1.93.0\n")
+    explainer = Explainer(tmp_path)
+
+    assert explainer._find_line("README.md", "1.93.0", 0) == 3
+    assert explainer._find_line("README.md", "1.93.0", None) == 3
+    assert explainer._find_line("README.md", "absent", 0) is None
+
+
+def test_explain_fix_declines_a_finding_with_no_pair(tmp_path):
+    """No pair means no substitution, so the file is left untouched.
+
+    Real ``lineending_drifts`` payload from ``a2a-drift``: a missing
+    ``.gitattributes`` is a condition with a sentence, not two disagreeing
+    values. There is nothing to splice, so the file must come back unchanged
+    rather than have a value written into it.
+    """
+    original = "lineending = lf\n"
+    (tmp_path / ".gitattributes").write_text(original)
+    drift = {"file": ".gitattributes", "kind": "lineending",
+             "detail": "missing .gitattributes with `* text=auto eol=lf`"}
+
+    result = Explainer(tmp_path).explain_fix(drift, "lineending_drifts")
+
+    assert result is None
+    assert (tmp_path / ".gitattributes").read_text() == original
