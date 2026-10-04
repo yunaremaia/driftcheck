@@ -8,7 +8,7 @@ from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
 from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
-from .messages import describe_finding
+from .messages import describe_drift, describe_finding
 from .git_mode import (
     get_changed_and_untracked,
     get_staged_files,
@@ -893,17 +893,7 @@ def _print_report(result: dict) -> None:
                 print(f"**{meta[1]}** ({key}):")
             for d in drifts:
                 file = d.get("file", "?")
-                detail = d.get("detail", "")
-                if detail:
-                    print(f"- `{file}`: {detail}")
-                else:
-                    tool = d.get("tool", "")
-                    doc_v = d.get("doc_version", "")
-                    actual_v = d.get("makefile_version", d.get("package_version", d.get("gomod_version", d.get("pyproject_version", d.get("requirements_version", d.get("gradle_version", ""))))))
-                    if tool:
-                        print(f"- `{file}`: {tool} {doc_v} → should be {actual_v}")
-                    else:
-                        print(f"- `{file}`: {d}")
+                print(f"- `{file}`: {describe_drift(d)}")
             print()
 
     if has_informational:
@@ -916,8 +906,7 @@ def _print_report(result: dict) -> None:
                 print(f"**{meta[1]}** ({key}):")
             for d in drifts:
                 file = d.get("file", "?")
-                detail = d.get("detail", str(d))
-                print(f"- `{file}`: {detail}")
+                print(f"- `{file}`: {describe_drift(d)}")
             print()
 
 
