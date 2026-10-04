@@ -224,10 +224,15 @@ def mixed_repo(tmp_path: Path) -> Path:
 
 
 def _run(root: Path, *flags: str) -> subprocess.CompletedProcess:
+    # encoding is explicit because the CLI now guarantees UTF-8 on stdout.
+    # text=True alone decodes with the *ambient* locale, which on a Windows
+    # runner is cp1252: the reader thread then dies on the arrow's 0x9d byte,
+    # the buffer is never appended, and proc.stdout silently becomes None.
     return subprocess.run(
         [sys.executable, "-m", "driftcheck", str(root), *flags],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 

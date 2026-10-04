@@ -416,7 +416,40 @@ def _pre_commit_hook_entry() -> str:
   always_run: true"""
 
 
+def _force_utf8_streams() -> None:
+    """Make stdout/stderr UTF-8 so a legacy console codepage cannot abort a print.
+
+    The printers emit ``→`` and ``—`` on nearly every finding. On Windows the
+    console codepage defaults to cp1252, which cannot encode ``→``, so the very
+    first ``print`` in ``_print_blocking_drifts`` raised UnicodeEncodeError and
+    killed the process mid-report: the operator got a traceback instead of the
+    findings that were about to be listed.
+
+    That is not cosmetic. A partial print means the *text* mode shows fewer
+    findings than ``--json``/``--csv``/``--sarif`` while the exit-code gate
+    still counts all of them -- the exact "clean report, failing build" split
+    this tool exists to prevent, reproduced by the encoding.
+
+    ``reconfigure`` (3.7+) rewrites the existing stream rather than replacing
+    it, so ``isatty`` and buffering behaviour survive. ``errors="replace"`` is
+    the backstop for a codepage that still cannot take a character: degrading
+    one glyph beats losing the whole report. Streams that cannot be reconfigured
+    (a pipe replaced by a plain object, or a non-TextIOWrapper) are left alone.
+    """
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
 def main(argv=None) -> int:
+    _force_utf8_streams()
     raw_argv = list(argv) if argv is not None else __import__("sys").argv[1:]
     if raw_argv and raw_argv[0] == "pre-commit":
         print(_pre_commit_hook_entry())

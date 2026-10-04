@@ -223,10 +223,14 @@ def test_cli_exit_code_uses_only_registered_keys() -> None:
         (root / "docs" / "README.md").write_text(
             "---\ntitle: x\nrust_version: 1.60.0\n---\n\n# docs\n", encoding="utf-8"
         )
+        # encoding is explicit: the CLI guarantees UTF-8 stdout, and text=True
+        # alone would decode with the ambient locale (cp1252 on a Windows
+        # runner), killing the reader thread and leaving proc.stdout as None.
         proc = subprocess.run(
             [sys.executable, "-m", "driftcheck", str(root), "--json"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         assert proc.returncode == 1, (
             f"expected exit 1 for a registered blocking finding, got "
