@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .config import DEFAULT_CONFIG, load_config
+
 
 @dataclass
 class CheckResult:
@@ -126,17 +128,18 @@ class Doctor:
                 message="No .driftcheck.toml (using defaults)",
             )
         try:
-            text = config_path.read_text(encoding="utf-8")
-            # Basic TOML structure validation — try to parse known fields
-            from .config import _parse_toml
-            raw = _parse_toml(text)
-            # Validate known keys
-            valid_keys = {
-                "exclude_detectors", "ignore_patterns", "fail_on_informational",
-                "doc_paths", "custom_detectors", "follow_symlinks", "max_file_size",
-            }
-            section = raw.get("driftcheck", {})
-            unknown = set(section.keys()) - valid_keys
+            # Read through load_config, the single source of truth for how
+            # .driftcheck.toml is interpreted. These checks used to re-parse
+            # the TOML and look only inside [driftcheck], so every top-level
+            # key -- which load_config honours too (config.py) -- was invisible
+            # here: a top-level typo was reported as ".driftcheck.toml is
+            # valid" while the real key was silently dropped, and a top-level
+            # exclude_detectors was reported as "All detectors enabled" on a
+            # scan that was in fact running with detectors excluded.
+            cfg = load_config(self.root)
+            # Foreign tables ([tool.foo] and friends) are dropped by
+            # load_config, so what remains is driftcheck's own key set.
+            unknown = set(cfg) - set(DEFAULT_CONFIG)
             if unknown:
                 return CheckResult(
                     name="config",
@@ -165,11 +168,9 @@ class Doctor:
                 message="No config — all detectors enabled",
             )
         try:
-            text = config_path.read_text(encoding="utf-8")
-            from .config import _parse_toml
-            raw = _parse_toml(text)
-            section = raw.get("driftcheck", {})
-            excluded = section.get("exclude_detectors", [])
+            # Same reasoning as check_config: go through load_config so the
+            # exclusions counted here are the ones the scan actually applies.
+            excluded = load_config(self.root).get("exclude_detectors", [])
             if not isinstance(excluded, list):
                 return CheckResult(
                     name="detectors",
