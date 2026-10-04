@@ -45,7 +45,7 @@ class TestGetChangedFiles:
         assert result == set()
 
     def test_custom_base_commit(self):
-        """Uses custom base commit."""
+        """Uses custom base commit as a revision, before the `--` separator."""
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_result.stdout = "file.py\n"
@@ -53,7 +53,9 @@ class TestGetChangedFiles:
             result = get_changed_files(Path("/tmp"), "main")
             mock_run.assert_called_once()
             call_args = mock_run.call_args
-            assert call_args[0][0] == ["git", "diff", "--name-only", "--", "main"]
+            # `main` must precede `--`: after it git reads it as a pathspec,
+            # which matches nothing (#467).
+            assert call_args[0][0] == ["git", "diff", "--name-only", "main", "--"]
 
     def test_rejects_malicious_base_commit_with_dash(self):
         """Rejects base commit starting with dash (option injection)."""

@@ -9,6 +9,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from .config import DRIFT_KEYS
+
 # Strict regex for git ref validation: only allow safe characters
 # Allows: hex commit hashes, branch names, tags, refs/heads/main, etc.
 # Rejects: paths with .., anything starting with -, shell metacharacters
@@ -37,7 +39,13 @@ def get_changed_files(root: Path, base_commit: str = "HEAD~1") -> set[str]:
     try:
         _validate_git_ref(base_commit)
         result = subprocess.run(
-            ["git", "diff", "--name-only", "--", base_commit],
+            # The base must come BEFORE the `--`: after it, git reads the base
+            # as a pathspec, and a pathspec of `HEAD~1` matches no file, so the
+            # command succeeded with an empty list on every repository and
+            # `--git-mode` reported "no files changed" for any tree. `_validate_git_ref`
+            # already rejects a ref starting with `-`, so a base here cannot be
+            # read as an option.
+            ["git", "diff", "--name-only", base_commit, "--"],
             cwd=root,
             capture_output=True,
             text=True,
@@ -129,7 +137,18 @@ def filter_detectors_by_files(
         for key in detector_file_patterns:
             if key != "env_drifts":  # env drifts don't compare against docs
                 relevant.add(key)
-    
+
+    # A drift key with no entry in the pattern map cannot be shown to be
+    # irrelevant, so it must run. `scan_repo` excludes every DRIFT_KEYS entry
+    # absent from the returned set, so a key missing from this map is not
+    # "not relevant to this change" -- it is silently dropped, and the finding
+    # it would have produced never reaches the exit code. That is the same
+    # false negative the closed hand-maintained lists caused in `_drift_keys_in`
+    # and the SARIF walk: a registry closed over an open-ended key space. The
+    # filter still earns its keep for every key it knows about; this only stops
+    # it from discarding the ones it does not.
+    relevant.update(key for key in DRIFT_KEYS if key not in detector_file_patterns)
+
     return relevant
 
 
