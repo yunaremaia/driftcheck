@@ -26,7 +26,7 @@ def test_documented_and_actual_values_are_paired_generically() -> None:
     reach. Finding it requires knowing only what the *documented* side looks
     like, so a detector's novel field name is picked up without a line here.
     """
-    payload = {"file": "README.md", "tool": "python", "doc_version": "3.9",
+    payload = {"file": "README.md", "tool": "Python", "doc_version": "3.9",
                "version_file": "3.12"}
     assert describe_expected(payload) == "3.12"
     assert describe_drift(payload) == "Python 3.9 → should be 3.12"
@@ -36,9 +36,13 @@ def test_a_field_nobody_predicted_is_still_paired() -> None:
     """An unforeseen field name is described, not dropped.
 
     This is the structural guarantee: the payload carries the value, so the
-    renderer reads it rather than deciding up front which keys exist.
+    renderer reads it rather than deciding up front which keys exist. The
+    documented side is present, because without one there is no mismatch to
+    state -- ``test_payload_with_nothing_to_pair_falls_back_to_the_summary``
+    pins that half.
     """
-    payload = {"file": "Chart.yaml", "chart": "api", "vault_image": "ghcr.io/vault:1.2"}
+    payload = {"file": "Chart.yaml", "chart": "api", "doc_image": "vault:1.1",
+               "vault_image": "ghcr.io/vault:1.2"}
     assert describe_expected(payload) == "ghcr.io/vault:1.2"
 
 
@@ -66,3 +70,26 @@ def test_non_dict_payload_still_produces_text() -> None:
     """A non-dict entry is described rather than raising."""
     assert describe_drift("plain string finding") == "plain string finding"
     assert describe_expected("plain string finding") == ""
+
+
+def test_a_label_before_the_documented_side_is_not_the_target() -> None:
+    """A name that describes the finding is never the value it wants.
+
+    Real payloads, not invented ones. ``package_version_drifts`` emits
+    ``package`` and ``python_version_drifts`` emits ``type``, both *before* the
+    documented value, so a subtraction that scanned from the top of the payload
+    returned the package name or the word "doc" as the version the docs should
+    carry -- "left-pad 1.0.0 -> should be left-pad", which reads as a
+    rendering bug in a sentence built to prevent exactly that.
+
+    The counterpart follows the documented side, so the scan starts there.
+    """
+    package = {"file": "CHANGELOG.md", "kind": "changelog", "package": "left-pad",
+               "doc_version": "1.0.0", "package_version": "2.0.0", "pos": 17}
+    assert describe_expected(package) == "2.0.0"
+
+    python = {"file": "README.md", "type": "doc", "tool": "Python",
+              "doc_version": "3.9", "version_file": "3.11.0",
+              "floor_version": "3.11.0", "floor_source": "pyproject.toml", "pos": 0}
+    assert describe_expected(python) == "3.11.0"
+    assert describe_drift(python) == "Python 3.9 → should be 3.11.0"

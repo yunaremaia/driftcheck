@@ -61,12 +61,18 @@ def find_probe(root, docs):
              "pos": 0}]
 
 
+def find_chart(root, docs):
+    return [{"file": "Chart.yaml", "rule": "chart-rule", "replicas": 3,
+             "pos": 0}]
+
+
 def find_withdetail(root, docs):
     return [{"file": "README.md", "detail": "probe plugin sentence", "pos": 0}]
 
 
 def register():
-    return {"probe": find_probe, "withdetail": find_withdetail}
+    return {"probe": find_probe, "chart": find_chart,
+            "withdetail": find_withdetail}
 '''
 
 
@@ -231,8 +237,16 @@ def test_report_and_text_agree_on_the_fallback_rendering(
     Scoped to the fallback on purpose: the report and the text printer have
     always worded their bespoke branches differently. What must not differ is
     the floor -- the rendering for keys no surface special-cases.
+
+    Both markers are plugin keys, which is what makes them a floor case rather
+    than a coincidence: a ``plugin_*`` key is born at runtime, so no
+    hand-maintained list anywhere can contain it. ``freshness_drifts`` was the
+    obvious second marker and is deliberately not used -- ``_print_blocking_
+    drifts`` hand-formats it (``cli.py``: the ``requests 2.31.0 -> newer:
+    2.34.2 (PyPI)`` line), so comparing it against the report's fallback would
+    be measuring a bespoke branch against the floor.
     """
-    for marker in ("probe-rule", "2.31.0"):
+    for marker in ("probe-rule", "chart-rule"):
         in_report = [ln for ln in _report_bullets(report) if marker in ln]
         in_text = [ln for ln in text_output.splitlines() if marker in ln]
         assert in_report and in_text, f"{marker} missing from a surface"
