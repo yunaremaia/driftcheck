@@ -8,6 +8,7 @@ from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
 from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
+from .messages import describe_finding
 from .git_mode import (
     get_changed_and_untracked,
     get_staged_files,
@@ -1021,13 +1022,16 @@ _HAND_FORMATTED_BLOCKING_KEYS = frozenset({
 def _render_generic_drift(key: str, d: dict) -> str:
     """One line for a finding with no hand-written formatter.
 
-    Mirrors `--report`'s fallback so a detector without a bespoke block is
-    described the same way in both surfaces.
+    A ``tool``/``doc_version`` payload gets the "X in docs should be Y" sentence
+    the hand-written blocks use. Everything else falls through to the shared
+    ``describe_finding`` helper that also backs the SARIF emitter, so the same
+    payload is described the same way in every surface and neither can regress
+    into a raw dict repr on its own.
     """
     file = d.get("file", "?")
+    tool = d.get("tool", "")
     detail = d.get("detail")
     if not detail:
-        tool = d.get("tool", "")
         doc_v = d.get("doc_version", "")
         actual_v = (
             d.get("suggested") or d.get("toolchain_version") or d.get("package_version")
@@ -1043,7 +1047,7 @@ def _render_generic_drift(key: str, d: dict) -> str:
         if tool:
             detail = f"{tool} {doc_v} → should be {actual_v}"
         else:
-            detail = str(d)
+            detail = describe_finding(d)
     return f"driftcheck: {file}: {detail} ({key})"
 
 

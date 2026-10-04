@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .config import INFORMATIONAL_DRIFT_KEYS
+from .messages import describe_finding
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 
@@ -680,7 +681,12 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return d.get("message", "Renovate configuration issue detected")
     elif drift_type == "typosquat_drifts":
         return d.get("detail", "Suspicious dependency name — possible typosquat")
-    return str(d)
+    # The branches above are a formatting preference, not a gate. Everything
+    # they do not cover -- including every plugin detector, whose key is born at
+    # runtime -- is described by the shared fallback, so a finding cannot reach
+    # the document with a raw dict repr as its alert text. Kept in step with the
+    # text output, which renders the same payload the same way.
+    return describe_finding(d)
 
 
 def _make_relative_path(file: str, root: Path | None) -> str:
