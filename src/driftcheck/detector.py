@@ -342,7 +342,12 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
     excluded = get_excluded_detectors(config)
     follow_symlinks = config.get("follow_symlinks", True)
     default_max_size = 1_000_000  # 1MB fallback
-    max_file_size = max_file_size or config.get("max_file_size", default_max_size)
+    # `or` cannot tell "caller passed None" from "caller passed 0", and 0 is a
+    # real limit here: it means "read nothing". `or` silently swapped an explicit
+    # `max_file_size=0` for the 1MB default while the config path honoured the
+    # same value, so `--max-file-size 0` and `max_file_size = 0` disagreed.
+    if max_file_size is None:
+        max_file_size = config.get("max_file_size", default_max_size)
 
     # Walk files with symlink policy (issue #128)
     walked_files, skipped_symlinks = _walk_files(root, follow_symlinks=follow_symlinks)
