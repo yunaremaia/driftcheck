@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
-from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
+from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS, load_config
 from .messages import describe_drift, describe_expected
 from .git_mode import (
     get_changed_and_untracked,
@@ -56,12 +56,19 @@ def _drift_keys_in(result: dict) -> list[str]:
     return list(DRIFT_KEYS) + extra
 
 
-def _blocking_drifts(result: dict) -> dict:
-    """Findings in ``result`` that must fail the build, keyed by drift key."""
+def _blocking_drifts(result: dict, fail_on_informational: bool = False) -> dict:
+    """Findings in ``result`` that must fail the build, keyed by drift key.
+
+    ``fail_on_informational`` promotes informational keys to blocking, which is
+    what the documented ``--fail-on-informational`` flag and the
+    ``fail_on_informational`` config key mean. It is a parameter rather than a
+    module global because severity is decided here, once, for every output mode
+    (#469).
+    """
     return {
         k: result[k]
         for k in _drift_keys_in(result)
-        if k not in INFORMATIONAL_DRIFTS and result.get(k)
+        if result.get(k) and (fail_on_informational or k not in INFORMATIONAL_DRIFTS)
     }
 
 
@@ -470,6 +477,10 @@ def main(argv=None) -> int:
     ap.add_argument("--version", action="version", version=_version())
     ap.add_argument("--quiet", "-q", action="store_true", help="only output drifts, suppress OK messages")
     ap.add_argument("--no-informational", action="store_true", help="skip informational drifts in output")
+    # default=None so an absent flag defers to the config key instead of
+    # overriding it with False (#469).
+    ap.add_argument("--fail-on-informational", action="store_true", default=None,
+                    help="treat informational drifts as blocking errors (exit 1)")
     ap.add_argument("--list-detectors", action="store_true", help="list available detectors and exit")
     ap.add_argument("--only", metavar="DETECTOR", help="run only specified detectors (comma-separated)")
     ap.add_argument("--exclude", metavar="DETECTOR", help="exclude specified detectors (comma-separated)")
@@ -664,9 +675,16 @@ def main(argv=None) -> int:
     else:
         comparison = None
 
+    # --fail-on-informational wins over the config key when passed; otherwise
+    # the config decides, and the default is off. Resolved once here so every
+    # output mode below shares one answer (#469).
+    fail_on_informational = args.fail_on_informational
+    if fail_on_informational is None:
+        fail_on_informational = bool(load_config(Path(args.path)).get("fail_on_informational"))
+
     if args.report:
         _print_report(result)
-        return 1 if _blocking_drifts(result) else 0
+        return 1 if _blocking_drifts(result, fail_on_informational) else 0
 
     # Filter detectors if requested (with validation)
     if args.only:
@@ -698,14 +716,14 @@ def main(argv=None) -> int:
             sarif_doc["runs"][0]["properties"] = sarif_doc["runs"][0].get("properties", {})
             sarif_doc["runs"][0]["properties"]["baseline"] = result.get("_baseline", {})
         print(json.dumps(sarif_doc, indent=2))
-        return 1 if _blocking_drifts(result) else 0
+        return 1 if _blocking_drifts(result, fail_on_informational) else 0
 
     if args.no_informational:
         result = {k: v for k, v in result.items() if k not in INFORMATIONAL_DRIFTS}
 
     if args.as_csv:
         _print_csv(result)
-        return 1 if _blocking_drifts(result) else 0
+        return 1 if _blocking_drifts(result, fail_on_informational) else 0
 
     if args.fix:
         fixed = apply_fixes(Path(args.path), result)
@@ -717,7 +735,7 @@ def main(argv=None) -> int:
             return 0
 
     all_drifts = {k: result.get(k, []) for k in _drift_keys_in(result)}
-    blocking_drifts = _blocking_drifts(result)
+    blocking_drifts = _blocking_drifts(result, fail_on_informational)
 
     # When baseline exists, only NEW drifts are blocking (pre-existing are warnings)
     if baseline and comparison:
