@@ -8,10 +8,14 @@ PyPI for a 3.12 package does not find it.
 """
 
 import re
-import tomllib
 from pathlib import Path
 
 import pytest
+
+try:  # tomllib is 3.11+; the package itself depends on tomli below that
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised on the 3.10 CI leg
+    import tomli as tomllib  # type: ignore[no-redef]
 
 PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
