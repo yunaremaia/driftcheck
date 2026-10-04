@@ -31,6 +31,15 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    # Per-version classifiers, so PyPI's "Programming Language" filter can match
+    # a specific minor. requires-python already declares ">=3.10" to the
+    # installer, but without these the package shows up only under the bare
+    # "Python :: 3" entry and cannot be found by someone looking for 3.12.
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Quality Assurance",
