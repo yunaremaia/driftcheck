@@ -43,10 +43,14 @@ def _make_repo(root: Path) -> None:
 
 
 def _run(root: Path, flag: str) -> tuple[dict, int]:
+    # encoding is explicit: the CLI guarantees UTF-8 stdout, and text=True
+    # alone would decode with the ambient locale (cp1252 on a Windows runner),
+    # killing the reader thread and leaving proc.stdout as None.
     proc = subprocess.run(
         [sys.executable, "-m", "driftcheck", str(root), flag],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert proc.returncode in (0, 1), proc.stderr
     return json.loads(proc.stdout), proc.returncode

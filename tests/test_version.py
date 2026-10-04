@@ -64,6 +64,7 @@ def test_cli_reports_the_module_version():
         [sys.executable, "-m", "driftcheck", "--version"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=REPO_ROOT,
     )
     if result.returncode != 0:

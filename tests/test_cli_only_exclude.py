@@ -64,7 +64,7 @@ class TestCliOnlyExcludeValidation:
         import subprocess
         result = subprocess.run(
             [sys.executable, "-m", "driftcheck.cli", "--only", "python_drifts", str(tmp_path)],
-            capture_output=True, text=True
+            capture_output=True, text=True, encoding="utf-8"
         )
         assert result.returncode == 1  # drift detected (3.9 vs 3.10)
 
@@ -74,7 +74,7 @@ class TestCliOnlyExcludeValidation:
         import subprocess
         result = subprocess.run(
             [sys.executable, "-m", "driftcheck.cli", "--only", "rust_drfit", str(tmp_path)],
-            capture_output=True, text=True
+            capture_output=True, text=True, encoding="utf-8"
         )
         assert result.returncode == 2
         assert "rust_drifts" in result.stderr
@@ -86,7 +86,7 @@ class TestCliOnlyExcludeValidation:
         import subprocess
         result = subprocess.run(
             [sys.executable, "-m", "driftcheck.cli", "--exclude", "python_drfit", str(tmp_path)],
-            capture_output=True, text=True
+            capture_output=True, text=True, encoding="utf-8"
         )
         # python_drfit is excluded from exclusion list, so python detector runs
         assert result.returncode == 1  # drift still detected
@@ -99,7 +99,7 @@ class TestCliOnlyExcludeValidation:
         import subprocess
         result = subprocess.run(
             [sys.executable, "-m", "driftcheck.cli", "--only", "python_drifts,foo_bar", str(tmp_path)],
-            capture_output=True, text=True
+            capture_output=True, text=True, encoding="utf-8"
         )
         # foo_bar is filtered out (warning), python_drifts runs
         assert result.returncode == 1

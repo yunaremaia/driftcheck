@@ -57,10 +57,14 @@ class TestCliShortNames:
         return tmp_path
 
     def _run(self, args, project):
+        # encoding is explicit: the CLI guarantees UTF-8 stdout, and text=True
+        # alone would decode with the ambient locale (cp1252 on a Windows
+        # runner), killing the reader thread and leaving result.stdout as None.
         return subprocess.run(
             [sys.executable, "-m", "driftcheck.cli", *args, str(project)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
 
     def test_only_accepts_short_name(self, project):
