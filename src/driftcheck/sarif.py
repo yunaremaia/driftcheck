@@ -465,6 +465,11 @@ DRIFT_RULES = {
         "Typosquat Suspect",
         "Suspiciously-named dependency detected — possible typosquat of a known package",
     ),
+    "uv_lock_drifts": (
+        "uv-lock-version-drift",
+        "uv.lock Version Drift",
+        "uv.lock pins a package version that contradicts the pyproject.toml constraint",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -517,14 +522,36 @@ def _make_result(
     message: str,
     file: str,
     *,
-    line: int = 1,
+    line: object = None,
     level: str = "warning",
-    pos: int = 0,
+    pos: object = None,
     uri_base_id: str | None = None,
 ) -> dict:
+    """Build one SARIF result, publishing the region the detector reported.
+
+    ``line`` is a 1-based line number and is the only thing that can be
+    published as ``startLine``. Detectors record it under ``line``
+    (``docker_bases``, ``docker_multistage``); everything else carries only a
+    character ``pos`` within the document, which is not a line number and is
+    published as ``startColumn`` instead.
+
+    Both are read defensively. This is the innermost loop of the document, so a
+    payload carrying a non-integer or out-of-range location raises here and
+    takes every other finding in the run with it; a malformed location is a
+    rendering problem and must never cost the finding itself. Anything unusable
+    falls back to line 1, and an absent offset leaves ``startColumn`` out
+    entirely rather than asserting column 1, which is a claim the detector did
+    not make.
+    """
     artifact_location = {"uri": file}
     if uri_base_id is not None:
         artifact_location["uriBaseId"] = uri_base_id
+
+    start_line = line if isinstance(line, int) and not isinstance(line, bool) and line >= 1 else 1
+    region: dict[str, int] = {"startLine": start_line}
+    if isinstance(pos, int) and not isinstance(pos, bool) and pos >= 0:
+        # SARIF columns are 1-based; detectors report a 0-based character offset.
+        region["startColumn"] = pos + 1
 
     return {
         "ruleId": rule_id,
@@ -533,7 +560,7 @@ def _make_result(
             {
                 "physicalLocation": {
                     "artifactLocation": artifact_location,
-                    "region": {"startLine": line, "startColumn": 1},
+                    "region": region,
                 }
             }
         ],
@@ -803,6 +830,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "go_replace_drifts", "frontmatter_drifts", "helm_dependency_drifts",
         "a2a_drifts", "changelog_drifts", "dockerfile_instruction_drifts",
         "freshness_drifts", "kmp_drifts", "python_version_file_drifts", "scala_drifts",
+        "uv_lock_drifts",
     ]
 
     # Walk the curated list first, then any remaining ``*_drifts`` key that is
@@ -844,7 +872,8 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
                     message,
                     file,
                     level=level,
-                    pos=d.get("pos", 0),
+                    line=d.get("line"),
+                    pos=d.get("pos"),
                     uri_base_id="repoRoot" if root is not None else None,
                 )
             )
