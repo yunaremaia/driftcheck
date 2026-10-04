@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
-from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
+from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS, load_config
 from .messages import describe_drift, describe_expected
 from .git_mode import (
     get_changed_and_untracked,
@@ -56,13 +56,38 @@ def _drift_keys_in(result: dict) -> list[str]:
     return list(DRIFT_KEYS) + extra
 
 
-def _blocking_drifts(result: dict) -> dict:
-    """Findings in ``result`` that must fail the build, keyed by drift key."""
+def _blocking_drifts(result: dict, fail_on_informational: bool = False) -> dict:
+    """Findings in ``result`` that must fail the build, keyed by drift key.
+
+    ``fail_on_informational`` promotes the keys in ``INFORMATIONAL_DRIFTS`` to
+    blocking ones, which is what ``--fail-on-informational`` and the matching
+    ``fail_on_informational`` config key ask for (issue #469). Both were
+    documented in the README but removed from the code: the parser rejected the
+    flag and the TOML key was accepted and then read by nobody, so an operator
+    enforcing lockfiles in strict CI got a config file that silently did
+    nothing.
+    """
     return {
         k: result[k]
         for k in _drift_keys_in(result)
-        if k not in INFORMATIONAL_DRIFTS and result.get(k)
+        if (fail_on_informational or k not in INFORMATIONAL_DRIFTS)
+        and result.get(k)
     }
+
+
+def _fail_on_informational(args) -> bool:
+    """True when informational drifts must fail the build.
+
+    ``--fail-on-informational`` wins over the ``fail_on_informational`` config
+    key, so a CI job can tighten a repo whose ``.driftcheck.toml`` leaves it
+    off. The key is read here rather than in ``scan_repo`` because the exit code
+    is a CLI concern -- until this existed nothing read the key at all, so the
+    documented setting was silently accepted and silently ignored (#469).
+    """
+    return bool(
+        args.fail_on_informational
+        or load_config(Path(args.path)).get("fail_on_informational")
+    )
 
 
 # Detector metadata: key -> (short_name, description)
@@ -470,6 +495,7 @@ def main(argv=None) -> int:
     ap.add_argument("--version", action="version", version=_version())
     ap.add_argument("--quiet", "-q", action="store_true", help="only output drifts, suppress OK messages")
     ap.add_argument("--no-informational", action="store_true", help="skip informational drifts in output")
+    ap.add_argument("--fail-on-informational", action="store_true", help="treat informational drifts (e.g. a missing lockfile) as blocking failures (exit 1)")
     ap.add_argument("--list-detectors", action="store_true", help="list available detectors and exit")
     ap.add_argument("--only", metavar="DETECTOR", help="run only specified detectors (comma-separated)")
     ap.add_argument("--exclude", metavar="DETECTOR", help="exclude specified detectors (comma-separated)")
@@ -665,8 +691,9 @@ def main(argv=None) -> int:
         comparison = None
 
     if args.report:
-        _print_report(result)
-        return 1 if _blocking_drifts(result) else 0
+        fail_on_informational = _fail_on_informational(args)
+        _print_report(result, fail_on_informational)
+        return 1 if _blocking_drifts(result, fail_on_informational) else 0
 
     # Filter detectors if requested (with validation)
     if args.only:
@@ -698,14 +725,14 @@ def main(argv=None) -> int:
             sarif_doc["runs"][0]["properties"] = sarif_doc["runs"][0].get("properties", {})
             sarif_doc["runs"][0]["properties"]["baseline"] = result.get("_baseline", {})
         print(json.dumps(sarif_doc, indent=2))
-        return 1 if _blocking_drifts(result) else 0
+        return 1 if _blocking_drifts(result, _fail_on_informational(args)) else 0
 
     if args.no_informational:
         result = {k: v for k, v in result.items() if k not in INFORMATIONAL_DRIFTS}
 
     if args.as_csv:
         _print_csv(result)
-        return 1 if _blocking_drifts(result) else 0
+        return 1 if _blocking_drifts(result, _fail_on_informational(args)) else 0
 
     if args.fix:
         fixed = apply_fixes(Path(args.path), result)
@@ -717,11 +744,19 @@ def main(argv=None) -> int:
             return 0
 
     all_drifts = {k: result.get(k, []) for k in _drift_keys_in(result)}
-    blocking_drifts = _blocking_drifts(result)
+
+    # --fail-on-informational wins over the config key, so a CI job can tighten
+    # a repo whose .driftcheck.toml leaves it off. The key is read here rather
+    # than in scan_repo because the exit code is a CLI concern; until now
+    # nothing read it at all (issue #469).
+    fail_on_informational = _fail_on_informational(args)
+    blocking_drifts = _blocking_drifts(result, fail_on_informational)
 
     # When baseline exists, only NEW drifts are blocking (pre-existing are warnings)
     if baseline and comparison:
-        new_blocking = {k: v for k, v in comparison["new_drifts"].items() if k not in INFORMATIONAL_DRIFTS}
+        new_blocking = _blocking_drifts(
+            comparison["new_drifts"], fail_on_informational
+        )
         has_blocking = any(new_blocking.values())
     else:
         has_blocking = any(blocking_drifts.values())
@@ -730,10 +765,6 @@ def main(argv=None) -> int:
 
     if args.as_json:
         print(json.dumps(result, indent=2))
-        if baseline and comparison:
-            # When baseline exists, only NEW drifts make it fail
-            new_blocking = {k: v for k, v in comparison["new_drifts"].items() if k not in INFORMATIONAL_DRIFTS}
-            return 1 if any(new_blocking.values()) else 0
         return 1 if has_blocking else 0
 
     tv = result.get("toolchain_version")
@@ -832,9 +863,9 @@ def _init_config(root: Path, force: bool = False, dry_run: bool = False) -> int:
     return 0
 
 
-def _print_report(result: dict) -> None:
+def _print_report(result: dict, fail_on_informational: bool = False) -> None:
     """Output a markdown report of all drifts with statistical summary."""
-    blocking = _blocking_drifts(result)
+    blocking = _blocking_drifts(result, fail_on_informational)
     informational = {k: result.get(k, []) for k in DRIFT_KEYS if k in INFORMATIONAL_DRIFTS}
     has_blocking = any(blocking.values())
     has_informational = any(informational.values())
