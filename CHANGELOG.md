@@ -6,6 +6,32 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Fixed
 
+- **The text renderer no longer crashes on findings it cannot format.** Two
+  hand-written print blocks in `_print_blocking_drifts` indexed fields their
+  detectors never produce, so a matching finding raised `KeyError` *inside* the
+  print loop. `npmrc_drifts` read `d['doc_registry']` (`find_npmrc_drift` compares
+  the two registries against each other and has no documented side, and the block
+  was a duplicate of one that already printed the key from `d['detail']`);
+  `taskfile_drifts` read `d['tool']`, `d['doc_version']` and
+  `d['taskfile_version']` (a version-comparison shape, while `find_taskfile_drift`
+  compares task *names* and emits `file`/`kind`/`detail`/`keys`). Because
+  `_print_blocking_drifts` runs before `_print_informational`, the exception
+  unwound straight out of the renderer: every blocking finding printed after the
+  offending block was lost, **all** informational output was lost, and the
+  operator got a traceback instead of a report — while the exit code stayed 1 and
+  `--json`/`--sarif` stayed complete, so the machine-readable surfaces looked
+  healthy. Measured on an 8-key fixture: text printed 4 of 8 blocking keys and 0
+  of 5 informational findings; after the fix all three surfaces report 10/10 with
+  no traceback. `freshness_drifts` also moved out of the blocking printer: it is
+  informational, so its block printed every finding twice, once with and once
+  without the `info:` marker and thus disagreeing about whether it fails the
+  build. It is now rendered once by the shared `describe_drift` fallback that
+  `--report` and `to_sarif` also use. `tests/test_text_printer_field_contract.py`
+  pins the contract from the detector side — a print block may only index a field
+  its producing detector builds — which the existing parity guard structurally
+  cannot do, because it builds its synthetic findings from the printers' own
+  field list and so stuffs the nonexistent fields into every one of them.
+
 - **The `uv.lock` detector now runs at all.** `find_uv_lock_drift` shipped in
   `driftcheck.detectors.uv_lock` and was covered by `tests/test_uv_lock.py`, but no
   call site in `detector.py` ever invoked it, so a repository whose `uv.lock` pins
