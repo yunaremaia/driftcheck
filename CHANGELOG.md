@@ -6,6 +6,19 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Fixed
 
+- **SARIF alert text is no longer a raw dict repr for 20 detectors.** Following #475 and
+  #476 the finding itself reached `--sarif`, but `_drift_message` still ended in
+  `return str(d)` and only 70 of the 90 curated keys had a branch above it, so
+  `python_req`, `justfile`, `terraform_lock`, `go_replace`, `freshness`, `git_submodule`,
+  `npmrc`, `yarnrc`, `pnpm_workspace`, `package_version`, `pyproject_tool`,
+  `python_version_file`, `r`, `scala`, `kmp`, `a2a`, `changelog`,
+  `dockerfile_instruction`, `frontmatter` and `helm_dependency` were emitted with their
+  Python repr as the only text an operator sees in Code Scanning. Every plugin detector
+  was affected in every release: `plugin_*_drifts` keys are built at runtime, so no branch
+  can exist for one. Measured on a fixture firing five of them: `--json` reported 12
+  findings and `--sarif` emitted 12 results, of which 5 carried a repr as their message;
+  after the fix 0 do. The fallback is shared with the text output via the new
+  `driftcheck.messages.describe_finding`, so the two surfaces cannot drift apart again.
 - **SARIF output no longer silently drops detectors.** 17 detectors were detected and
   printed normally but never reached `--sarif` output, because `to_sarif` gates on two
   independent structures — the `drift_keys` list it walks and the `DRIFT_RULES` mapping it
