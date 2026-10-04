@@ -563,9 +563,13 @@ def _drift_message(drift_type: str, d: dict) -> str:
     elif drift_type == "docker_multistage_drifts":
         return d.get("detail", "Multi-stage Dockerfile drift detected")
     elif drift_type == "docker_bases_drifts":
+        # `.get()` with the subject noun as the placeholder, like every other
+        # branch: indexing here raised KeyError and took the whole document
+        # with it, because the only caller is `to_sarif`.
+        image = d.get("image", "image")
         if "tags" in d:
-            return f"{d['image']} pinned differently across Dockerfiles: {', '.join(d['tags'])}"
-        return f"{d['image']}:{d.get('tag', '(none)')} uses floating/unpinned tag"
+            return f"{image} pinned differently across Dockerfiles: {', '.join(d['tags'])}"
+        return f"{image}:{d.get('tag', '(none)')} uses floating/unpinned tag"
     elif drift_type == "java_drifts":
         return f"Java {d.get('doc_version')} in docs should be {d.get('gradle_version')}"
     elif drift_type == "maven_drifts":
