@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .messages import describe_expected
+
 
 # Detector-level impact descriptions — keyed by drift type
 IMPACT_DESCRIPTIONS: dict[str, str] = {
@@ -193,38 +195,15 @@ class Explainer:
         return drift.get("doc_version", drift.get("doc_image", ""))
 
     def _extract_expected(self, drift: dict) -> str:
-        """Extract the expected (toolchain) value from a drift."""
-        return (
-            drift.get("suggested")
-            or drift.get("toolchain_version")
-            or drift.get("package_version")
-            or drift.get("gomod_version")
-            or drift.get("pyproject_version")
-            or drift.get("makefile_version")
-            or drift.get("cargo_version")
-            or drift.get("gradle_version")
-            or drift.get("maven_version")
-            or drift.get("terraform_version")
-            or drift.get("circleci_image")
-            or drift.get("gitlab_image")
-            or drift.get("k8s_image")
-            or drift.get("helm_image")
-            or drift.get("compose_image")
-            or drift.get("dotnet_version")
-            or drift.get("ruby_version")
-            or drift.get("php_version")
-            or drift.get("swift_version")
-            or drift.get("deno_json_version")
-            or drift.get("dart_version")
-            or drift.get("mix_version")
-            or drift.get("cmake_version")
-            or drift.get("pipfile_version")
-            or drift.get("catalog_version")
-            or drift.get("taskfile_version")
-            or drift.get("tool_versions_version")
-            or drift.get("version_file")
-            or ""
-        )
+        """Extract the expected (toolchain) value from a drift.
+
+        Shared with every other surface via ``messages.describe_expected``, so
+        this no longer keeps a private list of the field names it can read: a
+        detector that names its payload differently was invisible here and
+        produced no expected value, which left ``--explain`` with a diff and a
+        fix suggestion computed against an empty string.
+        """
+        return describe_expected(drift)
 
     def _find_line(self, file_path: str, actual: str) -> int | None:
         """Find the line number containing the actual value."""

@@ -8,7 +8,7 @@ from typing import Iterator
 from .detector import scan_repo, apply_fixes
 from .sarif import to_sarif
 from .config import DRIFT_KEYS, INFORMATIONAL_DRIFT_KEYS
-from .messages import describe_finding
+from .messages import describe_drift, describe_expected
 from .git_mode import (
     get_changed_and_untracked,
     get_staged_files,
@@ -893,17 +893,7 @@ def _print_report(result: dict) -> None:
                 print(f"**{meta[1]}** ({key}):")
             for d in drifts:
                 file = d.get("file", "?")
-                detail = d.get("detail", "")
-                if detail:
-                    print(f"- `{file}`: {detail}")
-                else:
-                    tool = d.get("tool", "")
-                    doc_v = d.get("doc_version", "")
-                    actual_v = d.get("makefile_version", d.get("package_version", d.get("gomod_version", d.get("pyproject_version", d.get("requirements_version", d.get("gradle_version", ""))))))
-                    if tool:
-                        print(f"- `{file}`: {tool} {doc_v} → should be {actual_v}")
-                    else:
-                        print(f"- `{file}`: {d}")
+                print(f"- `{file}`: {describe_drift(d)}")
             print()
 
     if has_informational:
@@ -916,8 +906,7 @@ def _print_report(result: dict) -> None:
                 print(f"**{meta[1]}** ({key}):")
             for d in drifts:
                 file = d.get("file", "?")
-                detail = d.get("detail", str(d))
-                print(f"- `{file}`: {detail}")
+                print(f"- `{file}`: {describe_drift(d)}")
             print()
 
 
@@ -932,37 +921,11 @@ def _print_csv(result: dict) -> None:
         for d in drifts:
             if not isinstance(d, dict):
                 continue
-            actual_v = (
-                d.get("suggested")
-                or d.get("toolchain_version")
-                or d.get("package_version")
-                or d.get("gomod_version")
-                or d.get("pyproject_version")
-                or d.get("makefile_version")
-                or d.get("cargo_version")
-                or d.get("gradle_version")
-                or d.get("maven_version")
-                or d.get("terraform_version")
-                or d.get("circleci_image")
-                or d.get("gitlab_image")
-                or d.get("k8s_image")
-                or d.get("helm_image")
-                or d.get("compose_image")
-                or d.get("dotnet_version")
-                or d.get("ruby_version")
-                or d.get("php_version")
-                or d.get("swift_version")
-                or d.get("deno_json_version")
-                or d.get("dart_version")
-                or d.get("mix_version")
-                or d.get("cmake_version")
-                or d.get("pipfile_version")
-                or d.get("catalog_version")
-                or d.get("taskfile_version")
-                or d.get("tool_versions_version")
-                or d.get("version_file")
-                or ""
-            )
+            # `describe_expected` covers the documented-vs-actual pair by
+            # subtraction. `suggested` is not one half of a pair: it is
+            # driftcheck's own proposal, emitted by detectors that have no
+            # documented side to disagree with, so it is read on its own.
+            actual_v = describe_expected(d) or str(d.get("suggested") or "")
             rows.append({
                 "file": d.get("file", ""),
                 "detector": short_name,
@@ -1022,33 +985,14 @@ _HAND_FORMATTED_BLOCKING_KEYS = frozenset({
 def _render_generic_drift(key: str, d: dict) -> str:
     """One line for a finding with no hand-written formatter.
 
-    A ``tool``/``doc_version`` payload gets the "X in docs should be Y" sentence
-    the hand-written blocks use. Everything else falls through to the shared
-    ``describe_finding`` helper that also backs the SARIF emitter, so the same
-    payload is described the same way in every surface and neither can regress
-    into a raw dict repr on its own.
+    The body is ``messages.describe_drift``, shared with the ``--report``
+    surface, so the same payload is described the same way in both and neither
+    can regress into a raw dict repr on its own. It used to keep its own
+    hand-written chain of two dozen ``*_version`` field names here; every field
+    it had not been taught fell off the end and the sentence rendered with an
+    empty target.
     """
-    file = d.get("file", "?")
-    tool = d.get("tool", "")
-    detail = d.get("detail")
-    if not detail:
-        doc_v = d.get("doc_version", "")
-        actual_v = (
-            d.get("suggested") or d.get("toolchain_version") or d.get("package_version")
-            or d.get("gomod_version") or d.get("pyproject_version") or d.get("config_version")
-            or d.get("makefile_version") or d.get("requirements_version") or d.get("gradle_version")
-            or d.get("maven_version") or d.get("mix_version") or d.get("gemfile_version")
-            or d.get("taskfile_version") or d.get("tool_versions_version") or d.get("version_file")
-            or d.get("setup_version") or d.get("pubspec_version") or d.get("deno_json_version")
-            or d.get("pinned_version") or d.get("latest_version") or d.get("actual_count")
-            or d.get("namespace_version") or d.get("cli_version") or d.get("schema_version")
-            or ""
-        )
-        if tool:
-            detail = f"{tool} {doc_v} → should be {actual_v}"
-        else:
-            detail = describe_finding(d)
-    return f"driftcheck: {file}: {detail} ({key})"
+    return f"driftcheck: {d.get('file', '?')}: {describe_drift(d)} ({key})"
 
 
 def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
