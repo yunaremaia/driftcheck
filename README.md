@@ -470,8 +470,8 @@ If this tool is useful to you, a star helps other people find it.
 
 ## Related tools
 
-- **[taintrace](https://github.com/yunaremaia/taintrace)** — trace and inspect AI agent execution
-- **[depscan](https://github.com/yunaremaia/depscan)** — scan dependencies across multiple ecosystems
+- **[taintrace](https://github.com/yunaremaia/taintrace)** — detect typosquatted package names in agent dependencies
+- **[depscan](https://github.com/yunaremaia/depscan)** — find typosquatted package names in Cargo, npm, PyPI and Go lockfiles
 - **[agentcost](https://github.com/yunaremaia/agentcost)** — track and attribute LLM spend per agent
 - **[mcp-guard](https://github.com/yunaremaia/mcp-guard)** — audit MCP servers for unsafe permissions
 
