@@ -62,6 +62,10 @@ DRIFT_KEYS = [
     "r_drifts",
     "scala_drifts",
     "terraform_lock_drifts",
+    # Emitted by find_uv_lock_drift, which was shipped but never called from
+    # detector.py, so uv.lock-vs-pyproject.toml mismatches were reported
+    # nowhere -- not in --json, not in --sarif, and not in the exit code.
+    "uv_lock_drifts",
 ]
 
 # Drift types that are reported but never fail the check.

@@ -6,6 +6,21 @@ All notable changes to driftcheck will be documented in this file.
 
 ### Fixed
 
+- **The `uv.lock` detector now runs at all.** `find_uv_lock_drift` shipped in
+  `driftcheck.detectors.uv_lock` and was covered by `tests/test_uv_lock.py`, but no
+  call site in `detector.py` ever invoked it, so a repository whose `uv.lock` pins
+  contradict its `pyproject.toml` constraints reported nothing: no `--json` key, no
+  SARIF rule, no `--list-detectors` entry, and an exit code that ignored it. The
+  silence was total — the unit tests passed because they call the function directly,
+  and the SARIF coverage guard could not see it because that guard walks keys
+  `detector.py` assigns into the result, and this detector assigned none. Measured on
+  a fixture pinning `requests==2.20.0` against `>=2.31.0`: `--sarif` emitted 3 rules
+  and none mentioned uv; after the fix it emits 4, the fourth being
+  `uv-lock-version-drift`, and the run exits 1. The near end of the pipeline now has
+  its own guard: `tests/test_detector_reachability.py` asserts every `find_*` shipped
+  in the detectors package is reachable from `detector.py`, so a future detector
+  cannot be added in the same inert way.
+
 - **SARIF alert text is no longer a raw dict repr for 20 detectors.** Following #475 and
   #476 the finding itself reached `--sarif`, but `_drift_message` still ended in
   `return str(d)` and only 70 of the 90 curated keys had a branch above it, so

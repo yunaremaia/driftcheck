@@ -160,6 +160,7 @@ DETECTOR_INFO = {
     "python_req_drifts": ("python-req", "requirements.txt pins vs PEP 621 dependencies"),
     "r_drifts": ("r", "R package versions vs README (DESCRIPTION/renv)"),
     "terraform_lock_drifts": ("terraform-lock", ".terraform.lock.hcl vs required_providers"),
+    "uv_lock_drifts": ("uv-lock", "uv.lock pins vs pyproject.toml dependencies"),
 }
 
 # Mapping of project files to their relevant detectors for `driftcheck init`

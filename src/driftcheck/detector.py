@@ -16,6 +16,7 @@ from pathlib import Path
 from .config import load_config, get_excluded_detectors, DRIFT_KEYS
 from .plugins import load_plugins, run_plugin_detectors
 from .detectors.actions_version_drift import find_actions_version_drift
+from .detectors.uv_lock import find_uv_lock_drift
 
 
 def _is_within_root(target: Path, root_resolved: Path) -> bool:
@@ -853,6 +854,11 @@ def scan_repo(root: Path = Path("."), enabled_detectors: set[str] | None = None,
         "julia_drifts": find_julia_drift(julia_text, julia_manifest_text, docs),
         "frontmatter_drifts": find_frontmatter_drift(docs, cargo_text, toolchain_text, package_text, pyproject_text),
         "helm_dependency_drifts": find_helm_dependency_drift(chart_text, helm_lock_text),
+        # Reads uv.lock and pyproject.toml off disk itself, like the detectors
+        # above that take `root`. It shipped in the package but was never
+        # called from here, so a repo whose uv.lock pins contradict
+        # pyproject.toml constraints passed clean with no output anywhere.
+        "uv_lock_drifts": find_uv_lock_drift(root),
     }
 
     # Run plugin detectors

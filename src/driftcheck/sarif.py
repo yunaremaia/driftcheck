@@ -465,6 +465,11 @@ DRIFT_RULES = {
         "Typosquat Suspect",
         "Suspiciously-named dependency detected — possible typosquat of a known package",
     ),
+    "uv_lock_drifts": (
+        "uv-lock-version-drift",
+        "uv.lock Version Drift",
+        "uv.lock pins a package version that contradicts the pyproject.toml constraint",
+    ),
 }
 
 # Drift types that are informational (SARIF level: warning)
@@ -710,6 +715,11 @@ def _drift_message(drift_type: str, d: dict) -> str:
         return f"pre-commit hook {repo}: docs say {doc_ver} but .pre-commit-config.yaml says {rev}"
     elif drift_type == "renovate_drifts":
         return d.get("message", "Renovate configuration issue detected")
+    elif drift_type == "uv_lock_drifts":
+        return (
+            f"{d.get('package', 'package')}: uv.lock pins {d.get('uv_lock_version')} "
+            f"but pyproject.toml requires {d.get('pyproject_spec')}"
+        )
     elif drift_type == "typosquat_drifts":
         return d.get("detail", "Suspicious dependency name — possible typosquat")
     # The branches above are a formatting preference, not a gate. Everything
@@ -803,6 +813,7 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         "go_replace_drifts", "frontmatter_drifts", "helm_dependency_drifts",
         "a2a_drifts", "changelog_drifts", "dockerfile_instruction_drifts",
         "freshness_drifts", "kmp_drifts", "python_version_file_drifts", "scala_drifts",
+        "uv_lock_drifts",
     ]
 
     # Walk the curated list first, then any remaining ``*_drifts`` key that is
