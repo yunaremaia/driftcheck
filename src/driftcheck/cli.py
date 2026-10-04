@@ -738,10 +738,20 @@ def main(argv=None) -> int:
         fixed = apply_fixes(Path(args.path), result)
         if fixed:
             print(f"driftcheck: fixed {len(fixed)} file(s): {', '.join(fixed)}")
-            return 0
+            # The tree changed underneath us, so the pre-fix `result` no longer
+            # describes it. Re-scan to decide the exit code on what is left.
+            result = scan_repo(
+                Path(args.path),
+                enabled_detectors=enabled_detectors,
+                max_file_size=args.max_file_size,
+            )
         else:
             print("driftcheck: no drifts to fix")
-            return 0
+        # --fix is not a mode that gets to report success on its own. Returning
+        # 0 here made the one mode whose job is to change the tree the one mode
+        # that went green in CI while blocking drifts were still present,
+        # disagreeing with --report/--sarif/--csv on the identical tree (#473).
+        return 1 if any(_blocking_drifts(result).values()) else 0
 
     all_drifts = {k: result.get(k, []) for k in _drift_keys_in(result)}
 
