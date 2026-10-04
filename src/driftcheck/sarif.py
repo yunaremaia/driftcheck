@@ -475,13 +475,40 @@ DRIFT_RULES = {
 INFORMATIONAL_TYPES = INFORMATIONAL_DRIFT_KEYS
 
 
-def _make_rule(rule_id: str, name: str, description: str) -> dict:
+def _level_for(drift_type: str) -> str:
+    """The one function that decides what SARIF level a drift key publishes at.
+
+    Severity is a single fact with two spellings in the output: the result's
+    ``level`` and the rule's ``defaultConfiguration.level``. Both read this, so
+    they cannot disagree, and both read ``INFORMATIONAL_TYPES``, which aliases
+    ``config.INFORMATIONAL_DRIFT_KEYS`` -- the same set the CLI's exit-code gate
+    uses. That is the fix for #471: ``error`` is the only level GitHub Code
+    Scanning treats as blocking, so a key that exits 0 must never reach it.
+
+    Kept as a named function rather than inlined at the call site so the
+    rule-level and result-level spellings provably share one implementation.
+    """
+    return "warning" if drift_type in INFORMATIONAL_TYPES else "error"
+
+
+def _make_rule(rule_id: str, name: str, description: str, level: str = "error") -> dict:
+    """Build a rule descriptor.
+
+    ``defaultConfiguration`` states the rule's default severity. The result's
+    ``level`` is what Code Scanning reads for the alert, so a rule that omits
+    it still produces the right alert -- but the severity is then unstated in
+    the only place the SARIF format provides for stating it, leaving consumers
+    that match on rule metadata (the ``filter-sarif`` family, editor
+    integrations) with nothing to match on. ``symlink-skipped`` already
+    declared one; the curated rules did not (#471).
+    """
     return {
         "id": rule_id,
         "name": name,
         "shortDescription": {"text": description},
         "fullDescription": {"text": description},
         "helpUri": "https://github.com/yunaremaia/driftcheck",
+        "defaultConfiguration": {"level": level},
     }
 
 
@@ -799,12 +826,10 @@ def to_sarif(result: dict, version: str | None = None, root: Path | None = None)
         else:
             rule_id, rule_name, rule_desc = meta
 
+        level = _level_for(drift_type)
         if rule_id not in rule_set:
-            rules.append(_make_rule(rule_id, rule_name, rule_desc))
+            rules.append(_make_rule(rule_id, rule_name, rule_desc, level=level))
             rule_set.add(rule_id)
-
-        is_informational = drift_type in INFORMATIONAL_TYPES
-        level = "warning" if is_informational else "error"
 
         for d in entries:
             file = _make_relative_path(d.get("file", ""), root)
