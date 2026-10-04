@@ -74,11 +74,18 @@ def find_dockerfile_bases_drift(dockerfiles: dict[str, str], docs: dict[str, str
         tags = set(e['tag'] for e in entries)
         if len(tags) > 1:
             files = sorted(set(e['file'] for e in entries))
+            # An untagged FROM parses with ``tag is None`` and a set holding it
+            # cannot be sorted against strings, so the missing tag is spelled
+            # out here. Mode 1 already reports that stage as floating; this
+            # names it in the sibling comparison instead of dropping the
+            # comparison, and never leaks a None into ``tags``, which the SARIF
+            # message builder joins as a string.
+            labels = sorted('(none)' if tag is None else tag for tag in tags)
             drifts.append({
                 'file': files[0],
                 'image': img,
-                'tags': sorted(tags),
-                'detail': f'{img} pinned differently across {", ".join(files)}: {sorted(tags)}',
+                'tags': labels,
+                'detail': f'{img} pinned differently across {", ".join(files)}: {labels}',
             })
 
     return drifts
