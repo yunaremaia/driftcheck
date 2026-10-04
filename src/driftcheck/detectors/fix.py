@@ -15,8 +15,16 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
     """Apply fixes for all detected drifts. Returns list of fixed file paths."""
     fixed = []
     
-    def fix_in_file(path: Path, old_ver: str, new_ver: str, patterns: list[re.Pattern]) -> bool:
-        """Replace version in file. Returns True if modified."""
+    def fix_in_file(path: Path, old_ver: str | None, new_ver: str | None, patterns: list[re.Pattern]) -> bool:
+        """Replace version in file. Returns True if modified.
+
+        A detector reports doc_version=None when the doc file has no version
+        string to rewrite. There is nothing to replace then, so skip the file
+        instead of raising TypeError inside str.replace (which used to abort
+        the whole --fix run, leaving every other file unfixed).
+        """
+        if not old_ver or not new_ver:
+            return False
         text = path.read_text(encoding="utf-8", errors="replace")
         original = text
         for pat in patterns:
