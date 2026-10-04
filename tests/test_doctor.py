@@ -78,6 +78,30 @@ class TestDoctorConfig:
         # TOML parser is lenient, so it may pass or fail
         assert config_check.status in ("pass", "fail")
 
+    def test_warn_unknown_top_level_key(self, tmp_repo):
+        """A typo'd TOP-LEVEL key is silently dropped by load_config.
+
+        load_config honours top-level keys as well as [driftcheck] ones, so a
+        typo outside the section is a silent misconfiguration. The config check
+        must warn about it exactly as it does inside the section.
+        """
+        (tmp_repo / ".driftcheck.toml").write_text(
+            "exclude_dectors = [\"node\"]\n", encoding="utf-8"
+        )
+        report = Doctor(tmp_repo).run_all()
+        config_check = next(c for c in report.checks if c.name == "config")
+        assert config_check.status == "warn"
+        assert "exclude_dectors" in config_check.message
+
+    def test_pass_valid_top_level_key(self, tmp_repo):
+        """A known key at top level is honoured by load_config and stays valid."""
+        (tmp_repo / ".driftcheck.toml").write_text(
+            'exclude_detectors = ["node"]\n', encoding="utf-8"
+        )
+        report = Doctor(tmp_repo).run_all()
+        config_check = next(c for c in report.checks if c.name == "config")
+        assert config_check.status == "pass"
+
 
 class TestDoctorDetectors:
     def test_pass_all_enabled(self, tmp_repo):
@@ -95,6 +119,28 @@ class TestDoctorDetectors:
         report = Doctor(tmp_repo).run_all()
         det_check = next(c for c in report.checks if c.name == "detectors")
         assert det_check.status == "fail"
+
+    def test_fail_all_excluded_top_level(self, tmp_repo):
+        """A top-level exclude_detectors is honoured by load_config, so doctor
+        must not report "All detectors enabled" for it."""
+        from driftcheck.config import DRIFT_KEYS
+        all_detectors = [k for k in DRIFT_KEYS if k != "drifts"]
+        excludes = ", ".join(f'"{d}"' for d in all_detectors)
+        (tmp_repo / ".driftcheck.toml").write_text(
+            f"exclude_detectors = [{excludes}]\n", encoding="utf-8"
+        )
+        report = Doctor(tmp_repo).run_all()
+        det_check = next(c for c in report.checks if c.name == "detectors")
+        assert det_check.status == "fail"
+
+    def test_warn_excluded_top_level(self, tmp_repo):
+        (tmp_repo / ".driftcheck.toml").write_text(
+            'exclude_detectors = ["node"]\n', encoding="utf-8"
+        )
+        report = Doctor(tmp_repo).run_all()
+        det_check = next(c for c in report.checks if c.name == "detectors")
+        assert det_check.status == "warn"
+        assert "1 detector(s) excluded" in det_check.message
 
 
 class TestDoctorGitignore:
