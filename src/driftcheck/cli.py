@@ -958,12 +958,20 @@ def _list_detectors() -> None:
 # else it receives falls through to the generic renderer at the end of the
 # function, so this list is a formatting preference and never a gate: a key that
 # is missing here still reaches stdout.
+#
+# `docker_multistage_drifts` and `python_version_drifts` are deliberately
+# absent. Each detector emits several payload shapes under its single key, and a
+# hand block that hard-indexes one shape's fields raises KeyError on the others
+# -- unwinding the whole renderer, losing every finding printed after it and all
+# informational output, while the exit code and `--json` stay healthy. The
+# generic renderer reads the payload instead of a fixed field list, so it
+# describes every one of their shapes.
 _HAND_FORMATTED_BLOCKING_KEYS = frozenset({
     "rust_drifts", "node_drifts", "bun_drifts",
     "package_version_drifts", "python_drifts", "python_setup_drifts",
     "go_drifts", "requirements_drifts", "count_drifts",
     "actions_drifts", "lineending_drifts", "docker_drifts",
-    "docker_multistage_drifts", "docker_bases_drifts", "java_drifts",
+    "docker_bases_drifts", "java_drifts",
     "maven_drifts", "terraform_drifts", "circleci_drifts",
     "gitlab_drifts", "k8s_drifts", "gh_actions_version_drifts",
     "helm_drifts", "dc_drifts", "ci_os_drifts",
@@ -975,7 +983,7 @@ _HAND_FORMATTED_BLOCKING_KEYS = frozenset({
     "npm_workspace_drifts", "kotlin_drifts",
     "pipfile_drifts", "conda_drifts", "poetry_drifts",
     "gradle_catalog_drifts", "npmrc_drifts", "jenkins_drifts",
-    "ruby_version_drifts", "python_version_drifts", "python_version_file_drifts",
+    "ruby_version_drifts", "python_version_file_drifts",
     "node_version_drifts", "java_version_drifts", "terraform_version_drifts",
     "yarnrc_drifts", "pnpm_workspace_drifts", "package_manager_drifts",
     "package_lock_drifts", "vscode_ext_drifts", "editorconfig_drifts",
@@ -1035,8 +1043,20 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
         print(f"driftcheck: {d['file']}: {d['detail']}")
     for d in all_drifts.get("docker_drifts", []):
         print(f"driftcheck: {d['file']}: {d['doc_image']} → should be {d['dockerfile_image']} (Dockerfile)")
-    for d in all_drifts.get("docker_multistage_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['detail']}")
+    # Multi-stage Dockerfile drift has no hand block on purpose.
+    #
+    # `find_dockerfile_multistage_drift` emits two shapes under this one key:
+    # `{file, detail, image, tags}` when the stages conflict on the base image,
+    # and `{file, doc_image, dockerfile_image, pos}` when the docs name a
+    # different tag for the final stage. A block reading `d['detail']` raised
+    # KeyError on the second shape, which unwound `_print_blocking_drifts` and
+    # took every finding printed after it -- plus all informational output --
+    # with it, while the exit code stayed 1 and `--json` stayed complete.
+    #
+    # Both shapes render correctly through the generic fallback, which prefers
+    # the detector's own `detail` and otherwise states the image pair by
+    # subtraction -- the same `describe_drift` the `--report` surface and
+    # `to_sarif` use, so the three surfaces cannot disagree about a finding.
     for d in all_drifts.get("docker_bases_drifts", []):
         if 'tags' in d:
             print(f"driftcheck: {d['image']} pinned differently across {', '.join(d['tags'])}")
@@ -1153,8 +1173,13 @@ def _print_blocking_drifts(all_drifts: dict, result: dict) -> None:
     # Version file drifts
     for d in all_drifts.get("ruby_version_drifts", []):
         print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.ruby-version)")
-    for d in all_drifts.get("python_version_drifts", []):
-        print(f"driftcheck: {d['file']}: {d['tool']} {d['doc_version']} → should be {d['version_file']} (.python-version)")
+    # Python `.python-version` drift has no hand block on purpose, for the same
+    # reason as multi-stage above. `find_python_version_drift` emits three
+    # shapes under this one key -- the `.python-version` pin and the doc mention
+    # carry `version_file`, but the GitHub Actions `setup-python` shape carries
+    # `workflow_version` instead, because there is no version file to disagree
+    # with there. Reading `d['version_file']` raised KeyError on that shape and
+    # took the rest of the report down with it.
     for d in all_drifts.get("python_version_file_drifts", []):
         print(f"driftcheck: .python-version {d['pin_version']} is below {d['floor_source']} requires-python floor {d['floor_version']}")
     for d in all_drifts.get("node_version_drifts", []):
