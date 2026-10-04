@@ -10,7 +10,12 @@ toolchain side might call itself.
 
 from __future__ import annotations
 
-from driftcheck.messages import describe_drift, describe_expected, describe_finding
+from driftcheck.messages import (
+    describe_drift,
+    describe_expected,
+    describe_finding,
+    describe_pair,
+)
 
 
 def test_detector_detail_is_preserved_verbatim() -> None:
@@ -93,3 +98,121 @@ def test_a_label_before_the_documented_side_is_not_the_target() -> None:
               "floor_version": "3.11.0", "floor_source": "pyproject.toml", "pos": 0}
     assert describe_expected(python) == "3.11.0"
     assert describe_drift(python) == "Python 3.9 → should be 3.11.0"
+
+# --- describe_pair: both halves, for payloads that name no documented side ---
+#
+# Every payload below is verbatim from `--json` output of a real scan (see the
+# counts in each docstring), not a shape invented for the test. The pairing rule
+# is load-bearing for `--explain`, which renders Actual/Expected/Diff/Fix, so
+# these pin what it must never do as much as what it must do.
+
+
+def test_documented_field_payload_pairs_that_field_with_the_counterpart() -> None:
+    """A payload naming its documented side still pairs the documented field.
+
+    Real ``git_tag_drifts`` payload: ``detail`` describes the drift, and the two
+    values it disagrees about are ``doc_version`` and ``git_tag`` -- a field
+    name the closed subtraction set does not have to know.
+    """
+    payload = {"file": "README.md", "doc_version": "1.0", "git_tag": "v0.1.0",
+               "detail": "README mentions version 1.0 but latest git tag is v0.1.0",
+               "pos": 198}
+    assert describe_pair(payload) == ("1.0", "v0.1.0")
+
+
+def test_pair_is_read_from_payloads_that_name_no_documented_side() -> None:
+    """The majority case: no ``doc_*`` field, and both halves are still reachable.
+
+    Real ``actions_drifts`` payload from ``a2a-drift/.github/workflows/ci.yml``.
+    Measured over 330 findings across 35 repos, 301 carry no documented field --
+    these are the findings ``--explain`` used to render with an empty ``Actual``,
+    an empty ``Expected`` and no diff, while the same finding printed correctly
+    in the scan.
+    """
+    payload = {"file": ".github/workflows/ci.yml", "action": "actions/checkout",
+               "current": "v4", "suggested": "v5", "pos": 556}
+    assert describe_pair(payload) == ("v4", "v5")
+
+
+def test_a_subject_label_is_never_rendered_as_one_of_the_two_values() -> None:
+    """A payload that names its subject leads with it; the values follow.
+
+    Real ``freshness_drifts`` payload: ``package`` is what the versions are
+    *about*, not either side of the mismatch. This is the shape the trailing-two
+    rule exists for -- measured over the real corpus, no ``action``, ``package``,
+    ``instruction`` or ``type`` value appeared in a returned pair.
+    """
+    payload = {"file": "pyproject.toml", "package": "httpx", "pinned_version": "0.27",
+               "latest_version": "0.28.1", "pos": 0}
+    assert describe_pair(payload) == ("0.27", "0.28.1")
+
+
+def test_the_detectors_own_sentence_is_never_one_half_of_the_pair() -> None:
+    """``detail`` and ``message`` describe the finding, so they cannot be a value.
+
+    Real ``uv_lock_drifts`` payload from ``tool-call-retry/uv.lock``. Its
+    ``message`` restates both versions in a sentence ("pyyaml: uv.lock=6.0.3,
+    pyproject.toml=>=6.0"); pairing against it would print the sentence as one
+    side of a diff.
+    """
+    payload = {"type": "uv_lock_drift", "package": "pyyaml", "uv_lock_version": "6.0.3",
+               "pyproject_spec": ">=6.0", "file": "uv.lock",
+               "message": "pyyaml: uv.lock=6.0.3, pyproject.toml=>=6.0"}
+    assert describe_pair(payload) == ("6.0.3", ">=6.0")
+
+
+def test_an_instruction_label_is_not_read_as_the_documented_value() -> None:
+    """A payload whose subject is named by an invented field is still read.
+
+    Real ``dockerfile_instruction_drifts`` payload from
+    ``gfi/CONTRIBUTING.md``. Its documented side is ``doc_value`` -- outside the
+    ``_DOCUMENTED_FIELDS`` vocabulary, so the documented branch does not apply and
+    the subtraction carries this finding. ``instruction`` names what is being
+    documented and must not become the value.
+    """
+    payload = {"file": "CONTRIBUTING.md", "instruction": "ENTRYPOINT",
+               "doc_value": "is", "dockerfile_value": '["gfi"]', "pos": 2720}
+    assert describe_pair(payload) == ("is", '["gfi"]')
+
+
+def test_a_finding_naming_a_condition_rather_than_two_values_has_no_pair() -> None:
+    """``kind`` + ``detail`` is a condition, not a disagreement.
+
+    Real ``typosquat_drifts`` payload: a suspicious package is reported with a
+    condition and a sentence, and there is nothing to diff. Returning None is
+    what lets the caller render the detector's own sentence instead of inventing
+    a missing half -- 87 of the 301 real payloads with no documented field are
+    of this shape.
+    """
+    payload = {"file": "pyproject.toml", "kind": "typosquat_suspect",
+               "detail": "suspicious dependency 'pretty' \u2014 edit distance <= 2 "
+                         "from known package(s): poetry (possible typosquat)",
+               "pos": 0}
+    assert describe_pair(payload) is None
+
+
+
+
+def test_non_dict_payload_has_no_pair() -> None:
+    """A non-dict entry has no fields to read, so it has no pair."""
+    assert describe_pair("plain string finding") is None
+    assert describe_pair(42) is None
+    assert describe_pair(None) is None
+
+
+def test_a_list_valued_field_is_not_one_half_of_the_pair() -> None:
+    """Two values are not two versions.
+
+    Real ``dependabot_incomplete`` payload from ``agent-undo``. Both surviving
+    fields hold *lists* of ecosystem names, so the trailing-two rule pairs
+    ``("['github-actions']", "['pip']")`` -- a Python repr rendered as a version
+    on each side of a diff, and a substitution nobody can apply to YAML. This is
+    the one measured payload where trailing-two names a pair that is not a pair:
+    3 of the 214 real no-documented-field payloads that reach it. A value a
+    reader would compare is a scalar; a collection is part of the condition, and
+    ``describe_finding`` already renders it well.
+    """
+    payload = {"file": ".github/dependabot.yml", "kind": "dependabot_incomplete",
+               "ecosystems": ["github-actions", "pip"], "configured": ["npm"],
+               "detail": "dependabot.yml missing ecosystems: github-actions"}
+    assert describe_pair(payload) is None

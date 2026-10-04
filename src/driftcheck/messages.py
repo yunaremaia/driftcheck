@@ -21,6 +21,13 @@ rendered with an empty target:
 
     - `README.md`: Python 3.9 → should be
 
+``describe_pair`` extends the same subtraction to the payloads that name no
+documented side at all, and returns both halves rather than one. ``--explain``
+prints both, and it had no way to reach the pair on the majority of real
+findings: 301 of 330 findings across 35 repos carry no ``doc_*`` field, so
+``Actual``/``Expected``/``Diff``/``Fix`` rendered empty and unfixable while the
+same finding printed correctly in the scan.
+
 The same closed list had been copied into ``cli._render_generic_drift``,
 ``cli._print_csv`` and ``explain._extract_expected`` -- four lists over one open
 key space, each free to fall out of date with the others, and each a place a
@@ -106,6 +113,14 @@ def describe_finding(d: object) -> str:
     return str(d)
 
 
+# Fields carrying the detector's own sentence about the finding instead of
+# either side of a mismatch. ``detail`` is the spelling most detectors use and
+# ``message`` the other one, and both are excluded from the pair for the same
+# reason: "missing .gitattributes with * text=auto eol=lf" describes the finding,
+# it is not one of the two values a reader should diff.
+_SENTENCE_FIELDS = frozenset({"detail", "message"})
+
+
 def _documented_field(d: dict) -> str | None:
     """The name of the field carrying the documented side of a mismatch."""
     return next((field for field in _DOCUMENTED_FIELDS if d.get(field)), None)
@@ -148,6 +163,74 @@ def describe_expected(d: object) -> str:
             continue
         return str(value)
     return ""
+
+
+def describe_pair(d: object) -> tuple[str, str] | None:
+    """The two values a finding disagrees about, or None when it has none.
+
+    The same subtraction ``describe_expected`` performs, extended to payloads
+    that name no documented side. ``--explain`` needs both halves, and reading
+    only the documented half is what left 89% of its findings with an empty
+    ``Actual``, an empty ``Expected`` and no usable diff -- the scan printed the
+    real values, in the payload, under names this surface had no way to reach.
+
+    Derived, not enumerated, for the reason ``describe_expected``'s docstring
+    gives: a closed list of the field names a detector picks goes stale the
+    moment a new detector picks a different one. So the pair is read structurally
+    -- every field that carries a value and is not location metadata, not finding
+    metadata and not the detector's own sentence. What is left is what the payload
+    is actually about.
+
+    Order is the whole of the remaining rule. A payload's non-value fields
+    (``action``, ``package``, ``instruction``) name the subject and lead; the two
+    values that disagree follow them. Measured over 330 findings from 35 repos
+    (``driftcheck --json`` over every checkout under ``repos/``), the last two
+    surviving fields are the pair in every payload of that shape, and agree with
+    ``describe_expected`` on all 29 payloads where that already worked. So
+    ``{"action", "current", "suggested"}`` pairs ``current``/``suggested`` and
+    never renders ``actions/checkout`` as a version.
+
+    Scalars only. The one measured shape that breaks the rule is
+    ``dependabot_incomplete``, whose two surviving fields are *lists* of
+    ecosystem names: trailing-two pairs them, and ``str()`` renders
+    ``"['github-actions', 'pip']"`` as a version on each side of a diff. A
+    collection is part of the condition rather than one of two values to compare,
+    so it does not count toward the pair and the caller renders the sentence --
+    ``describe_finding`` already handles those payloads well.
+
+    ponytail: trailing two, because every measured scalar payload follows it. A
+    detector that emitted a third scalar value *after* the pair would need the
+    rule to name the subject instead -- until one does, this is the version that
+    needs no names.
+
+    Returns None when fewer than two values survive: the finding names a subject
+    and a condition (``kind`` + ``detail``) rather than two disagreeing values, so
+    there is nothing to diff. The caller renders the detector's own sentence
+    instead of inventing the missing half.
+    """
+    if not isinstance(d, dict):
+        return None
+
+    documented_field = _documented_field(d)
+    if documented_field is not None:
+        expected = describe_expected(d)
+        if expected:
+            return str(d[documented_field]), expected
+
+    values = [
+        str(value)
+        for name, value in d.items()
+        if name not in _LOCATION_FIELDS
+        and name not in _NON_VALUE_FIELDS
+        and name not in _SENTENCE_FIELDS
+        and value not in _EMPTY
+        # A list of names is the condition, not one of two values to compare;
+        # ``str()`` of it is a Python repr, which is not a version.
+        and isinstance(value, (str, int, float))
+    ]
+    if len(values) < 2:
+        return None
+    return values[-2], values[-1]
 
 
 def describe_drift(d: object) -> str:

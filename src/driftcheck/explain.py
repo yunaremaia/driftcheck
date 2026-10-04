@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .messages import describe_expected
+from .messages import describe_finding, describe_pair
 
 
 # Detector-level impact descriptions — keyed by drift type
@@ -101,12 +101,14 @@ class Explainer:
             dict with: drift_type, file, line, actual, expected, diff, impact, fix
         """
         file_path = drift.get("file", "")
-        actual = self._extract_actual(drift)
-        expected = self._extract_expected(drift)
-        line = self._find_line(file_path, actual) if file_path else None
+        pair = describe_pair(drift)
+        actual, expected = pair if pair else ("", "")
+        if not actual and drift.get("tool") and drift.get("doc_version"):
+            actual = f"{drift['tool']} {drift['doc_version']}"
+        line = self._find_line(file_path, actual, drift.get("pos")) if file_path else None
         diff = self._make_diff(actual, expected)
         impact = IMPACT_DESCRIPTIONS.get(drift_type, "Version mismatch between documentation and toolchain.")
-        fix = self._suggest_fix(file_path, line, actual, expected)
+        fix = self._suggest_fix(file_path, line, actual, expected, drift)
 
         return {
             "drift": drift_type,
@@ -167,10 +169,12 @@ class Explainer:
         if not file_path:
             return None
 
-        actual = self._extract_actual(drift)
-        expected = self._extract_expected(drift)
-        if not actual or not expected:
+        pair = describe_pair(drift)
+        if pair is None:
+            # A finding with no pair (kind + detail only) has no value to
+            # substitute, so there is nothing this function can do to the file.
             return None
+        actual, expected = pair
 
         full_path = self.root / file_path
         if not full_path.exists():
@@ -188,50 +192,57 @@ class Explainer:
             return file_path
         return None
 
-    def _extract_actual(self, drift: dict) -> str:
-        """Extract the actual (documented) value from a drift."""
-        if drift.get("tool") and drift.get("doc_version"):
-            return f"{drift['tool']} {drift['doc_version']}"
-        return drift.get("doc_version", drift.get("doc_image", ""))
+    def _find_line(self, file_path: str, actual: str, pos: object = None) -> int | None:
+        """Find the line number the finding is on.
 
-    def _extract_expected(self, drift: dict) -> str:
-        """Extract the expected (toolchain) value from a drift.
-
-        Shared with every other surface via ``messages.describe_expected``, so
-        this no longer keeps a private list of the field names it can read: a
-        detector that names its payload differently was invisible here and
-        produced no expected value, which left ``--explain`` with a diff and a
-        fix suggestion computed against an empty string.
+        ``pos`` is the byte-independent character offset the detector recorded
+        (``m.start()``), so counting newlines up to it is exact -- no search for
+        a value that may appear on many lines, and no line at all when the value
+        is absent from the file. Many detectors emit a literal ``0`` meaning
+        "offset not tracked", which is indistinguishable from a real offset of
+        zero, so a falsy ``pos`` falls through to the string search below.
         """
-        return describe_expected(drift)
-
-    def _find_line(self, file_path: str, actual: str) -> int | None:
-        """Find the line number containing the actual value."""
-        if not file_path or not actual:
+        if not file_path:
             return None
         full_path = self.root / file_path
         if not full_path.exists():
             return None
         try:
             content = full_path.read_text(encoding="utf-8")
-            for i, line in enumerate(content.splitlines(), 1):
-                if actual in line:
-                    return i
         except (OSError, UnicodeDecodeError):
-            pass
+            return None
+
+        if isinstance(pos, int) and pos > 0 and pos <= len(content):
+            return content.count("\n", 0, pos) + 1
+
+        if not actual:
+            return None
+        for i, line in enumerate(content.splitlines(), 1):
+            if actual in line:
+                return i
         return None
 
     def _make_diff(self, actual: str, expected: str) -> str:
         """Generate a simple diff between actual and expected."""
+        if not actual and not expected:
+            return ""
         if actual == expected:
             return f"  {actual}"
         return f"- {actual}\n+ {expected}"
 
-    def _suggest_fix(self, file_path: str, line: int | None, actual: str, expected: str) -> str:
-        """Generate a human-readable fix suggestion."""
+    def _suggest_fix(self, file_path: str, line: int | None, actual: str, expected: str,
+                     drift: dict | None = None) -> str:
+        """Generate a human-readable fix suggestion.
+
+        A finding with no value pair reports a condition, not two disagreeing
+        values -- a missing ``.gitattributes``, an ecosystem Dependabot does not
+        cover. There is nothing to substitute, so the detector's own sentence is
+        the fix, and saying "cannot determine fix" about a finding that carries
+        its own explanation is the wrong answer.
+        """
         if not file_path:
             return "No file associated with this drift."
         if not actual or not expected:
-            return "Cannot determine fix — missing actual or expected value."
+            return describe_finding(drift if isinstance(drift, dict) else {})
         location = f"{file_path}" + (f" line {line}" if line else "")
         return f"Update {location}: replace '{actual}' with '{expected}'"
