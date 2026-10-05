@@ -4,6 +4,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion
+
 try:
     import tomllib
 except ImportError:
@@ -114,18 +117,46 @@ def find_uv_lock_drift(root: str | Path) -> list[dict]:
 
     drifts: list[dict] = []
     for pkg_name, uv_version in uv_packages.items():
-        if pkg_name in pyproject_deps:
-            pyproject_spec = pyproject_deps[pkg_name]
-            drifts.append({
-                "type": "uv_lock_drift",
-                "package": pkg_name,
-                "uv_lock_version": uv_version,
-                "pyproject_spec": pyproject_spec,
-                "file": "uv.lock",
-                "message": f"{pkg_name}: uv.lock={uv_version}, pyproject.toml={pyproject_spec}",
-            })
+        if pkg_name not in pyproject_deps:
+            continue
+        pyproject_spec = pyproject_deps[pkg_name]
+        # Report only when the pin *violates* the constraint. The previous
+        # version appended a finding for every package present in both files,
+        # so a consistent repo (pyproject `requests>=2.28.0`, uv.lock pinning
+        # 2.32.0) reported one drift per direct dependency. A drift detector
+        # that cries wolf on the healthy case is worse than no detector.
+        if not _violates(uv_version, pyproject_spec):
+            continue
+        drifts.append({
+            "type": "uv_lock_drift",
+            "package": pkg_name,
+            "uv_lock_version": uv_version,
+            "pyproject_spec": pyproject_spec,
+            "file": "uv.lock",
+            "message": f"{pkg_name}: uv.lock={uv_version} violates pyproject.toml={pyproject_spec}",
+        })
 
     return drifts
+
+
+def _constraint(spec: str) -> str:
+    """Strip PEP 508 extras and environment markers off a dependency spec."""
+    return re.sub(r"\[[^\]]*\]", "", spec.split(";", 1)[0]).strip()
+
+
+def _violates(uv_version: str, pyproject_spec: str) -> bool:
+    """Return whether *uv_version* fails the constraint in *pyproject_spec*.
+
+    False whenever the constraint is empty or unparseable: an unreadable spec
+    is not evidence of drift.
+    """
+    spec = _constraint(pyproject_spec)
+    if not spec:
+        return False
+    try:
+        return not SpecifierSet(spec).contains(uv_version, prereleases=True)
+    except (InvalidSpecifier, InvalidVersion):
+        return False
 
 
 def _read_text_safe(path: Path) -> str | None:
