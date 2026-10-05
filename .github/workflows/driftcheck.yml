@@ -53,7 +53,7 @@ jobs:
           python-version: '3.11'
 
       - name: Cache driftcheck installation
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip/driftcheck
           key: ${{ runner.os }}-driftcheck-${{ hashFiles('**/pyproject.toml') }}
