@@ -13,7 +13,10 @@ ACTIONS_NODE24_FIX = {
 ACTIONS_RE = re.compile(r'uses:\s*(?P<action>[A-Za-z0-9_.\-\/]+)\s*@\s*(?P<ver>v\d+(?:\.\d+)*)', re.I)
 
 # Known latest versions for popular actions (update periodically)
-# Last updated: 2026-09-09
+# Verified against each upstream repo's major-version tags on 2026-10-05.
+# Never claim a major that has no tag: a version ahead of upstream sends users
+# to a `uses:` line that cannot resolve, which fails the workflow at runtime
+# rather than reporting drift.
 GH_ACTIONS_LATEST = {
     "actions/checkout": "v7",
     "actions/setup-node": "v7",
@@ -23,16 +26,16 @@ GH_ACTIONS_LATEST = {
     "actions/cache": "v6",
     "actions/upload-artifact": "v7",
     "actions/download-artifact": "v8",
-    "pnpm/action-setup": "v5",
+    "pnpm/action-setup": "v6",
     "actions/configure-pages": "v6",
-    "actions/deploy-pages": "v6",
+    "actions/deploy-pages": "v5",
     "actions/stale": "v11",
     "actions/labeler": "v7",
     "actions/dependency-review-action": "v5",
     "github/codeql-action/init": "v4",
     "github/codeql-action/analyze": "v4",
     "codecov/codecov-action": "v7",
-    "dorny/test-reporter": "v2",
+    "dorny/test-reporter": "v3",
 }
 
 GH_ACTIONS_RE = re.compile(r'uses:\s*(?P<action>[A-Za-z0-9_.\-\/]+)\s*@(?P<ver>v\d+(?:\.\d+)*)', re.I)

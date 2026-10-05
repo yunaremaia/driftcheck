@@ -221,10 +221,10 @@ driftcheck is designed to run as a quality gate in CI pipelines. It exits with c
 **Comparing against a specific tag:**
 
 ```bash
-driftcheck --git-mode --git-base v1.0.0
+driftcheck --git-mode --git-base v0.1.52
 ```
 
-### Checks (v0.1.47):
+### Checks (v0.1.52):
 
 **Language runtimes:**
 - **Rust**: `rust-toolchain.toml` `channel` **and** `Cargo.toml` `rust-version` vs `README.md` / `docs/README*.md` / `CONTRIBUTING*.md` — minor-aware (patch differences ignored)
@@ -343,7 +343,7 @@ the files staged for the next commit:
 ```yaml
 repos:
   - repo: https://github.com/yunaremaia/driftcheck
-    rev: v0.1.47
+    rev: v0.1.52
     hooks:
       - id: driftcheck
         args: ["--no-informational"]
