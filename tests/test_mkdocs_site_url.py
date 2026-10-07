@@ -394,5 +394,184 @@ def test_no_absolute_local_paths_in_mkdocs_config():
         )
 
 
+def test_site_description_is_configured(sitemap_helpers, mkdocs_text):
+    """The root cause: no site_description means no <meta name="description">.
+
+    mkdocs writes the tag only when site_description is set. Without it the
+    build is still green and search engines get no snippet -- the same silent
+    shape as the empty sitemap, one tag over.
+    """
+    site_description = sitemap_helpers.parse_site_description(mkdocs_text)
+
+    assert site_description, (
+        "mkdocs.yml defines no site_description, so mkdocs emits no "
+        '<meta name="description"> and search results have no snippet to show. '
+        "Set it to pyproject.toml's description."
+    )
+
+
+def test_site_description_matches_pyproject(sitemap_helpers, mkdocs_text):
+    """site_description must be the description the package already ships.
+
+    The expected value is read from pyproject.toml rather than written here: a
+    hand-copied string cannot notice the copy drifting, and a hardcoded list of
+    accepted values cannot notice the value missing from it.
+    """
+    expected = _pyproject_description()
+    actual = sitemap_helpers.parse_site_description(mkdocs_text)
+
+    assert expected, "pyproject.toml has no description field"
+    assert actual == expected, (
+        f"mkdocs.yml site_description is {actual!r} but pyproject.toml "
+        f"description is {expected!r}: the docs site would describe the tool "
+        "differently from the package that links to it"
+    )
+
+
+def test_theme_custom_dir_points_at_the_overrides_directory(sitemap_helpers, mkdocs_text):
+    """og:/twitter: tags need theme.custom_dir; material emits none on its own."""
+    custom_dir = sitemap_helpers.parse_custom_dir(mkdocs_text)
+
+    assert custom_dir, (
+        "mkdocs.yml theme has no custom_dir, so overrides/main.html is never "
+        "loaded and no og:/twitter: meta tags are emitted"
+    )
+    assert (REPO_ROOT / custom_dir).is_dir(), (
+        f"mkdocs.yml theme.custom_dir is {custom_dir!r} but that directory does "
+        "not exist in the repository"
+    )
+
+
+def test_overrides_template_is_tracked_and_references_the_og_tags(sitemap_helpers, mkdocs_text):
+    """The override must exist, be tracked, and emit every tag the site needs.
+
+    The tag list comes from the same constant the CI check uses, so the suite
+    and the deploy gate cannot disagree about what "has social metadata" means.
+    """
+    custom_dir = sitemap_helpers.parse_custom_dir(mkdocs_text)
+    assert custom_dir, "mkdocs.yml theme has no custom_dir"
+
+    override = REPO_ROOT / custom_dir / "main.html"
+    assert override.is_file(), (
+        f"{override.relative_to(REPO_ROOT)} is missing; without it mkdocs "
+        "emits no Open Graph tags"
+    )
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(override.relative_to(REPO_ROOT))],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert tracked.returncode == 0, (
+        f"{override.relative_to(REPO_ROOT)} is not tracked by git: the CI docs "
+        "job builds from the repository, so an ignored override would produce a "
+        "site with no social metadata and a green build"
+    )
+
+    content = override.read_text(encoding="utf-8")
+    for marker, label in sitemap_helpers.REQUIRED_META_TAGS:
+        # The template writes the attribute itself, so compare on the tag name
+        # rather than on the rendered attribute quoting.
+        tag_name = marker.split('"')[1]
+        assert tag_name in content, (
+            f"overrides/main.html does not reference {tag_name}, so the built "
+            f"HTML will have no {label}"
+        )
+
+
+def test_home_page_title_does_not_use_an_undefined_page_attribute(sitemap_helpers, mkdocs_text):
+    """A page attribute that does not exist renders as the "Home" placeholder.
+
+    mkdocs-material exposes ``page.is_homepage``; testing a near miss such as
+    ``page.is_home`` yields undefined, the else branch runs, and the home page
+    -- the one page every link preview of the site resolves to -- ships titled
+    "Home - <site>". Exercised against rendered HTML fixtures because a real
+    build does not fail, it just publishes the wrong title.
+    """
+    custom_dir = sitemap_helpers.parse_custom_dir(mkdocs_text)
+    override = (REPO_ROOT / custom_dir / "main.html").read_text(encoding="utf-8")
+
+    for near_miss in ("page.is_home ", "page.is_home %}", "page.is_home %"):
+        assert near_miss not in override, (
+            f"overrides/main.html tests {near_miss.strip()!r}, which "
+            "mkdocs-material does not define; Jinja renders it as undefined and "
+            'the home page ships with the placeholder title "Home - <site>" '
+            "instead of the project name"
+        )
+
+    site_name = sitemap_helpers.parse_site_name(mkdocs_text)
+
+    def head_with_title(title: str) -> str:
+        return (
+            "<head>"
+            '<meta name="description" content="a description" />'
+            '<meta property="og:type" content="website" />'
+            f'<meta property="og:title" content="{title}" />'
+            '<meta property="og:description" content="a description" />'
+            '<meta property="og:url" content="https://example.test/" />'
+            '<meta name="twitter:card" content="summary" />'
+            "</head>"
+        )
+
+    assert not sitemap_helpers.meta_tag_failures(
+        head_with_title(site_name), site_name, "index.html"
+    ), "a correctly titled home page must pass the meta tag check"
+
+    failures = sitemap_helpers.meta_tag_failures(
+        head_with_title(f"Home - {site_name}"), site_name, "index.html"
+    )
+    assert any("og:title" in failure for failure in failures), (
+        f"the meta tag check does not flag a home page titled 'Home - "
+        f"{site_name}'; the guard would not catch the bug it exists for"
+    )
+
+
+def test_docs_job_runs_the_metadata_check():
+    """The check has to run where mkdocs is installed, or it never runs.
+
+    The test job has no mkdocs, so a config-only guard here cannot prove the
+    built HTML. The docs job is the only place the artifact exists; if that
+    step is dropped the guard silently stops executing.
+    """
+    workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+
+    assert "check_docs_sitemap.py" in workflow, (
+        "the docs job no longer runs scripts/check_docs_sitemap.py, so nothing "
+        "verifies the built HTML for social metadata"
+    )
+    assert "mkdocs build" in workflow, (
+        "the docs job no longer builds the site; the sitemap and meta tag "
+        "checks would run against a stale or absent site/"
+    )
+
+
+def test_meta_tag_check_ignores_tags_outside_the_head(sitemap_helpers):
+    """A tag in <body> is not read by a crawler or a link preview."""
+    html = (
+        "<head><title>x</title></head>"
+        '<body><meta property="og:title" content="nope" /></body>'
+    )
+
+    assert "og:title" not in sitemap_helpers.parse_meta_tags(html)
+
+
+def _pyproject_description() -> str:
+    """The `description` value of pyproject.toml, read as text.
+
+    Read as text for the same reason the module reads mkdocs.yml that way: this
+    suite must run in every matrix leg without adding a parser dependency, and
+    the layout differs between the checkout and the sdist.
+    """
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    for line in pyproject.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("description =") and not stripped.startswith(
+            "description = ["
+        ):
+            return stripped.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

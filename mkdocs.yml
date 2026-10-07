@@ -3,12 +3,14 @@ site_name: driftcheck
 # Without it the build still succeeds and sitemap.xml is written as a valid but
 # EMPTY urlset, which silently removes the site from sitemap-based discovery.
 site_url: https://yunaremaia.github.io/driftcheck/
+site_description: Detect version drift between docs and toolchain files (README vs Dockerfile, build.gradle, rust-toolchain.toml, package.json, etc.)
 repo_name: yunaremaia/driftcheck
 repo_url: https://github.com/yunaremaia/driftcheck
 edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: overrides
   palette:
     - scheme: default
       primary: indigo

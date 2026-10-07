@@ -58,6 +58,57 @@ def parse_site_url(text: str) -> str | None:
     return None
 
 
+def parse_site_name(text: str) -> str | None:
+    """Return the top-level ``site_name`` value, or None when it is absent.
+
+    Parsed as text for the same reason as ``parse_site_url``. Needed to tell a
+    real page title from the placeholder ``Home`` that mkdocs gives the index
+    page when a template reads a page attribute that does not exist.
+    """
+    for line in text.splitlines():
+        match = TOP_LEVEL_KEY_RE.match(line)
+        if match and match.group("key") == "site_name":
+            return match.group("value").strip().strip("'\"") or None
+    return None
+
+
+def parse_site_description(text: str) -> str | None:
+    """Return the top-level ``site_description`` value, or None when absent.
+
+    This is the value mkdocs renders into ``<meta name="description">``; with
+    no site_description the tag is omitted entirely and the build stays green.
+    """
+    for line in text.splitlines():
+        match = TOP_LEVEL_KEY_RE.match(line)
+        if match and match.group("key") == "site_description":
+            return match.group("value").strip().strip("'\"") or None
+    return None
+
+
+def parse_custom_dir(text: str) -> str | None:
+    """Return ``theme.custom_dir``, or None when the theme does not set one.
+
+    Without it mkdocs-material loads no override template, and it emits no
+    Open Graph or Twitter Card tags of its own -- so every shared link renders
+    a blank preview.
+    """
+    lines = text.splitlines()
+    in_theme = False
+    for line in lines:
+        if TOP_LEVEL_KEY_RE.match(line):
+            key = TOP_LEVEL_KEY_RE.match(line).group("key")
+            if key == "theme":
+                in_theme = True
+                continue
+            if in_theme:
+                break
+        if in_theme:
+            stripped = line.strip()
+            if stripped.startswith("custom_dir:"):
+                return stripped.split(":", 1)[1].strip().strip("'\"") or None
+    return None
+
+
 def parse_nav_targets(text: str) -> list[str]:
     """Return every markdown file referenced by the ``nav:`` block."""
     lines = text.splitlines()
@@ -101,6 +152,68 @@ def expected_urls(site_url: str, nav_targets: list[str]) -> list[str]:
 def sitemap_urls(sitemap_path: Path) -> list[str]:
     root = ET.parse(sitemap_path).getroot()
     return [loc.text.strip() for loc in root.iter(f"{SITEMAP_NS}loc") if loc.text]
+
+
+#: Social/search tags that must be present in every built page's ``<head>``.
+#: ``description`` is what a search engine shows as the snippet; the ``og:`` and
+#: ``twitter:`` tags are what any link preview renders. Both were absent from
+#: this site because ``mkdocs.yml`` had no ``site_description`` and no
+#: ``theme.custom_dir`` override -- and the build stayed green either way, which
+#: is the same silent-failure shape as the empty sitemap above.
+REQUIRED_META_TAGS = (
+    ('<meta name="description"', "meta description"),
+    ('<meta property="og:type"', "og:type"),
+    ('<meta property="og:title"', "og:title"),
+    ('<meta property="og:description"', "og:description"),
+    ('<meta property="og:url"', "og:url"),
+    ('<meta name="twitter:card"', "twitter:card"),
+)
+
+META_TAG_RE = re.compile(
+    r'<meta\s+(?:name|property)="(?P<key>[^"]+)"\s+content="(?P<content>[^"]*)"',
+    re.IGNORECASE,
+)
+
+
+def parse_meta_tags(html: str) -> dict[str, str]:
+    """Return every ``name``/``property`` meta tag of a page's ``<head>``.
+
+    Only the head is inspected: ``mkdocs-material`` renders a search index and
+    navigation inside ``<body>``, and a tag found there is not read by a search
+    engine or a link preview.
+    """
+    head = html.split("</head>", 1)[0]
+    return {m.group("key").lower(): m.group("content") for m in META_TAG_RE.finditer(head)}
+
+
+def meta_tag_failures(html: str, site_name: str, page: str) -> list[str]:
+    """Return the social/search metadata problems in one built page.
+
+    Kept as a pure function over the rendered HTML so the suite can exercise it
+    against fixtures instead of trusting a build that happened to be green.
+    """
+    failures: list[str] = []
+    tags = parse_meta_tags(html)
+
+    for marker, label in REQUIRED_META_TAGS:
+        if marker not in html.split("</head>", 1)[0]:
+            failures.append(f"{page} has no {label} tag in <head>")
+
+    for key in ("description", "og:description"):
+        if key in tags and not tags[key].strip():
+            failures.append(f"{page} has an empty {key}")
+
+    # The home page must introduce the project by name. A bare "Home" (or
+    # "Home - <site>") is what an unset template variable produces, and it is
+    # the title every link preview of the site would show.
+    home_title = tags.get("og:title", "")
+    if page == "index.html" and home_title and not home_title.startswith(site_name):
+        failures.append(
+            f"{page} og:title is {home_title!r}, which does not start with the "
+            f"site name {site_name!r}: a link preview would not name the project"
+        )
+
+    return failures
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -155,6 +268,21 @@ def main(argv: list[str] | None = None) -> int:
         for url in expected:
             if url not in published:
                 failures.append(f"sitemap.xml has no entry for {url}")
+
+    # Social/search metadata, checked against the real rendered pages. This is
+    # the only job that installs mkdocs, so this is the only place the built
+    # HTML can be inspected at all.
+    site_name = parse_site_name(config_text) or ""
+    for page in sorted(site_dir.rglob("*.html")):
+        if "404" in page.name:
+            continue
+        try:
+            html = page.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        failures.extend(
+            meta_tag_failures(html, site_name, page.relative_to(site_dir).as_posix())
+        )
 
     if failures:
         print("docs sitemap check FAILED:", file=sys.stderr)
