@@ -1,5 +1,4 @@
 """Tests for yarnrc drift detection."""
-import pytest
 from driftcheck.detectors.yarnrc import (
     parse_yarnrc_version,
     find_yarnrc_drift,

@@ -1,6 +1,4 @@
 """Tests for Swift Package Manager detector."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.swift import (
     parse_swift_version_from_package,

@@ -1,12 +1,8 @@
 """Tests for Kubernetes drift detection: image tags in manifests vs README."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.k8s import (
     parse_k8s_images,
     find_k8s_drift,
-    K8S_IMAGE_RE,
-    K8S_VER_RE,
 )
 
 

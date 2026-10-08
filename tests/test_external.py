@@ -1,13 +1,10 @@
 """Tests for external resource drift detection (external.py)."""
-import tempfile
 from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.external import (
     EXTERNAL_CDN_RE,
     find_external_resource_drift,
-    SKIP_DIRS,
 )
 
 

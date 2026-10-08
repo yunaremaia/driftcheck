@@ -1,11 +1,7 @@
 """Integration tests for driftcheck CLI — end-to-end with real temp directories."""
 import json
-import subprocess
-import sys
-import tempfile
 from pathlib import Path
 
-import pytest
 
 from driftcheck.cli import main
 

@@ -1,8 +1,5 @@
 """Tests for Docker drift detector."""
-from pathlib import Path
-import tempfile
 
-import pytest
 
 from driftcheck.detectors.docker import (
     parse_dockerfile_from,

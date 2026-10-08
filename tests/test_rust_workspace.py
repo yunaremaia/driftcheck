@@ -5,7 +5,6 @@ from driftcheck.detectors.rust_workspace import find_rust_workspace_drift
 from driftcheck.cli import DETECTOR_INFO
 from driftcheck.config import DRIFT_KEYS
 import tempfile
-import os
 
 
 def test_all_members_in_sync():

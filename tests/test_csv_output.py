@@ -1,7 +1,6 @@
 """Tests for driftcheck --csv output format."""
 import csv
 import io
-from pathlib import Path
 from driftcheck.cli import main
 
 

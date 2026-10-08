@@ -1,8 +1,6 @@
 """Tests for Conda drift detector."""
-from pathlib import Path
 import tempfile
 
-import pytest
 
 from driftcheck.detectors.conda import (
     parse_conda_environment,

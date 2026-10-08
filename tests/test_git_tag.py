@@ -1,6 +1,5 @@
 """Tests for git tag drift detection."""
 import tempfile
-import os
 import subprocess
 from pathlib import Path
 from driftcheck.detectors.git_tag import (

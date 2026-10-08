@@ -1,5 +1,4 @@
 """Tests for Kotlin drift detection (kotlin.py)."""
-import pytest
 
 from driftcheck.detectors.kotlin import (
     KOTLIN_PLUGIN_RE,

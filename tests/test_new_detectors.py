@@ -1,7 +1,4 @@
 """Tests for tool-versions, nvmrc, and swift detectors."""
-from pathlib import Path
-import tempfile
-import os
 
 from driftcheck.detectors.tool_versions import (
     parse_tool_versions,

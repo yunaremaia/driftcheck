@@ -48,7 +48,6 @@ from pathlib import Path
 
 import pytest
 
-from driftcheck.messages import describe_finding
 
 REPO_SRC = str(Path(__file__).resolve().parents[1] / "src")
 

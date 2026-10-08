@@ -1,9 +1,7 @@
 """Tests for python_version_drift detector: unified Python version drift detection."""
 
-import pytest
 from pathlib import Path
 import tempfile
-import os
 
 from driftcheck.detectors.python_version_drift import (
     parse_python_version_file,

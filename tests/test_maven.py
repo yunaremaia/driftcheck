@@ -1,7 +1,5 @@
 """Tests for Maven drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.maven import (
     parse_maven_java_version,

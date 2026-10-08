@@ -1,10 +1,7 @@
 """Tests for Dockerfile base image drift detection."""
-import pytest
 from driftcheck.detectors.docker_bases import (
     parse_dockerfile_bases,
     find_dockerfile_bases_drift,
-    FROM_LINE_RE,
-    FLOATING_TAGS,
 )
 
 

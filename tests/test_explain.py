@@ -1,8 +1,5 @@
 """Tests for driftcheck --explain command (issue #271)."""
-from pathlib import Path
 import json
-import sys
-import pytest
 from driftcheck.explain import Explainer
 
 

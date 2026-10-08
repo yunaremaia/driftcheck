@@ -1,13 +1,8 @@
 """Tests for Elixir drift detection."""
-from pathlib import Path
-import tempfile
-import os
 
 from driftcheck.detectors.elixir import (
     parse_mix_elixir_version,
     find_elixir_drift,
-    MIX_ELIXIR_RE,
-    ELIXIR_DOC_RE,
 )
 
 

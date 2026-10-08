@@ -1,7 +1,5 @@
 """Tests for GitLab CI drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.gitlab import (
     parse_gitlab_images,

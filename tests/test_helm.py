@@ -1,12 +1,8 @@
 """Tests for Helm drift detection: Chart.yaml/values.yaml image tags vs README."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.helm import (
     parse_helm_images,
     find_helm_drift,
-    HELM_IMAGE_RE,
-    HELM_VER_RE,
 )
 
 

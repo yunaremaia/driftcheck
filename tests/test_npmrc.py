@@ -1,5 +1,4 @@
 """Tests for npmrc drift detection."""
-import pytest
 from driftcheck.detectors.npmrc import (
     parse_npmrc,
     find_npmrc_drift,

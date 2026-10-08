@@ -1,7 +1,5 @@
 """Tests for Dependabot drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.dependabot import find_dependabot_drift
 

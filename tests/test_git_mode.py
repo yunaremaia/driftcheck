@@ -1,7 +1,6 @@
 """Tests for git-mode scanning."""
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-import pytest
 
 from driftcheck.git_mode import (
     get_changed_files,

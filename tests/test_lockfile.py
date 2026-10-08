@@ -1,11 +1,8 @@
 """Tests for lockfile drift detection: missing, stale, or orphaned lockfiles."""
 from __future__ import annotations
 import os
-import tempfile
 import time
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.lockfile import find_lockfile_drift
 

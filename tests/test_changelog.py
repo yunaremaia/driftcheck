@@ -1,5 +1,4 @@
 """Tests for changelog entry drift detection."""
-import tempfile
 from pathlib import Path
 
 from driftcheck.detectors.changelog import (
@@ -8,7 +7,6 @@ from driftcheck.detectors.changelog import (
     _changelog_has_version_sections,
     _changelog_has_recent_activity,
     _changelog_has_unreleased_section,
-    find_changelog_drift,
 )
 
 

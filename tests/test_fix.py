@@ -1,10 +1,8 @@
 """Unit tests for the driftcheck fix module — apply_fixes() behavior."""
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.fix import apply_fixes
 

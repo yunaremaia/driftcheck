@@ -1,11 +1,8 @@
 """Tests for CI OS drift detection: deprecated GitHub Actions runners."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.ci_os import (
     find_ci_os_drift,
     CI_OS_DEPRECATED,
-    CI_OS_RE,
 )
 
 

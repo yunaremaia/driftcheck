@@ -1,12 +1,8 @@
 """Tests for .NET / C# drift detection: .csproj TargetFramework vs README."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.dotnet import (
     parse_dotnet_tfm,
     find_dotnet_drift,
-    DOTNET_TF_RE,
-    DOTNET_DOC_RE,
 )
 
 

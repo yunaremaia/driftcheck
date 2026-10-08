@@ -6,7 +6,6 @@ from pathlib import Path
 from contextlib import redirect_stdout, redirect_stderr
 import io
 
-import pytest
 
 # Add driftcheck to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

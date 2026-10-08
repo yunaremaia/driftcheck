@@ -1,8 +1,6 @@
 """Tests for driftcheck baseline mode — incremental drift detection."""
 
 import json
-import tempfile
-from pathlib import Path
 
 import pytest
 

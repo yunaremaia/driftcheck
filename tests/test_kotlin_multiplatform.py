@@ -3,7 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.kotlin_multiplatform import (
     BADGE_RES,

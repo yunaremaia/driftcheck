@@ -1,11 +1,8 @@
 """Tests for CMake drift detection."""
-from pathlib import Path
 
 from driftcheck.detectors.cmake import (
     parse_cmake_version,
     find_cmake_drift,
-    CMAKE_VERSION_RE,
-    CMAKE_DOC_RE,
 )
 
 

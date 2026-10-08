@@ -10,7 +10,6 @@ honoured, so the two surfaces for the same intent disagreed. These tests pin the
 argument path to the config path.
 """
 from __future__ import annotations
-import tempfile
 from pathlib import Path
 
 from driftcheck.detector import scan_repo

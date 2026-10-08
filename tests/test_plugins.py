@@ -1,7 +1,5 @@
 """Tests for the plugin system."""
 import textwrap
-from pathlib import Path
-import tempfile
 
 from driftcheck.plugins import load_plugins, run_plugin_detectors
 

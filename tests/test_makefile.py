@@ -1,5 +1,4 @@
 """Tests for Makefile drift detection."""
-from pathlib import Path
 from driftcheck.detectors.makefile import (
     parse_makefile_versions,
     find_makefile_drift,

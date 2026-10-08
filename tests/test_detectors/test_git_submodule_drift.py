@@ -1,8 +1,6 @@
 """Tests for git_submodule_drift detector."""
-import pytest
 from pathlib import Path
 import tempfile
-import subprocess
 
 from driftcheck.detectors.git_submodule_drift import (
     find_git_submodule_drift,

@@ -1,8 +1,4 @@
 """Tests for the Poetry pyproject.toml drift detector."""
-import pytest
-from pathlib import Path
-import tempfile
-import os
 
 from driftcheck.detectors.poetry import (
     parse_poetry_pyproject,

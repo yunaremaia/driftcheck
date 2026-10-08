@@ -1,6 +1,4 @@
 """Tests for Helm values drift detection."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.env_drift import find_helm_values_drift
 

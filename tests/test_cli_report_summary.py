@@ -1,5 +1,4 @@
 """Tests for driftcheck --report statistical summary feature."""
-from pathlib import Path
 from driftcheck.cli import main
 
 

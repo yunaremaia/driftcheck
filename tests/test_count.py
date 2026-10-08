@@ -1,8 +1,5 @@
 """Tests for count drift detector: README 'N skills' vs actual filesystem count."""
-from pathlib import Path
-import tempfile
 
-import pytest
 
 from driftcheck.detectors.count import find_count_drift, COUNT_RE
 

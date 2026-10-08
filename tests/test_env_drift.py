@@ -1,12 +1,8 @@
 """Tests for environment drift detection (.env, Docker Compose overrides, Helm values)."""
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.env_drift import (
     parse_env_file,
-    parse_env_example,
     find_env_drift,
     find_compose_override_drift,
     find_helm_values_drift,

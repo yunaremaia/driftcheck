@@ -1,7 +1,5 @@
 """Integration tests for new detectors."""
 from pathlib import Path
-import tempfile
-import os
 
 from driftcheck.detector import scan_repo
 

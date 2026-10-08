@@ -1,6 +1,4 @@
 """Tests for Docker Compose override drift detection."""
-from pathlib import Path
-import tempfile
 
 from driftcheck.detectors.env_drift import find_compose_override_drift
 

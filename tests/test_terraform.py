@@ -1,7 +1,5 @@
 """Tests for Terraform drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.terraform import (
     parse_terraform_provider_versions,

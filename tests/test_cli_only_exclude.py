@@ -2,7 +2,6 @@
 
 import sys
 
-import pytest
 from driftcheck.cli import _validate_detector_names, DETECTOR_INFO
 
 

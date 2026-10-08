@@ -1,7 +1,5 @@
 """Tests for Java (Gradle) drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.java import (
     parse_gradle_java_version,

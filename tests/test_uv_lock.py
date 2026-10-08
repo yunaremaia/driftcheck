@@ -1,10 +1,7 @@
 """Tests for uv.lock content drift detection."""
 
 from __future__ import annotations
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.uv_lock import (
     parse_uv_lock,

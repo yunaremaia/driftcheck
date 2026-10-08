@@ -1,5 +1,4 @@
 """Tests for pnpm workspace drift detection."""
-import pytest
 from driftcheck.detectors.pnpm import (
     parse_pnpm_workspace,
     find_pnpm_workspace_drift,

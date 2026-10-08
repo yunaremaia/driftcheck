@@ -1,9 +1,6 @@
 """Tests for Pipfile drift detection: Pipfile vs Pipfile.lock version mismatches."""
 from __future__ import annotations
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.pipfile import (
     parse_pipfile_versions,

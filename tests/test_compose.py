@@ -1,8 +1,5 @@
 """Tests for Docker Compose drift detector."""
-from pathlib import Path
-import tempfile
 
-import pytest
 
 from driftcheck.detectors.compose import (
     parse_docker_compose_images,

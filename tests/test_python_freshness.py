@@ -1,6 +1,5 @@
 """Tests for python_freshness detector."""
 from __future__ import annotations
-import pytest
 
 from driftcheck.detectors.python_freshness import (
     parse_pinned_requirements,

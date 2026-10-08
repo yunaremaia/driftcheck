@@ -5,8 +5,6 @@ import tempfile
 from driftcheck.detectors.dart import (
     parse_dart_sdk_version,
     find_dart_drift,
-    DART_SDK_RE,
-    DART_DOC_RE,
 )
 from driftcheck.detector import scan_repo
 

@@ -1,6 +1,4 @@
 """Tests for .env.example vs .env drift detection."""
-import tempfile
-from pathlib import Path
 
 from driftcheck.detectors.env_drift import find_env_drift
 

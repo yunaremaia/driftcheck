@@ -1,5 +1,4 @@
 """Tests for Typosquat drift detector."""
-from pathlib import Path
 
 from driftcheck.detectors.typosquat import (
     find_typosquat_drift,

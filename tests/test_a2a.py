@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.a2a import (
     parse_agent_card,

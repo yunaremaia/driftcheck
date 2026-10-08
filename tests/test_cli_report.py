@@ -1,7 +1,4 @@
 """Tests for driftcheck --init and --report CLI features."""
-import io
-import sys
-from pathlib import Path
 from driftcheck.cli import main
 
 

@@ -1,6 +1,5 @@
 """Tests for SARIF output with new drift types."""
 from __future__ import annotations
-import json
 
 from driftcheck.sarif import to_sarif
 

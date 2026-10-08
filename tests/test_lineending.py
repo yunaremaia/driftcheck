@@ -1,7 +1,5 @@
 """Tests for Lineending drift detector."""
-from pathlib import Path
 
-import pytest
 
 from driftcheck.detectors.lineending import find_lineending_drift
 

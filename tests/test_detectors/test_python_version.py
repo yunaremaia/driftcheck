@@ -1,5 +1,4 @@
 """Tests for python_version detector: .python-version vs requires-python floor."""
-import pytest
 from driftcheck.detectors.python_version import (
     parse_python_version_file,
     parse_requires_python,
