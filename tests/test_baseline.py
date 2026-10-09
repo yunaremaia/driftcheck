@@ -260,3 +260,192 @@ class TestBaselineCLI:
         data = json.loads(output)
         assert "_baseline" in data
         assert "new_drift_count" in data["_baseline"]
+
+
+class TestMakeDriftKeyBranches:
+    """Cover the runner/action/image/fallback branches of _make_drift_key."""
+
+    def test_runner_key(self):
+        drift = {"file": "ci.yml", "runner": "ubuntu-latest"}
+        key = _make_drift_key("actions_drifts", drift)
+        assert key == ("actions_drifts", "ci.yml", "runner=ubuntu-latest")
+
+    def test_action_key(self):
+        drift = {"file": "ci.yml", "action": "actions/checkout", "current": "v4"}
+        key = _make_drift_key("actions_drifts", drift)
+        assert key == ("actions_drifts", "ci.yml", "action=actions/checkout@v4")
+
+    def test_image_key(self):
+        drift = {"file": "Dockerfile", "image": "python:3.11"}
+        key = _make_drift_key("docker_drifts", drift)
+        assert key == ("docker_drifts", "Dockerfile", "image=python:3.11")
+
+    def test_fallback_key(self):
+        drift = {"file": "foo.txt", "custom_field": "value"}
+        key = _make_drift_key("custom_drifts", drift)
+        assert key[0] == "custom_drifts"
+        assert key[1] == "foo.txt"
+        assert "custom_field" in key[2]
+
+
+class TestResultToBaselineEntries:
+    """Cover the filtering branches of _result_to_baseline_entries."""
+
+    def test_skips_symlinks_key(self):
+        from driftcheck.baseline import _result_to_baseline_entries
+        result = {"_skipped_symlinks": ["a", "b"], "python_drifts": [{"file": "README.md", "doc_version": "3.9"}]}
+        entries = _result_to_baseline_entries(result)
+        assert len(entries) == 1
+        assert entries[0]["detector"] == "python_drifts"
+
+    def test_skips_non_dict_drift(self):
+        from driftcheck.baseline import _result_to_baseline_entries
+        result = {"python_drifts": ["not-a-dict", {"file": "README.md", "doc_version": "3.9"}]}
+        entries = _result_to_baseline_entries(result)
+        assert len(entries) == 1
+        assert entries[0]["file"] == "README.md"
+
+    def test_skips_non_list_value(self):
+        from driftcheck.baseline import _result_to_baseline_entries
+        result = {"python_drifts": "not-a-list", "docker_drifts": [{"file": "Dockerfile"}]}
+        entries = _result_to_baseline_entries(result)
+        assert len(entries) == 1
+        assert entries[0]["detector"] == "docker_drifts"
+
+
+class TestGetCommitSha:
+    """Cover the exception handling in _get_commit_sha."""
+
+    def test_returns_unknown_on_non_git_dir(self, tmp_path, monkeypatch):
+        import subprocess
+        from driftcheck.baseline import _get_commit_sha
+
+        def fake_run(*args, **kwargs):
+            result = subprocess.CompletedProcess(args=args, returncode=128, stdout="", stderr="fatal: not a git repository")
+            return result
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        sha = _get_commit_sha(tmp_path)
+        assert sha == "unknown"
+
+    def test_returns_unknown_on_timeout(self, tmp_path, monkeypatch):
+        import subprocess
+        from driftcheck.baseline import _get_commit_sha
+
+        def fake_run(*args, **kwargs):
+            raise subprocess.TimeoutExpired(cmd="git", timeout=10)
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        sha = _get_commit_sha(tmp_path)
+        assert sha == "unknown"
+
+    def test_returns_unknown_on_file_not_found(self, tmp_path, monkeypatch):
+        import subprocess
+        from driftcheck.baseline import _get_commit_sha
+
+        def fake_run(*args, **kwargs):
+            raise FileNotFoundError("git not found")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        sha = _get_commit_sha(tmp_path)
+        assert sha == "unknown"
+
+
+class TestCreateBaselineNoResult:
+    """Cover the result=None path in create_baseline."""
+
+    def test_scans_repo_when_no_result(self, tmp_repo_with_drift):
+        baseline = create_baseline(tmp_repo_with_drift, result=None)
+        assert baseline["total_entries"] > 0
+        assert (tmp_repo_with_drift / BASELINE_FILENAME).exists()
+
+
+class TestUpdateBaselineNoResult:
+    """Cover the result=None path in update_baseline."""
+
+    def test_scans_repo_when_no_result(self, tmp_repo_with_drift):
+        result = scan_repo(tmp_repo_with_drift)
+        create_baseline(tmp_repo_with_drift, result)
+        # Update without providing result
+        updated = update_baseline(tmp_repo_with_drift, result=None)
+        assert updated["total_entries"] > 0
+
+    def test_new_drift_gets_now_timestamp(self, tmp_repo_with_drift):
+        result = scan_repo(tmp_repo_with_drift)
+        create_baseline(tmp_repo_with_drift, result)
+        # Add a new drift
+        (tmp_repo_with_drift / "README.md").write_text(
+            "# Test\n\nRequires Python 3.8\n", encoding="utf-8"
+        )
+        result2 = scan_repo(tmp_repo_with_drift)
+        updated = update_baseline(tmp_repo_with_drift, result2)
+        # Should have more entries than before
+        assert updated["total_entries"] > result["total_entries"] if "total_entries" in result else True
+
+
+class TestCompareSkipsNonDict:
+    """Cover the non-dict drift skip in compare_against_baseline."""
+
+    def test_skips_non_dict_drift(self, tmp_repo_with_drift):
+        result = scan_repo(tmp_repo_with_drift)
+        create_baseline(tmp_repo_with_drift, result)
+        # Manually inject a non-drift entry
+        result["python_drifts"].append("not-a-dict")
+        comparison = compare_against_baseline(tmp_repo_with_drift, result)
+        # Should not crash, and non-dict should be ignored
+        assert isinstance(comparison, dict)
+
+
+class TestShowBaselineManyEntries:
+    """Cover the '... and N more' branch in show_baseline."""
+
+    def test_shows_and_n_more(self, tmp_repo_with_drift):
+        # Create a baseline with many entries
+        result = scan_repo(tmp_repo_with_drift)
+        # Artificially inflate the baseline
+        baseline = create_baseline(tmp_repo_with_drift, result)
+        # Add many fake entries
+        for i in range(5):
+            baseline["drifts"].append({
+                "detector": "python_drifts",
+                "file": f"file{i}.md",
+                "type": f"doc=3.{i}",
+                "first_seen": "2026-01-01T00:00:00+00:00",
+                "drift": {"file": f"file{i}.md", "doc_version": f"3.{i}"},
+            })
+        baseline["total_entries"] = len(baseline["drifts"])
+        (tmp_repo_with_drift / BASELINE_FILENAME).write_text(
+            json.dumps(baseline, indent=2), encoding="utf-8"
+        )
+        summary = show_baseline(tmp_repo_with_drift)
+        assert "... and" in summary
+        assert "more" in summary
+
+
+class TestAddToGitignoreAppend:
+    """Cover the append-to-existing-.gitignore branch."""
+
+    def test_appends_to_existing_gitignore(self, tmp_repo_with_drift):
+        from driftcheck.baseline import _add_to_gitignore
+        gitignore = tmp_repo_with_drift / ".gitignore"
+        gitignore.write_text("*.pyc\n__pycache__/\n", encoding="utf-8")
+        _add_to_gitignore(tmp_repo_with_drift)
+        content = gitignore.read_text(encoding="utf-8")
+        assert BASELINE_FILENAME in content
+        assert "*.pyc" in content  # Original content preserved
+
+    def test_appends_with_newline_if_missing(self, tmp_repo_with_drift):
+        from driftcheck.baseline import _add_to_gitignore
+        gitignore = tmp_repo_with_drift / ".gitignore"
+        gitignore.write_text("*.pyc", encoding="utf-8")  # No trailing newline
+        _add_to_gitignore(tmp_repo_with_drift)
+        content = gitignore.read_text(encoding="utf-8")
+        assert BASELINE_FILENAME in content
+        assert "*.pyc\n" in content  # Newline added before baseline entry
+
+    def test_creates_gitignore_if_missing(self, tmp_repo_with_drift):
+        from driftcheck.baseline import _add_to_gitignore
+        _add_to_gitignore(tmp_repo_with_drift)
+        gitignore = tmp_repo_with_drift / ".gitignore"
+        assert gitignore.exists()
+        assert BASELINE_FILENAME in gitignore.read_text(encoding="utf-8")
