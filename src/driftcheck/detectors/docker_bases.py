@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 FROM_LINE_RE = re.compile(
-    r'^FROM\s+(?:--platform=\S+\s+)?(?P<image>[\w.\-/]+)(?::(?P<tag>[\w.\-]+))?(?:\s+AS\s+(?P<alias>\w+))?',
+    r'^FROM\s+(?:--platform=\S+\s+)?(?P<image>[\w.\-/]+(?::\d+(?=/))?[\w.\-/]*)(?::(?P<tag>[\w.\-]+))?(?:\s+AS\s+(?P<alias>\w+))?',
     re.MULTILINE | re.I
 )
 

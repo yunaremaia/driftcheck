@@ -53,6 +53,30 @@ class TestParseDockerfileBases:
         assert len(result) == 1
         assert result[0]['image'] == 'node'
 
+    def test_registry_with_port(self):
+        content = "FROM localhost:5000/python:3.11\nRUN echo hello"
+        result = parse_dockerfile_bases(content)
+        assert len(result) == 1
+        assert result[0]['image'] == 'localhost:5000/python'
+        assert result[0]['tag'] == '3.11'
+        assert result[0]['floating'] is False
+
+    def test_registry_with_port_no_tag(self):
+        content = "FROM localhost:5000/python\nRUN echo hello"
+        result = parse_dockerfile_bases(content)
+        assert len(result) == 1
+        assert result[0]['image'] == 'localhost:5000/python'
+        assert result[0]['tag'] is None
+        assert result[0]['floating'] is True
+
+    def test_registry_with_port_latest(self):
+        content = "FROM localhost:5000/python:latest\nRUN echo hello"
+        result = parse_dockerfile_bases(content)
+        assert len(result) == 1
+        assert result[0]['image'] == 'localhost:5000/python'
+        assert result[0]['tag'] == 'latest'
+        assert result[0]['floating'] is True
+
 
 class TestFindDockerfileBasesDrift:
     def test_clean_pinned(self):
