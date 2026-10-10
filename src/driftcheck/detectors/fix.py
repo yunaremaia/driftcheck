@@ -9,6 +9,55 @@ from .package_version import fix_package_version_reference
 from .python import PY_RE
 from .go import GO_RE
 from .count import COUNT_RE
+from .helm import HELM_VER_RE
+from .compose import DC_VER_RE
+
+
+
+def _replace_reported_image_tag(text: str, drift: dict, new_ref: str, pattern: re.Pattern) -> str:
+    """Update only the tag from the detector match, never the first raw substring."""
+    old_ref = drift.get("doc_version")
+    if not old_ref or not new_ref:
+        return text
+
+    old_tag = old_ref.rsplit(":", 1)[-1]
+    new_tag = new_ref.rsplit(":", 1)[-1]
+    old_image = old_ref.rsplit(":", 1)[0] if ":" in old_ref else None
+
+    def tag_span(match):
+        # A URL that contains an image:tag fragment is not a documented pin.
+        line_start = text.rfind("\n", 0, match.start()) + 1
+        prefix = text[line_start:match.start()]
+        if re.search(r"https?://\S*$", prefix, flags=re.I):
+            return None
+        actual_tag = match.group("tag") or match.group("tag2")
+        if actual_tag != old_tag:
+            return None
+        image = match.group("image")
+        if image and old_image and image.lower() != old_image.lower():
+            return None
+        group = "tag" if match.group("tag") is not None else "tag2"
+        return match.span(group)
+
+    pos = drift.get("pos")
+    if isinstance(pos, int):
+        # Source positions are authoritative; never substitute a different
+        # occurrence when the reported reference has moved or disappeared.
+        match = pattern.match(text, pos)
+        span = tag_span(match) if match else None
+    else:
+        # Legacy results have no position. Avoid silently guessing when
+        # multiple references could be changed.
+        candidates = [
+            span for match in pattern.finditer(text)
+            if (span := tag_span(match)) is not None
+        ]
+        span = candidates[0] if len(candidates) == 1 else None
+
+    if span is None:
+        return text
+    start, end = span
+    return text[:start] + new_tag + text[end:]
 
 
 def apply_fixes(root: Path, result: dict) -> list[str]:
@@ -146,23 +195,21 @@ def apply_fixes(root: Path, result: dict) -> list[str]:
         fpath = root / d["file"]
         if fpath.exists():
             text = fpath.read_text(encoding="utf-8", errors="replace")
-            old = d["doc_version"]
-            new = d["helm_image"]
-            if old in text:
-                text = text.replace(old, new, 1)
-                fpath.write_text(text, encoding="utf-8")
-                fixed.append(d["file"])
+            updated = _replace_reported_image_tag(text, d, d.get("helm_image"), HELM_VER_RE)
+            if updated != text:
+                fpath.write_text(updated, encoding="utf-8")
+                if d["file"] not in fixed:
+                    fixed.append(d["file"])
 
     # Docker Compose drifts
     for d in result.get("dc_drifts", []):
         fpath = root / d["file"]
         if fpath.exists():
             text = fpath.read_text(encoding="utf-8", errors="replace")
-            old = d["doc_version"]
-            new = d["compose_image"]
-            if old in text:
-                text = text.replace(old, new, 1)
-                fpath.write_text(text, encoding="utf-8")
-                fixed.append(d["file"])
+            updated = _replace_reported_image_tag(text, d, d.get("compose_image"), DC_VER_RE)
+            if updated != text:
+                fpath.write_text(updated, encoding="utf-8")
+                if d["file"] not in fixed:
+                    fixed.append(d["file"])
 
     return fixed
