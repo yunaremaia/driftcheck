@@ -26,6 +26,52 @@ the **[documentation site](https://yunaremaia.github.io/driftcheck/)**. Start at
 see the [detector reference](https://yunaremaia.github.io/driftcheck/detectors/)
 for what driftcheck checks.
 
+### Example Output
+
+```console
+$ driftcheck
+driftcheck: README.md: README mentions version 0.1.52 but latest git tag is v0.1.54
+driftcheck: README.md: README mentions version 0.1.52 but latest git tag is v0.1.54
+driftcheck: README.md: README mentions version 0.1.52 but latest git tag is v0.1.54
+driftcheck: CONTRIBUTING.md: README mentions version 0.1 but latest git tag is v0.1.54
+driftcheck: info: .github/dependabot.yml: missing — dependabot.yml not found but ecosystems in use: docker, github-actions, pip
+driftcheck: info: uv.lock: stale — stale uv.lock — older than pyproject.toml (run package manager to regenerate)
+
+$ driftcheck --report
+## driftcheck report
+
+### 📊 Summary
+
+- **Total drifts:** 6
+  - ❌ Blocking: 4
+  - ℹ️  Informational: 2
+- **Detectors fired:** 3
+  - `git-tag`: 4
+  - `dependabot`: 1
+  - `lockfile`: 1
+- **Top files:**
+  - `README.md`: 3 drift(s)
+  - `CONTRIBUTING.md`: 1 drift(s)
+  - `.github/dependabot.yml`: 1 drift(s)
+  - `uv.lock`: 1 drift(s)
+
+### ❌ Blocking drifts
+
+**Latest git tag vs README version mentions** (git_tag_drifts):
+- `README.md`: README mentions version 0.1.52 but latest git tag is v0.1.54
+- `README.md`: README mentions version 0.1.52 but latest git tag is v0.1.54
+- `README.md`: README mentions version 0.1.52 but latest git tag is v0.1.54
+- `CONTRIBUTING.md`: README mentions version 0.1 but latest git tag is v0.1.54
+
+### ℹ️  Informational
+
+**Dependabot coverage gaps (informational)** (dependabot_drifts):
+- `.github/dependabot.yml`: dependabot.yml not found but ecosystems in use: docker, github-actions, pip
+
+**Lockfile missing/stale/orphaned (informational)** (lockfile_drifts):
+- `uv.lock`: stale uv.lock — older than pyproject.toml (run package manager to regenerate)
+```
+
 ```bash
 driftcheck           # scan current repo
 driftcheck --json    # machine-readable
