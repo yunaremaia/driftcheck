@@ -6,6 +6,28 @@
 [![Release](https://img.shields.io/github/v/release/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/yunaremaia/driftcheck) ![Stars](https://img.shields.io/github/stars/yunaremaia/driftcheck)](https://github.com/yunaremaia/driftcheck/blob/main/LICENSE)
+\## Quick Start — 5 minutes
+
+Install and run driftcheck in your repo:
+
+```bash
+# 1. Install ( PyPI name is driftcheck-py; the import is driftcheck )
+pip install driftcheck-py
+
+# 2. Run a scan — it auto-detects your toolchain files
+driftcheck
+```
+
+**What you'll see:** driftcheck scans your repo and reports any version drift between your docs and actual toolchain files (README, pyproject.toml, rust-toolchain.toml, package.json, go.mod, etc.). Exit code 0 means clean; exit code 1 means blocking drifts found.
+
+**Next steps:** Run `driftcheck --report` for a markdown summary, or `driftcheck --init` to generate a `.driftcheck.toml` config.
+
+Or using the PyPI package name directly:
+
+```bash
+pip install driftcheck-py
+driftcheck
+```
 
 **Detect version drift between docs and toolchain files.**
 
